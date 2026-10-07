@@ -1,0 +1,8 @@
+{
+  "records": [
+    { "order": "PO-1187", "supplier": "Valley Feed Mills", "date": "Oct 04, 2025", "items": 2, "total": "₹6,840", "received": "2,400 kg", "status": "Partially received" },
+    { "order": "PO-1186", "supplier": "AgriVet Supply", "date": "Oct 03, 2025", "items": 5, "total": "₹1,240", "received": "Complete", "status": "Closed" },
+    { "order": "PO-1185", "supplier": "Western Grain Co.", "date": "Oct 02, 2025", "items": 1, "total": "₹4,120", "received": "Pending", "status": "Ordered" },
+    { "order": "PO-1184", "supplier": "Farm Essentials", "date": "Oct 01, 2025", "items": 3, "total": "₹920", "received": "Complete", "status": "Closed" }
+  ]
+}

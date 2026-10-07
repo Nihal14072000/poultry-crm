@@ -1,0 +1,102 @@
+<section class="workspace-page">
+  <div class="page-heading">
+    <div>
+      <div class="eyebrow">GREENFIELD POULTRY <span>/</span> OPERATIONS</div>
+      <h1>{{ title }}</h1>
+      <p>{{ description }}</p>
+    </div>
+    <div class="heading-actions">
+      <button class="button button-secondary" type="button" (click)="refresh()">↻ Refresh</button>
+      @if (mode !== 'read-only' && can('create')) { <button class="button button-primary" type="button" (click)="openCreate()"><span>＋</span> {{ mode === 'append-only' ? 'Add movement' : 'Add record' }}</button> }
+    </div>
+  </div>
+  @if (successMessage) { <div class="success-banner" role="status"><span>✓</span>{{ successMessage }}<button type="button" aria-label="Dismiss success message" (click)="successMessage = ''">×</button></div> }
+  @if (actionError && !editorOpen && !deleteCandidate) { <div class="page-error" role="alert">{{ actionError }}</div> }
+
+  <div class="directory-card">
+    <div class="directory-toolbar">
+      <div class="record-count"><strong>{{ filteredRecords.length }}</strong> records <span>·</span> Updated just now</div>
+      <div class="filters">
+        <label class="table-search"><span>⌕</span><input type="search" [ngModel]="query" (ngModelChange)="setQuery($event)" placeholder="Search {{ title.toLowerCase() }}..." aria-label="Search records"></label>
+        <select [ngModel]="statusFilter" (ngModelChange)="setStatus($event)" aria-label="Filter by status">@for (status of statuses; track status) { <option [value]="status">{{ status }}</option> }</select>
+        <button type="button" class="filter-button" aria-label="More filters">☷</button>
+      </div>
+    </div>
+    @if (loading) {
+      <div class="state-panel"><span class="spinner"></span>Loading {{ title.toLowerCase() }}...</div>
+    } @else if (errorMessage) {
+      <div class="state-panel error" role="alert"><strong>Unable to load data</strong>{{ errorMessage }}</div>
+    } @else if (!filteredRecords.length) {
+      <div class="state-panel empty"><strong>No matching records</strong><span>Try changing your search or status filter.</span></div>
+    } @else {
+      <div class="table-scroll">
+        <table class="directory-table">
+          <thead><tr>@for (column of columns; track column.key) { <th><button type="button" class="sort-button" (click)="toggleSort(column.key)">{{ column.label }} @if (sortKey === column.key) { <span>{{ sortDescending ? '↓' : '↑' }}</span> }</button></th> }@if (mode !== 'read-only' || hasModuleWorkflow) { <th class="actions-heading">ACTIONS</th> }</tr></thead>
+          <tbody>
+            @for (record of pagedRecords; track $index) {
+              <tr>
+                @for (column of columns; track column.key; let first = $first) {
+                  <td>
+                    @if (column.key === 'status') { <span class="status-badge" [ngClass]="statusClass(record[column.key])"><i></i>{{ record[column.key] }}</span> }
+                    @else if (first) {
+                      @if (detailPath(record); as path) { <a class="primary-value detail-link" [routerLink]="path">{{ record[column.key] }}</a> }
+                      @else { <strong class="primary-value">{{ record[column.key] }}</strong> }
+                    }
+                    @else { {{ record[column.key] }} }
+                  </td>
+                }
+                @if ((mode === 'editable' && (can('update') || can('delete'))) || (mode === 'append-only' && can('create')) || (hasModuleWorkflow && can('transition'))) { <td class="row-actions">@if (mode === 'editable' && can('update')) { <button type="button" class="action-text" (click)="openEdit(record)">Edit</button> }@if (mode === 'editable' && can('delete')) { <button type="button" class="action-text delete-action" (click)="requestDelete(record)">Delete</button> }@for (action of workflowActions(record); track action.nextStatus) { @if (can('transition')) { <button type="button" class="action-text workflow-action" [disabled]="saving" (click)="runWorkflowAction(record, action)">{{ action.label }}</button> } }</td> }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="table-footer"><span>Showing {{ pagedRecords.length ? ((currentPage - 1) * pageSize) + 1 : 0 }}–{{ (currentPage - 1) * pageSize + pagedRecords.length }} of {{ filteredRecords.length }} matching · {{ records.length }} total</span><div><button type="button" [disabled]="currentPage === 1" (click)="previousPage()">← Previous</button><button type="button" class="current-page">{{ currentPage }} / {{ pageCount }}</button><button type="button" [disabled]="currentPage >= pageCount" (click)="nextPage()">Next →</button></div></div>
+    }
+  </div>
+  <p class="demo-note"><span>●</span> Demo workspace · This view is powered by local JSON sample data.</p>
+
+  @if (editorOpen) {
+    <div class="dialog-backdrop" (click)="closeEditor()">
+      <section class="record-dialog" [class.fleet-dialog]="resource === 'fleet'" role="dialog" aria-modal="true" [attr.aria-label]="(editorMode === 'create' ? 'Add ' : 'Edit ') + title" (click)="$event.stopPropagation()">
+        <div class="dialog-heading"><div><h2>{{ editorMode === 'create' ? 'Add record' : 'Edit record' }}</h2><p>{{ title }} · Demo changes are saved in this browser.</p></div><button type="button" class="dialog-close" aria-label="Close" (click)="closeEditor()">×</button></div>
+        @if (editorMode === 'create' && hasSuggestions) {
+          <p class="suggestion-note">Start typing in a field to see suggestions from existing records.</p>
+        }
+        <div class="dialog-fields">
+          @for (column of columns; track column.key) {
+            <label>{{ column.label }}
+              @if (column.key === 'status') {
+                <select [(ngModel)]="editorRecord[column.key]" [ngModelOptions]="{standalone: true}" [disabled]="hasModuleWorkflow && editorMode === 'edit'" [attr.aria-invalid]="showFieldError(column.key)" [attr.aria-describedby]="showFieldError(column.key) ? 'field-error-' + column.key : null">
+                  <option value="">Select status</option>
+                  @for (status of statusOptions(); track status) { <option [value]="status">{{ status }}</option> }
+                </select>
+              } @else {
+                <input [type]="fieldInputType(column.key)" [attr.min]="minimumValue(column.key)" [attr.max]="percentageMax(column.key)" [attr.maxlength]="column.key.toLowerCase().includes('note') ? 500 : 120" [attr.required]="!['notes', 'note', 'comments', 'remark', 'email', 'assignedTo'].includes(column.key) ? true : null" [attr.list]="editorMode === 'create' && suggestionsFor(column.key).length ? suggestionsId(column.key) : null" [(ngModel)]="editorRecord[column.key]" [ngModelOptions]="{standalone: true}" [placeholder]="'Enter ' + column.label.toLowerCase()" [attr.aria-invalid]="showFieldError(column.key)" [attr.aria-describedby]="showFieldError(column.key) ? 'field-error-' + column.key : null">
+                @if (editorMode === 'create' && suggestionsFor(column.key).length) {
+                  <datalist [id]="suggestionsId(column.key)">
+                    @for (suggestion of suggestionsFor(column.key); track suggestion) { <option [value]="suggestion"></option> }
+                  </datalist>
+                }
+              }
+              @if (showFieldError(column.key)) { <span class="field-error" [id]="'field-error-' + column.key">{{ fieldError(column.key) }}</span> }
+            </label>
+          }
+        </div>
+        @if (validationAttempted && recordValidationError) { <div class="dialog-error" role="alert">{{ recordValidationError }}</div> }
+        @if (actionError) { <div class="dialog-error" role="alert">{{ actionError }}</div> }
+        <div class="dialog-footer"><button class="button button-secondary" type="button" (click)="closeEditor()">Cancel</button><button class="button button-primary" type="button" [disabled]="saving || !can(editorMode === 'create' ? 'create' : 'update')" (click)="saveRecord()">{{ saving ? 'Saving…' : (editorMode === 'create' ? 'Create record' : 'Save changes') }}</button></div>
+      </section>
+    </div>
+  }
+
+  @if (deleteCandidate) {
+    <div class="dialog-backdrop" (click)="cancelDelete()">
+      <section class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-title" (click)="$event.stopPropagation()">
+        <span class="confirm-icon">!</span><h2 id="delete-title">Remove this demo record?</h2><p>This removes the record from this browser’s local demo data. It cannot be undone.</p>
+        @if (actionError) { <div class="dialog-error" role="alert">{{ actionError }}</div> }
+        <div class="dialog-footer"><button class="button button-secondary" type="button" (click)="cancelDelete()">Keep record</button><button class="button danger-button" type="button" (click)="deleteRecord()">Remove record</button></div>
+      </section>
+    </div>
+  }
+</section>

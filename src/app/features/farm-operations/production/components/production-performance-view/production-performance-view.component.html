@@ -1,0 +1,45 @@
+<div class="performance-view" role="tabpanel">
+  <div class="performance-intro">
+    <div><h2>{{ title }} performance</h2><p>Key indicators and recent trends for this production area.</p></div>
+    <span class="period-label"><span>▦</span> Recent performance</span>
+  </div>
+
+  <section class="metric-grid" [attr.aria-label]="title + ' performance metrics'">
+    @for (metric of metrics; track metric.label) {
+      <article class="metric-card">
+        <div class="metric-label">{{ metric.label }}<span class="metric-dot"></span></div>
+        <strong class="metric-value">{{ metric.value }}</strong>
+        <div class="metric-footer"><span class="metric-change" [ngClass]="metric.direction">{{ metric.change }}</span><span>{{ metric.note }}</span></div>
+      </article>
+    }
+  </section>
+
+  <section class="chart-grid" [attr.aria-label]="title + ' trends'">
+    @for (chart of charts; track chart.title) {
+      <article class="chart-card">
+        <div class="chart-heading"><div><h3>{{ chart.title }}</h3><p>Performance trend · {{ chart.unit }}</p></div><button type="button" aria-label="Chart options">•••</button></div>
+        <div class="chart-body">
+          <div class="chart-y-labels"><span>High</span><span>Mid</span><span>Low</span></div>
+          <div class="chart-plot">
+            <div class="chart-lines"><i></i><i></i><i></i></div>
+            <svg viewBox="0 0 480 165" preserveAspectRatio="none" role="img" [attr.aria-label]="chart.title + ' trend'">
+              @for (series of chart.series; track series.name) {
+                <polyline [attr.points]="chartPoints(chart, series)" fill="none" [attr.stroke]="series.color" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                @for (value of series.values; track i; let i = $index) {
+                  <circle [attr.cx]="chartX(chart, i)" [attr.cy]="chartY(chart, value)" r="3" [attr.fill]="series.color"></circle>
+                }
+              }
+            </svg>
+            <div class="chart-x-labels">@for (label of chart.labels; track label) { <span>{{ label }}</span> }</div>
+          </div>
+        </div>
+        <div class="chart-legend">@for (series of chart.series; track series.name) { <span><i [style.background]="series.color"></i>{{ series.name }}</span> }</div>
+      </article>
+    }
+  </section>
+
+  @if (insight) {
+    <aside class="insight-card"><span class="insight-spark">✦</span><div><strong>Performance note</strong><p>{{ insight }}</p></div></aside>
+  }
+  <p class="sample-note"><span>●</span> Trends and performance indicators are illustrative sample data.</p>
+</div>

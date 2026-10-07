@@ -1,0 +1,9 @@
+{
+  "records": [
+    { "code": "CU-104", "name": "Sunrise Foods", "type": "Distributor", "phone": "+91 98765 12040", "orders": 18, "outstanding": "₹8,240", "creditLimit": 50000, "paymentTerms": "Net 30", "status": "Active" },
+    { "code": "CU-108", "name": "Harvest Basket Co.", "type": "Retailer", "phone": "+91 98220 38110", "orders": 12, "outstanding": "₹2,180", "creditLimit": 25000, "paymentTerms": "Net 14", "status": "Active" },
+    { "code": "CU-112", "name": "Daily Fresh Market", "type": "Wholesaler", "phone": "+91 98900 77342", "orders": 9, "outstanding": "₹0", "creditLimit": 20000, "paymentTerms": "Due on receipt", "status": "Active" },
+    { "code": "CU-119", "name": "Valley Provisions", "type": "Distributor", "phone": "+91 97654 20136", "orders": 7, "outstanding": "₹1,620", "creditLimit": 10000, "paymentTerms": "Net 30", "status": "On hold" },
+    { "code": "CU-126", "name": "Farmhouse Retail", "type": "Retailer", "phone": "+91 98110 47201", "orders": 5, "outstanding": "₹480", "creditLimit": 10000, "paymentTerms": "Net 7", "status": "Active" }
+  ]
+}

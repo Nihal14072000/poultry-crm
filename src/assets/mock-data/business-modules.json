@@ -1,0 +1,241 @@
+{
+  "daily-operations": { "records": [] },
+  "batch-transactions": { "records": [] },
+  "broiler": { "records": [
+    { "batch": "FW-2412", "farm": "Greenfield North", "age": "28 days", "birds": "4,820", "averageWeight": "1.62 kg", "fcr": "1.58", "status": "On track" },
+    { "batch": "FW-2410", "farm": "Willow Creek", "age": "35 days", "birds": "3,910", "averageWeight": "2.08 kg", "fcr": "1.64", "status": "Watch" },
+    { "batch": "FW-2409", "farm": "Sunny Acres", "age": "21 days", "birds": "5,360", "averageWeight": "0.98 kg", "fcr": "1.55", "status": "On track" }
+  ], "performance": {
+    "description": "Growth, feed efficiency and flock health across active broiler batches.",
+    "metrics": [
+      { "label": "Average live weight", "value": "1.74 kg", "change": "+4.2%", "direction": "up", "note": "vs. previous week" },
+      { "label": "Average FCR", "value": "1.59", "change": "−2.5%", "direction": "down", "note": "better than target 1.62" },
+      { "label": "Livability", "value": "98.76%", "change": "+0.3%", "direction": "up", "note": "across active flocks" },
+      { "label": "Mortality", "value": "1.24%", "change": "−0.18%", "direction": "down", "note": "within 1.5% target" }
+    ],
+    "charts": [
+      { "title": "Average weight by age", "unit": "kg", "labels": ["7d", "14d", "21d", "28d", "35d", "42d"], "series": [
+        { "name": "Actual", "color": "#4d8059", "values": [0.18, 0.48, 0.98, 1.62, 2.08, 2.52] },
+        { "name": "Target", "color": "#d0a35d", "values": [0.19, 0.50, 1.00, 1.70, 2.20, 2.65] }
+      ] },
+      { "title": "FCR trend", "unit": "ratio", "labels": ["7d", "14d", "21d", "28d", "35d", "42d"], "series": [
+        { "name": "Actual", "color": "#6a86a0", "values": [1.05, 1.18, 1.34, 1.48, 1.59, 1.68] },
+        { "name": "Target", "color": "#d0a35d", "values": [1.08, 1.20, 1.36, 1.50, 1.62, 1.72] }
+      ] }
+    ],
+    "insight": "FW-2410 is 5.5% below its target weight at day 35. Review the feed and health notes for Willow Creek."
+  } },
+  "layer": { "records": [
+    { "batch": "LY-1182", "farm": "Meadow Ridge", "birds": "7,260", "eggsToday": "6,412", "production": "88.3%", "feed": "782 kg", "status": "On track" },
+    { "batch": "LY-1179", "farm": "Greenfield North", "birds": "6,840", "eggsToday": "5,904", "production": "86.3%", "feed": "744 kg", "status": "Watch" }
+  ], "performance": {
+    "description": "Egg output, flock productivity and feed efficiency from active layer flocks.",
+    "metrics": [
+      { "label": "Eggs collected today", "value": "12,316", "change": "+3.1%", "direction": "up", "note": "vs. previous day" },
+      { "label": "Average production", "value": "87.3%", "change": "+1.2%", "direction": "up", "note": "hen-day production" },
+      { "label": "Saleable eggs", "value": "96.8%", "change": "+0.4%", "direction": "up", "note": "of total collected" },
+      { "label": "Feed / dozen eggs", "value": "1.31 kg", "change": "−0.06 kg", "direction": "down", "note": "improving efficiency" }
+    ],
+    "charts": [
+      { "title": "Egg production rate", "unit": "%", "labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], "series": [
+        { "name": "Actual", "color": "#4d8059", "values": [84, 85, 86, 85, 88, 87, 88] },
+        { "name": "Target", "color": "#d0a35d", "values": [86, 86, 86, 86, 86, 86, 86] }
+      ] },
+      { "title": "Egg grading mix", "unit": "trays", "labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], "series": [
+        { "name": "Saleable", "color": "#6a86a0", "values": [380, 394, 402, 398, 416, 409, 424] },
+        { "name": "Damaged", "color": "#d58d70", "values": [18, 16, 17, 15, 14, 15, 13] }
+      ] }
+    ],
+    "insight": "LY-1182 is producing 88.3% today, 2.3 points above the 86% target. Broken and damaged egg rate is 3.2%."
+  } },
+  "breeder": { "records": [
+    { "flock": "BR-034", "farm": "Riverbend Farm", "females": "8,400", "males": "840", "fertility": "92.4%", "eggsToday": "7,116", "status": "On track" },
+    { "flock": "BR-031", "farm": "Sunny Acres", "females": "7,900", "males": "790", "fertility": "89.8%", "eggsToday": "6,438", "status": "Watch" }
+  ], "performance": {
+    "description": "Breeder flock production, fertility and hatchable egg performance.",
+    "metrics": [
+      { "label": "Fertility", "value": "91.2%", "change": "+0.8%", "direction": "up", "note": "fertile eggs / eggs set" },
+      { "label": "Hatchability", "value": "86.7%", "change": "+1.4%", "direction": "up", "note": "of eggs set" },
+      { "label": "Egg production", "value": "84.1%", "change": "−0.3%", "direction": "down", "note": "hen-day production" },
+      { "label": "Female mortality", "value": "0.42%", "change": "−0.05%", "direction": "down", "note": "within target" }
+    ],
+    "charts": [
+      { "title": "Fertility & hatchability", "unit": "%", "labels": ["Wk 1", "Wk 2", "Wk 3", "Wk 4", "Wk 5", "Wk 6"], "series": [
+        { "name": "Fertility", "color": "#4d8059", "values": [89, 90, 91, 90, 92, 92] },
+        { "name": "Hatchability", "color": "#8b9b72", "values": [83, 84, 85, 84, 86, 87] }
+      ] },
+      { "title": "Egg production rate", "unit": "%", "labels": ["Wk 1", "Wk 2", "Wk 3", "Wk 4", "Wk 5", "Wk 6"], "series": [
+        { "name": "Actual", "color": "#6a86a0", "values": [82, 83, 85, 84, 84, 84] },
+        { "name": "Target", "color": "#d0a35d", "values": [83, 83, 84, 84, 84, 84] }
+      ] }
+    ],
+    "insight": "BR-031 fertility is 89.8%, below the 91% target. Review male-to-female ratio and recent flock health records."
+  } },
+  "hatchery": { "records": [
+    { "set": "SET-2510", "setDate": "Sep 30, 2025", "eggsSet": "12,000", "fertile": "11,040", "hatched": "—", "hatchability": "—", "status": "Setting" },
+    { "set": "SET-2509", "setDate": "Sep 23, 2025", "eggsSet": "10,800", "fertile": "9,990", "hatched": "8,940", "hatchability": "89.5%", "status": "Complete" }
+  ], "performance": {
+    "description": "Incubator outcomes, saleable chick yield and hatchery loss indicators.",
+    "metrics": [
+      { "label": "Eggs set this week", "value": "22,800", "change": "+6.4%", "direction": "up", "note": "across 2 active sets" },
+      { "label": "Hatchability", "value": "89.5%", "change": "+1.8%", "direction": "up", "note": "of fertile eggs" },
+      { "label": "Saleable chicks", "value": "8,712", "change": "+2.2%", "direction": "up", "note": "from last completed set" },
+      { "label": "Chick mortality", "value": "2.6%", "change": "−0.4%", "direction": "down", "note": "first-week mortality" }
+    ],
+    "charts": [
+      { "title": "Hatchability by set", "unit": "%", "labels": ["SET-2504", "SET-2505", "SET-2506", "SET-2507", "SET-2508", "SET-2509"], "series": [
+        { "name": "Actual", "color": "#4d8059", "values": [84, 86, 85, 87, 88, 89.5] },
+        { "name": "Target", "color": "#d0a35d", "values": [86, 86, 86, 86, 86, 86] }
+      ] },
+      { "title": "Chick grading output", "unit": "thousands", "labels": ["SET-2504", "SET-2505", "SET-2506", "SET-2507", "SET-2508", "SET-2509"], "series": [
+        { "name": "Saleable", "color": "#6a86a0", "values": [8.1, 8.4, 8.3, 8.5, 8.7, 8.9] },
+        { "name": "Rejected", "color": "#d58d70", "values": [0.5, 0.4, 0.5, 0.4, 0.35, 0.3] }
+      ] }
+    ],
+    "insight": "SET-2509 hatchability improved to 89.5%. Chick rejection fell to 3.0% after grading."
+  } },
+  "health": { "records": [
+    { "incident": "HI-0084", "batch": "FW-2410", "farm": "Willow Creek", "reported": "Oct 04, 2025", "birdsAffected": "18", "vet": "Dr. Priya Shah", "status": "Under review" },
+    { "incident": "HI-0083", "batch": "LY-1182", "farm": "Meadow Ridge", "reported": "Oct 03, 2025", "birdsAffected": "6", "vet": "Dr. Arjun Rao", "status": "Resolved" }
+  ] },
+  "medication": { "records": [
+    { "record": "TX-0418", "batch": "FW-2412", "treatment": "Electrolyte mix", "scheduled": "Oct 05, 2025", "dosage": "1 g / litre", "vet": "Dr. Priya Shah", "status": "Scheduled" },
+    { "record": "VX-0217", "batch": "LY-1182", "treatment": "Newcastle booster", "scheduled": "Oct 06, 2025", "dosage": "0.5 ml / bird", "vet": "Dr. Arjun Rao", "status": "Scheduled" }
+  ] },
+  "feed": { "records": [
+    { "batch": "FW-2412", "farm": "Greenfield North", "feedType": "Grower pellets", "planned": "600 kg", "consumed": "612 kg", "variance": "+2.0%", "status": "Recorded" },
+    { "batch": "FW-2410", "farm": "Willow Creek", "feedType": "Finisher pellets", "planned": "520 kg", "consumed": "548 kg", "variance": "+5.4%", "status": "Review" }
+  ] },
+  "products": { "records": [
+    { "sku": "FD-001", "product": "Starter crumble", "category": "Feed", "unit": "kg", "salePrice": "₹0.62", "status": "Active" },
+    { "sku": "EG-030", "product": "Farm fresh eggs · 30 pack", "category": "Eggs", "unit": "tray", "salePrice": "₹3.80", "status": "Active" },
+    { "sku": "CH-001", "product": "Day-old broiler chick", "category": "Chicks", "unit": "bird", "salePrice": "₹0.48", "status": "Active" },
+    { "sku": "MD-006", "product": "Electrolyte mix", "category": "Medicine", "unit": "pack", "salePrice": "₹4.20", "status": "Active" }
+  ] },
+  "warehouses": { "records": [
+    { "code": "WH-01", "warehouse": "Central store", "location": "Nashik, Maharashtra", "items": "84 SKUs", "manager": "Ravi Patil", "status": "Active" },
+    { "code": "WH-02", "warehouse": "North farm store", "location": "Nashik, Maharashtra", "items": "42 SKUs", "manager": "Meera Joshi", "status": "Active" },
+    { "code": "WH-03", "warehouse": "East farm store", "location": "Satara, Maharashtra", "items": "36 SKUs", "manager": "Kiran More", "status": "Active" }
+  ] },
+  "transfers": { "records": [
+    { "transfer": "TR-0308", "date": "Oct 04, 2025", "from": "Central store", "to": "Willow Creek", "items": "Starter crumble", "quantity": "720 kg", "status": "In transit" },
+    { "transfer": "TR-0307", "date": "Oct 03, 2025", "from": "North farm store", "to": "Greenfield North", "items": "Vitamin supplement", "quantity": "24 bottles", "status": "Received" }
+  ] },
+  "stock-ledger": { "records": [
+    { "reference": "GRN-1187", "date": "Oct 04, 2025", "product": "Grower pellets", "warehouse": "North farm store", "movement": "Goods receipt", "quantity": "+2,400 kg", "status": "Posted" },
+    { "reference": "ISS-0842", "date": "Oct 04, 2025", "product": "Grower pellets", "warehouse": "North farm store", "movement": "Flock issue", "quantity": "−612 kg", "status": "Posted" },
+    { "reference": "TR-0308", "date": "Oct 04, 2025", "product": "Starter crumble", "warehouse": "Central store", "movement": "Transfer out", "quantity": "−720 kg", "status": "In transit" }
+  ] },
+  "suppliers": { "records": [
+    { "code": "SU-021", "name": "Valley Feed Mills", "category": "Feed", "phone": "+91 98220 63014", "orders": "14", "outstanding": "₹6,840", "status": "Active" },
+    { "code": "SU-034", "name": "AgriVet Supply", "category": "Veterinary", "phone": "+91 98900 21863", "orders": "9", "outstanding": "₹0", "status": "Active" },
+    { "code": "SU-042", "name": "Western Grain Co.", "category": "Feed", "phone": "+91 97654 83120", "orders": "7", "outstanding": "₹4,120", "status": "Active" }
+  ] },
+  "quotations": { "records": [
+    { "quotation": "QT-0428", "customer": "Sunrise Foods", "date": "Oct 04, 2025", "validUntil": "Oct 11, 2025", "total": "₹4,280", "owner": "A. Morgan", "status": "Sent" },
+    { "quotation": "QT-0427", "customer": "Harvest Basket Co.", "date": "Oct 03, 2025", "validUntil": "Oct 10, 2025", "total": "₹1,960", "owner": "N. Desai", "status": "Accepted" }
+  ] },
+  "quotation-lines": { "records": [] },
+  "orders": { "records": [
+    { "order": "SO-2084", "customer": "Sunrise Foods", "date": "Oct 04, 2025", "items": "3", "total": "₹4,280", "payment": "Credit", "status": "Confirmed" },
+    { "order": "SO-2083", "customer": "Harvest Basket Co.", "date": "Oct 04, 2025", "items": "2", "total": "₹1,960", "payment": "Paid", "status": "Dispatched" }
+  ] },
+  "order-lines": { "records": [] },
+  "dispatch": { "records": [
+    { "delivery": "DO-0842", "order": "SO-2083", "customer": "Harvest Basket Co.", "vehicle": "MH-12-AB-4521", "driver": "S. Jadhav", "scheduled": "Oct 04 · 11:30 AM", "status": "In transit" },
+    { "delivery": "DO-0841", "order": "SO-2082", "customer": "Daily Fresh Market", "vehicle": "MH-11-CD-1078", "driver": "P. Kadam", "scheduled": "Oct 04 · 09:00 AM", "status": "Delivered" }
+  ] },
+  "dispatch-lines": { "records": [] },
+  "invoices": { "records": [] },
+  "receipts": { "records": [] },
+  "inventory-reservations": { "records": [] },
+  "leads": { "records": [
+    { "lead": "LD-0194", "company": "Cityline Grocers", "contact": "Rohan Mehta", "source": "Referral", "owner": "N. Desai", "nextFollowUp": "Oct 06, 2025", "status": "Qualified" },
+    { "lead": "LD-0192", "company": "Orchard Street Market", "contact": "Asha Kulkarni", "source": "Website", "owner": "A. Morgan", "nextFollowUp": "Oct 07, 2025", "status": "New" }
+  ] },
+  "opportunities": { "records": [
+    { "opportunity": "Weekly egg supply", "customer": "Cityline Grocers", "value": "₹12,400", "stage": "Negotiation", "owner": "N. Desai", "closeDate": "Oct 18, 2025", "status": "Open" },
+    { "opportunity": "Broiler supply · Q4", "customer": "Sunrise Foods", "value": "₹28,600", "stage": "Quotation", "owner": "A. Morgan", "closeDate": "Oct 22, 2025", "status": "Open" }
+  ] },
+  "follow-ups": { "records": [
+    { "task": "Confirm weekly order", "customer": "Sunrise Foods", "due": "Oct 05, 2025", "owner": "A. Morgan", "type": "Call", "notes": "Discuss next week's bird lifting", "status": "Open" },
+    { "task": "Share updated price list", "customer": "Cityline Grocers", "due": "Oct 06, 2025", "owner": "N. Desai", "type": "Email", "notes": "Include egg tray pricing", "status": "Open" }
+  ] },
+  "complaints": { "records": [
+    { "case": "CC-0072", "customer": "Valley Provisions", "subject": "Short delivery quantity", "reported": "Oct 03, 2025", "owner": "S. Kulkarni", "priority": "High", "status": "Investigating" },
+    { "case": "CC-0071", "customer": "Harvest Basket Co.", "subject": "Invoice correction", "reported": "Oct 02, 2025", "owner": "A. Morgan", "priority": "Normal", "status": "Resolved" }
+  ] },
+  "employees": { "records": [
+    { "employee": "Meera Joshi", "department": "Farm operations", "designation": "Farm Manager", "farm": "Willow Creek", "phone": "+91 98220 10442", "joined": "Mar 12, 2022", "status": "Active" },
+    { "employee": "Ravi Patil", "department": "Warehouse", "designation": "Warehouse Manager", "farm": "Central store", "phone": "+91 97654 21008", "joined": "Jun 04, 2021", "status": "Active" },
+    { "employee": "S. Jadhav", "department": "Driver", "designation": "Driver", "farm": "Nashik", "phone": "+91 98900 56213", "licenseNo": "MH1520110012345", "licenseDueDate": "2027-08-31", "joined": "Aug 18, 2023", "status": "Active" },
+    { "employee": "P. Kadam", "department": "Driver", "designation": "Driver", "farm": "Pune", "phone": "+91 98220 33107", "licenseNo": "MH1220090087654", "licenseDueDate": "2027-05-31", "joined": "Sep 02, 2023", "status": "Active" }
+  ] },
+  "fleet": { "records": [
+    { "vehicle": "MH-12-AB-4521", "type": "Light truck", "driver": "S. Jadhav", "capacity": "2,000 kg", "lastInspection": "Sep 28, 2025", "location": "Nashik", "status": "Available" },
+    { "vehicle": "MH-11-CD-1078", "type": "Refrigerated van", "driver": "P. Kadam", "capacity": "1,200 kg", "lastInspection": "Sep 22, 2025", "location": "Pune route", "status": "In transit" }
+  ] },
+  "vehicles": { "records": [
+    { "vehicle": "MH-12-AB-4521", "state": "Maharashtra", "type": "Light truck", "capacityKg": 2000, "purchaseDate": "2021-08-12", "purchasePrice": 850000, "purchasedFrom": "Nashik Motors", "rePassingDueDate": "2026-12-31", "roadTaxDueDate": "2027-03-31", "goodsPermitDueDate": "2026-11-30", "statePermitDueDate": "2026-11-30", "pucDueDate": "2026-09-30", "insuranceDueDate": "2027-01-31", "drCertificateDueDate": "2026-12-31", "foodCertificateDueDate": "2026-10-31", "location": "Nashik", "saleDate": "", "salePrice": "", "soldTo": "", "status": "Active" },
+    { "vehicle": "MH-11-CD-1078", "state": "Maharashtra", "type": "Refrigerated van", "capacityKg": 1200, "purchaseDate": "2022-04-20", "purchasePrice": 1250000, "purchasedFrom": "Pune Commercial Vehicles", "rePassingDueDate": "2027-04-30", "roadTaxDueDate": "2027-06-30", "goodsPermitDueDate": "2027-02-28", "statePermitDueDate": "2027-02-28", "pucDueDate": "2026-12-31", "insuranceDueDate": "2027-04-30", "drCertificateDueDate": "2027-04-30", "foodCertificateDueDate": "2026-11-30", "location": "Pune", "saleDate": "", "salePrice": "", "soldTo": "", "status": "Active" }
+  ] },
+  "vehicle-assignments": { "records": [
+    { "vehicleId": "vehicles-1", "employeeId": "employees-3", "assignedDate": "2025-10-01", "returnedDate": "", "status": "Assigned", "location": "Nashik" },
+    { "vehicleId": "vehicles-2", "employeeId": "employees-4", "assignedDate": "2025-10-02", "returnedDate": "", "status": "Assigned", "location": "Pune" }
+  ] },
+  "receivables": { "records": [
+    { "invoice": "INV-1048", "customer": "Sunrise Foods", "issued": "Sep 14, 2025", "due": "Sep 28, 2025", "amount": "₹4,280", "balance": "₹4,280", "status": "Overdue" },
+    { "invoice": "INV-1046", "customer": "Harvest Basket Co.", "issued": "Sep 26, 2025", "due": "Oct 10, 2025", "amount": "₹1,960", "balance": "₹980", "status": "Due soon" }
+  ] },
+  "payables": { "records": [
+    { "bill": "BILL-208", "supplier": "Valley Feed Mills", "issued": "Sep 28, 2025", "due": "Oct 12, 2025", "amount": "₹6,840", "balance": "₹6,840", "status": "Pending" },
+    { "bill": "BILL-206", "supplier": "Western Grain Co.", "issued": "Sep 22, 2025", "due": "Oct 06, 2025", "amount": "₹4,120", "balance": "₹2,060", "status": "Due soon" }
+  ] },
+  "payments": { "records": [
+    { "reference": "RCPT-774", "party": "Daily Fresh Market", "type": "Receipt", "date": "Oct 03, 2025", "method": "Bank transfer", "amount": "₹3,140", "status": "Posted" },
+    { "reference": "PAY-318", "party": "AgriVet Supply", "type": "Supplier payment", "date": "Oct 02, 2025", "method": "Bank transfer", "amount": "₹1,240", "status": "Posted" }
+  ] },
+  "expenses": { "records": [
+    { "reference": "EXP-0908", "category": "Electricity", "farm": "Greenfield North", "date": "Oct 03, 2025", "submittedBy": "R. Patil", "amount": "₹680", "status": "Approved" },
+    { "reference": "EXP-0907", "category": "Transport", "farm": "Willow Creek", "date": "Oct 03, 2025", "submittedBy": "M. Joshi", "amount": "₹420", "status": "Pending" }
+  ] },
+  "profitability": { "records": [
+    { "scope": "Greenfield North · FW-2412", "period": "Sep 06 – Oct 04", "revenue": "₹12,840", "costs": "₹9,620", "profit": "₹3,220", "margin": "25.1%", "status": "On track" },
+    { "scope": "Willow Creek · FW-2410", "period": "Aug 30 – Oct 04", "revenue": "₹18,420", "costs": "₹15,860", "profit": "₹2,560", "margin": "13.9%", "status": "Review" }
+  ] },
+  "analytics": { "records": [
+    { "metric": "Active bird count", "scope": "All farms", "current": "48,290", "previous": "46,080", "change": "+4.8%", "updated": "Today", "status": "On track" },
+    { "metric": "Average broiler FCR", "scope": "Broiler flocks", "current": "1.59", "previous": "1.63", "change": "−2.5%", "updated": "Today", "status": "On track" },
+    { "metric": "Saleable egg rate", "scope": "Layer flocks", "current": "88.3%", "previous": "89.1%", "change": "−0.8%", "updated": "Today", "status": "Review" }
+  ] },
+  "notifications": { "records": [
+    { "alert": "Starter crumble below safety stock", "category": "Inventory", "relatedTo": "Willow Creek store", "created": "12 min ago", "recipient": "Warehouse team", "severity": "High", "status": "Unread" },
+    { "alert": "Batch FW-2408 ready for lifting", "category": "Farm operations", "relatedTo": "Greenfield North · Shed 04", "created": "48 min ago", "recipient": "Sales team", "severity": "Medium", "status": "Unread" },
+    { "alert": "Invoice INV-1048 is overdue", "category": "Finance", "relatedTo": "Sunrise Foods", "created": "2 hours ago", "recipient": "Accounts team", "severity": "Low", "status": "Read" }
+  ] },
+  "organization": { "records": [
+    { "unit": "Greenfield Poultry", "type": "Organization", "location": "Nashik, Maharashtra", "manager": "Alex Morgan", "currency": "INR", "timezone": "Asia/Kolkata", "status": "Active" },
+    { "unit": "Greenfield Farms", "type": "Business unit", "location": "Maharashtra", "manager": "Meera Joshi", "currency": "INR", "timezone": "Asia/Kolkata", "status": "Active" },
+    { "unit": "Greenfield Trading", "type": "Business unit", "location": "Nashik, Maharashtra", "manager": "Alex Morgan", "currency": "INR", "timezone": "Asia/Kolkata", "status": "Active" }
+  ] },
+  "users-roles": { "records": [
+    { "name": "Alex Morgan", "email": "alex.morgan@example.test", "role": "Organization Admin", "permissions": "All organization modules", "businessUnit": "Greenfield Poultry", "lastActive": "Now", "status": "Active" },
+    { "name": "Meera Joshi", "email": "meera.joshi@example.test", "role": "Farm Manager", "permissions": "Assigned farms and flocks", "businessUnit": "Willow Creek", "lastActive": "Today, 10:12 AM", "status": "Active" },
+    { "name": "Ravi Patil", "email": "ravi.patil@example.test", "role": "Warehouse Manager", "permissions": "Inventory and transfers", "businessUnit": "Central store", "lastActive": "Today, 08:44 AM", "status": "Active" }
+  ] },
+  "documents": { "records": [
+    { "document": "FW-2412 placement record", "category": "Flock", "linkedTo": "Batch FW-2412", "uploadedBy": "M. Joshi", "updated": "Sep 06, 2025", "size": "248 KB", "status": "Available" },
+    { "document": "Feed quality certificate", "category": "Procurement", "linkedTo": "PO-1187", "uploadedBy": "R. Patil", "updated": "Oct 04, 2025", "size": "1.2 MB", "status": "Available" },
+    { "document": "Sunrise Foods tax certificate", "category": "Customer", "linkedTo": "Sunrise Foods", "uploadedBy": "A. Morgan", "updated": "Aug 18, 2025", "size": "416 KB", "status": "Available" }
+  ] },
+  "audit": { "records": [
+    { "event": "Daily flock record created", "record": "FW-2412 · Oct 04", "performedBy": "Meera Joshi", "timestamp": "Oct 04 · 10:42 AM", "change": "Daily record submitted", "source": "Farm operations", "status": "Recorded" },
+    { "event": "Sales order confirmed", "record": "SO-2084", "performedBy": "Alex Morgan", "timestamp": "Oct 04 · 09:18 AM", "change": "Draft → Confirmed", "source": "Sales", "status": "Recorded" },
+    { "event": "Goods receipt posted", "record": "GRN-1187", "performedBy": "Ravi Patil", "timestamp": "Oct 04 · 08:36 AM", "change": "2,400 kg grower pellets received", "source": "Inventory", "status": "Recorded" }
+  ] },
+  "administration": { "records": [
+    { "name": "Alex Morgan", "email": "alex.morgan@example.test", "role": "Organization Admin", "businessUnit": "Greenfield Poultry", "lastActive": "Now", "access": "Full access", "status": "Active" },
+    { "name": "Meera Joshi", "email": "meera.joshi@example.test", "role": "Farm Manager", "businessUnit": "Willow Creek", "lastActive": "Today, 10:12 AM", "access": "Farm operations", "status": "Active" },
+    { "name": "Ravi Patil", "email": "ravi.patil@example.test", "role": "Warehouse Manager", "businessUnit": "Central store", "lastActive": "Today, 08:44 AM", "access": "Inventory", "status": "Active" }
+  ] }
+}

@@ -1,0 +1,9 @@
+{
+  "records": [
+    { "batch": "FW-2412", "farm": "Greenfield North", "shed": "Shed 02", "type": "Broiler", "age": "28 days", "birds": 4820, "averageWeight": "1.62 kg", "fcr": 1.58, "status": "Active" },
+    { "batch": "FW-2410", "farm": "Willow Creek", "shed": "Shed 01", "type": "Broiler", "age": "35 days", "birds": 3910, "averageWeight": "2.08 kg", "fcr": 1.64, "status": "Ready for sale" },
+    { "batch": "FW-2409", "farm": "Sunny Acres", "shed": "Shed 03", "type": "Broiler", "age": "21 days", "birds": 5360, "averageWeight": "0.98 kg", "fcr": 1.55, "status": "Active" },
+    { "batch": "LY-1182", "farm": "Meadow Ridge", "shed": "Shed 04", "type": "Layer", "age": "42 weeks", "birds": 7260, "averageWeight": "1.78 kg", "fcr": 2.05, "status": "Active" },
+    { "batch": "FW-2408", "farm": "Greenfield North", "shed": "Shed 04", "type": "Broiler", "age": "38 days", "birds": 4180, "averageWeight": "2.21 kg", "fcr": 1.57, "status": "Ready for sale" }
+  ]
+}

@@ -1,0 +1,36 @@
+<main class="detail-page">
+  <a class="back-link" routerLink="/farm-operations/farms">← All farms</a>
+  @if (loading) {
+    <div class="state-panel">Loading farm and shed details…</div>
+  } @else if (error || !farm) {
+    <div class="state-panel error" role="alert">{{ error }}</div>
+  } @else {
+    <header class="page-heading">
+      <div><div class="eyebrow">FARM OPERATIONS <span>/</span> {{ farm['code'] }}</div><h1>{{ farm['name'] }}</h1><p>{{ farm['location'] }}</p></div>
+      <span class="status-badge"><i></i>{{ farm['status'] }}</span>
+    </header>
+    <section class="metric-grid" aria-label="Farm capacity metrics">
+      <article><span>ACTIVE BIRDS</span><strong>{{ occupancy | number }}</strong><small>Across {{ farmSheds.length }} sheds</small></article>
+      <article><span>FARM CAPACITY</span><strong>{{ capacity | number }}</strong><small>Bird places</small></article>
+      <article><span>CAPACITY USED</span><strong>{{ utilization | number:'1.0-1' }}%</strong><div class="progress"><i [style.width.%]="utilization"></i></div></article>
+      <article><span>ACTIVE BATCHES</span><strong>{{ activeBatches.length }}</strong><small>{{ activeBatches.length ? 'Select a flock for its 360 view' : 'No active batches' }}</small></article>
+    </section>
+    <section class="section-card">
+      <div class="section-heading"><div><h2>Shed capacity</h2><p>Occupancy and available placement capacity by shed</p></div><a routerLink="/farm-operations/sheds">All sheds →</a></div>
+      @if (!farmSheds.length) { <p class="empty-state">No sheds are associated with this farm.</p> }
+      @for (shed of farmSheds; track shed['_demoId'] ?? shed['code']) {
+        <article class="shed-row">
+          <div class="shed-title"><div><strong>{{ shed['name'] }}</strong><small>{{ shed['code'] }} · {{ shed['type'] }}</small></div><span>{{ shed['occupancy'] | number }} / {{ shed['capacity'] | number }}</span></div>
+          <div class="progress"><i [style.width.%]="shedUtilization(shed)"></i></div>
+          <div class="shed-footer"><span>{{ available(shed) | number }} places available@if (reservedBirds(shed)) { · {{ reservedBirds(shed) | number }} reserved }</span><span>{{ shedBatches(shed).length }} batches</span></div>
+          @for (batch of shedBatches(shed); track batch['_demoId'] ?? batch['batch']) {
+            <a class="batch-row" [routerLink]="['/farm-operations/batches', batch['batch']]">
+              <span><strong>{{ batch['batch'] }}</strong><small>{{ batch['type'] }} · {{ batch['age'] }}</small></span>
+              <span>{{ batch['birds'] | number }} birds <b>→</b></span>
+            </a>
+          }
+        </article>
+      }
+    </section>
+  }
+</main>

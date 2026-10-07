@@ -1,0 +1,44 @@
+:host { display: block; }
+.header-controls { align-items: center; display: flex; gap: 17px; }
+.header-control { position: relative; }
+.topbar-divider { background: #e6e9e5; height: 24px; width: 1px; }
+.icon-button { background: transparent; border: 0; cursor: pointer; height: 28px; padding: 3px; position: relative; width: 28px; }
+.bell-icon,.calendar-icon { display: inline-block; flex: none; height: 14px; position: relative; width: 14px; }
+.bell-icon { border: 1.5px solid #69766e; border-radius: 8px 8px 4px 4px; height: 12px; width: 11px; }
+.bell-icon::after { background: #69766e; border-radius: 2px; bottom: -3px; content: ""; height: 2px; left: 3px; position: absolute; width: 5px; }
+.notification-button i { background: #d57d59; border: 2px solid #fff; border-radius: 50%; height: 7px; position: absolute; right: 2px; top: 1px; width: 7px; }
+.date-button { align-items: center; background: transparent; border: 0; color: #68736b; cursor: pointer; display: flex; font: inherit; font-size: 10px; gap: 9px; }
+.calendar-icon { border: 1.5px solid #839087; border-radius: 3px; height: 12px; width: 13px; }
+.calendar-icon::before { border-top: 1.5px solid #839087; content: ""; left: 0; position: absolute; right: 0; top: 3px; }
+.down-caret { color: #8f9991; font-size: 14px; }
+.header-popover { background: #fff; border: 1px solid #e6ebe4; border-radius: 9px; box-shadow: 0 14px 38px rgba(26,43,32,.16); position: absolute; right: 0; top: calc(100% + 14px); z-index: 12; }
+.notification-popover { width: min(370px, calc(100vw - 28px)); }
+.date-popover { width: min(330px, calc(100vw - 28px)); }
+.popover-heading { align-items: flex-start; border-bottom: 1px solid #edf0ec; display: flex; justify-content: space-between; padding: 15px 16px 12px; }
+.popover-heading h2 { color: #35443a; font-family: Manrope,sans-serif; font-size: 13px; margin: 0 0 4px; }
+.popover-heading p { color: #909a92; font-size: 9px; margin: 0; }
+.popover-close { background: transparent; border: 0; color: #89958c; cursor: pointer; font-size: 19px; line-height: 16px; }
+.notification-list { max-height: min(55vh, 380px); overflow-y: auto; }
+.notification-item { align-items: flex-start; border-bottom: 1px solid #f0f2ef; display: flex; gap: 10px; padding: 13px 16px; }
+.notification-item:last-child { border-bottom: 0; }
+.notification-severity { background: #8da29a; border-radius: 50%; flex: none; height: 8px; margin-top: 4px; width: 8px; }
+.notification-severity.high { background: #d17b5c; }
+.notification-severity.medium { background: #d0a35d; }
+.notification-severity.low { background: #7f9b85; }
+.notification-item strong { color: #46554a; display: block; font-size: 10px; line-height: 1.4; }
+.notification-item p { color: #818d83; font-size: 9px; margin: 4px 0; }
+.notification-item small { color: #a0a9a1; font-size: 8px; }
+.popover-state { align-items: center; color: #78847b; display: flex; font-size: 10px; gap: 8px; justify-content: center; min-height: 90px; padding: 16px; }
+.popover-state.error { color: #9f5c4d; flex-direction: column; }
+.popover-state button { background: transparent; border: 0; color: #396b49; cursor: pointer; font-size: 9px; font-weight: 650; }
+.popover-footer { align-items: center; border-top: 1px solid #edf0ec; color: #477252; display: flex; font-size: 9px; font-weight: 650; justify-content: space-between; padding: 12px 16px; text-decoration: none; }
+.date-presets { display: flex; gap: 6px; padding: 13px 15px 5px; }
+.date-presets button,.date-cancel,.date-apply { border-radius: 5px; cursor: pointer; font-size: 9px; height: 30px; padding: 0 9px; }
+.date-presets button,.date-cancel { background: #fff; border: 1px solid #e4e9e2; color: #647168; }
+.date-fields { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; padding: 11px 15px; }
+.date-fields label { color: #718076; display: flex; flex-direction: column; font-size: 9px; gap: 5px; }
+.date-fields input { background: #fff; border: 1px solid #e2e8e0; border-radius: 5px; color: #49584e; font: inherit; font-size: 10px; height: 32px; min-width: 0; padding: 0 7px; }
+.date-error { color: #a85343; font-size: 9px; margin: 0 15px 9px; }
+.date-actions { border-top: 1px solid #edf0ec; display: flex; gap: 7px; justify-content: flex-end; padding: 11px 15px; }
+.date-apply { background: #315f45; border: 1px solid #315f45; color: #fff; }
+@media(max-width:720px) { .header-controls { gap: 9px; } .date-button { gap: 0; } .date-button span:not(.calendar-icon) { display: none; } }

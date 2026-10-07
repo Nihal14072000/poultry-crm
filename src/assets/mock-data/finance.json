@@ -1,0 +1,9 @@
+{
+  "records": [
+    { "reference": "INV-1048", "counterparty": "Sunrise Foods", "type": "Receivable", "dueDate": "Sep 28, 2025", "amount": "₹4,280", "status": "Overdue" },
+    { "reference": "INV-1046", "counterparty": "Harvest Basket Co.", "type": "Receivable", "dueDate": "Oct 10, 2025", "amount": "₹1,960", "status": "Due soon" },
+    { "reference": "BILL-208", "counterparty": "Valley Feed Mills", "type": "Payable", "dueDate": "Oct 12, 2025", "amount": "₹6,840", "status": "Pending" },
+    { "reference": "RCPT-774", "counterparty": "Daily Fresh Market", "type": "Receipt", "dueDate": "Oct 03, 2025", "amount": "₹3,140", "status": "Paid" },
+    { "reference": "BILL-204", "counterparty": "AgriVet Supply", "type": "Payable", "dueDate": "Oct 01, 2025", "amount": "₹1,240", "status": "Paid" }
+  ]
+}

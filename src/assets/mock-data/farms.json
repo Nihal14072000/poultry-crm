@@ -1,0 +1,9 @@
+{
+  "records": [
+    { "code": "FR-001", "name": "Greenfield North", "location": "Nashik, Maharashtra", "sheds": 4, "capacity": 16000, "birds": 12840, "status": "Active" },
+    { "code": "FR-002", "name": "Willow Creek", "location": "Pune, Maharashtra", "sheds": 3, "capacity": 12000, "birds": 9640, "status": "Active" },
+    { "code": "FR-003", "name": "Sunny Acres", "location": "Satara, Maharashtra", "sheds": 3, "capacity": 14000, "birds": 11220, "status": "Active" },
+    { "code": "FR-004", "name": "Meadow Ridge", "location": "Kolhapur, Maharashtra", "sheds": 5, "capacity": 18000, "birds": 14590, "status": "Active" },
+    { "code": "FR-005", "name": "Riverbend Farm", "location": "Sangli, Maharashtra", "sheds": 2, "capacity": 9000, "birds": 0, "status": "Maintenance" }
+  ]
+}

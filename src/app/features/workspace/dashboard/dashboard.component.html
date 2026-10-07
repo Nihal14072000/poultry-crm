@@ -1,0 +1,123 @@
+@if (loading) {
+  <div class="loading-panel"><span class="spinner"></span><span>Loading your workspace...</span></div>
+} @else if (errorMessage) {
+  <div class="error-panel" role="alert"><strong>Dashboard unavailable</strong><span>{{ errorMessage }}</span></div>
+} @else {
+  @if (dashboard; as data) {
+  <div class="dashboard">
+    <section class="welcome-row">
+      <div>
+        <div class="eyebrow"><span class="eyebrow-dot"></span> SATURDAY, OCTOBER 4, 2025</div>
+        <h1>Good morning, Alex <span class="wave">✳</span></h1>
+        <p class="welcome-subtitle">Here’s what’s happening across your poultry operations today.</p>
+      </div>
+      <div class="welcome-actions">
+        <a class="button button-secondary" routerLink="/insights-admin/reports"><span class="export-symbol">⇧</span> Export report</a>
+        <a class="button button-primary" routerLink="/farm-operations/daily-operations"><span class="plus-symbol">＋</span> Add daily entry</a>
+      </div>
+    </section>
+
+    <section class="metric-grid" aria-label="Business summary">
+      @for (metric of data.metrics; track metric.label; let i = $index) {
+        <a class="metric-card" [routerLink]="i === 1 ? '/farm-operations/batches' : i === 3 ? '/insights-admin/reports' : '/farm-operations/farms'">
+          <div class="metric-top">
+            <span class="metric-label">{{ metric.label }}</span>
+            <span class="metric-icon" [ngClass]="metric.tone">
+              @switch (metric.icon) {
+                @case ('birds') { <span class="bird-symbol">✣</span> }
+                @case ('batches') { <span class="batch-symbol">▦</span> }
+                @case ('revenue') { <span class="money-symbol">$</span> }
+                @default { <span class="health-symbol">♡</span> }
+              }
+            </span>
+          </div>
+          <div class="metric-value">{{ metric.value }}</div>
+          <div class="metric-foot"><span class="change-pill" [ngClass]="metric.direction">{{ metric.change }} <span>{{ metric.direction === 'down' ? '↓' : '↑' }}</span></span><span>{{ metric.detail }}</span></div>
+        </a>
+      }
+    </section>
+
+    <section class="primary-grid">
+      <article class="panel revenue-panel">
+        <div class="panel-heading">
+          <div><h2>Revenue overview</h2><p>Track your sales performance over time</p></div>
+          <label class="period-select"><select aria-label="Revenue period" [(ngModel)]="selectedPeriod"><option>Last 30 days</option><option>Last 7 days</option><option>This year</option></select></label>
+        </div>
+        <div class="revenue-summary"><strong>₹284,650</strong><span class="change-pill up">↑ 8.2%</span><small>vs. previous period</small></div>
+        <div class="chart-wrap">
+          <div class="y-labels"><span>₹80k</span><span>₹60k</span><span>₹40k</span><span>₹20k</span><span>₹0</span></div>
+          <div class="chart">
+            <div class="chart-grid"><i></i><i></i><i></i><i></i><i></i></div>
+            <svg viewBox="0 0 760 220" preserveAspectRatio="none" role="img" aria-label="Revenue trend chart">
+              <defs><linearGradient id="revenueFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#89ae83" stop-opacity=".25"></stop><stop offset="100%" stop-color="#89ae83" stop-opacity="0"></stop></linearGradient></defs>
+              <polygon [attr.points]="revenueAreaPoints()" fill="url(#revenueFill)"></polygon>
+              <polyline [attr.points]="revenuePoints()" fill="none" stroke="#477856" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></polyline>
+              @for (point of data.revenueTrend; track point.label; let i = $index) {
+                <circle [attr.cx]="chartX(i)" [attr.cy]="chartY(point.value)" r="3.5" fill="#fff" stroke="#477856" stroke-width="2"></circle>
+              }
+            </svg>
+            <div class="x-labels">@for (point of data.revenueTrend; track point.label) { <span>{{ point.label }}</span> }</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel alerts-panel">
+        <div class="panel-heading">
+          <div><h2>Needs your attention <span class="alert-count">{{ data.alerts.length }}</span></h2><p>Items to review across your business</p></div>
+          <a class="text-link" routerLink="/insights-admin/notifications">View all <span>→</span></a>
+        </div>
+        <div class="alert-list">
+          @for (alert of data.alerts; track alert.title) {
+            <a class="alert-item" routerLink="/insights-admin/notifications">
+              <span class="alert-marker" [ngClass]="alert.severity"><span></span></span>
+              <span class="alert-copy"><strong>{{ alert.title }}</strong><small>{{ alert.description }}</small><em>{{ alert.time }}</em></span>
+              <span class="alert-chevron">›</span>
+            </a>
+          }
+        </div>
+        <a class="alert-footer" routerLink="/insights-admin/notifications">Open alert center <span>→</span></a>
+      </article>
+    </section>
+
+    <section class="secondary-grid">
+      <article class="panel farm-panel">
+        <div class="panel-heading">
+          <div><h2>Farm performance</h2><p>Health and productivity across your locations</p></div>
+          <a class="text-link" routerLink="/farm-operations/farms">All farms <span>→</span></a>
+        </div>
+        <div class="farm-table-wrap">
+          <table class="farm-table">
+            <thead><tr><th>FARM</th><th>ACTIVE BIRDS</th><th>MORTALITY</th><th>FCR</th><th>7-DAY TREND</th><th>STATUS</th></tr></thead>
+            <tbody>
+              @for (farm of data.farmPerformance; track farm.name) {
+                <tr>
+                  <td><a class="farm-name" [routerLink]="['/farm-operations/farms', farm.name]"><strong>{{ farm.name }}</strong><small>{{ farm.location }}</small></a></td>
+                  <td class="bird-count">{{ farm.birds | number }}</td>
+                  <td>{{ farm.mortality }}%</td>
+                  <td>{{ farm.fcr }}</td>
+                  <td><svg class="sparkline" viewBox="0 0 74 28" aria-label="7 day farm trend"><polyline [attr.points]="sparkline(farm.trend)" fill="none" [attr.stroke]="farm.status === 'Watch' ? '#d5a45f' : '#629171'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline></svg></td>
+                  <td><span class="status-pill" [ngClass]="farm.status === 'Watch' ? 'watch' : 'on-track'"><i></i>{{ farm.status }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
+      <article class="panel activity-panel">
+        <div class="panel-heading"><div><h2>Recent activity</h2><p>Latest updates from your team</p></div><a class="text-link" routerLink="/insights-admin/audit">Activity log <span>→</span></a></div>
+        <div class="activity-list">
+          @for (activity of data.recentActivity; track activity.title) {
+            <div class="activity-item">
+              <span class="activity-icon" [ngClass]="activity.type">{{ activity.type === 'daily' ? '✓' : activity.type === 'sales' ? '$' : '▤' }}</span>
+              <span class="activity-copy"><strong>{{ activity.title }}</strong><small>{{ activity.description }}</small></span>
+              <time>{{ activity.time }}</time>
+            </div>
+          }
+        </div>
+        <div class="activity-note"><span>✦</span><p><strong>Looking good!</strong> All farms are reporting on schedule today.</p></div>
+      </article>
+    </section>
+    <p class="demo-note"><span>●</span> Demo workspace · Data shown is sample data and is not connected to a live backend.</p>
+  </div>
+  }
+}

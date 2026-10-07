@@ -1,0 +1,30 @@
+<section class="production-page">
+  <div class="page-heading">
+    <div>
+      <div class="eyebrow">GREENFIELD POULTRY <span>/</span> FARM OPERATIONS</div>
+      <h1>{{ title }}</h1>
+      <p>{{ description }}</p>
+    </div>
+    <span class="demo-tag"><i></i> SAMPLE PERFORMANCE DATA</span>
+  </div>
+
+  <div class="production-tabs" role="tablist" [attr.aria-label]="title + ' views'">
+    <button type="button" role="tab" [attr.aria-selected]="selectedTab === 'records'" [class.selected]="selectedTab === 'records'" (click)="selectedTab = 'records'">
+      <span class="tab-grid-icon">▦</span> Flocks & records
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="selectedTab === 'performance'" [class.selected]="selectedTab === 'performance'" (click)="selectedTab = 'performance'">
+      <span class="tab-chart-icon">⌁</span> Performance
+      @if (metrics.length) { <span class="tab-count">{{ metrics.length }}</span> }
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="state-panel"><span class="spinner"></span>Loading {{ title.toLowerCase() }} data...</div>
+  } @else if (errorMessage) {
+    <div class="state-panel error" role="alert"><strong>Couldn’t load this view</strong><span>{{ errorMessage }}</span></div>
+  } @else if (selectedTab === 'performance') {
+    <app-production-performance-view [title]="title" [metrics]="metrics" [charts]="charts" [insight]="insight"></app-production-performance-view>
+  } @else {
+    <app-production-records [title]="title" [resource]="resource" [columns]="columns" [records]="records" [(query)]="query"></app-production-records>
+  }
+</section>

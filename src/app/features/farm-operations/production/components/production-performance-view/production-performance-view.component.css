@@ -1,0 +1,40 @@
+.performance-view { animation: arrive .18s ease-out; }
+.performance-intro { align-items: flex-end; display: flex; justify-content: space-between; margin-bottom: 13px; }
+.performance-intro h2 { color: #36453b; font-family: Manrope,sans-serif; font-size: 13px; margin: 0 0 4px; }
+.performance-intro p { color: #929b94; font-size: 9px; margin: 0; }
+.period-label { align-items: center; background: white; border: 1px solid #e8ece6; border-radius: 5px; color: #77837a; display: flex; font-size: 9px; gap: 7px; padding: 7px 9px; }
+.period-label span { color: #778c7b; font-size: 12px; }
+.metric-grid { display: grid; gap: 11px; grid-template-columns: repeat(4,minmax(0,1fr)); margin-bottom: 13px; }
+.metric-card { background: #fff; border: 1px solid #e9ece7; border-radius: 8px; min-width: 0; padding: 14px 15px; }
+.metric-label { align-items: center; color: #79847c; display: flex; font-size: 9px; justify-content: space-between; }
+.metric-dot { background: #eaf2e8; border-radius: 50%; height: 7px; width: 7px; }
+.metric-value { color: #2c3d32; display: block; font-family: Manrope,sans-serif; font-size: 22px; letter-spacing: -.5px; margin: 12px 0 8px; }
+.metric-footer { align-items: center; color: #9ba39c; display: flex; flex-wrap: wrap; font-size: 8px; gap: 6px; }
+.metric-change { border-radius: 4px; font-size: 8px; font-weight: 650; padding: 4px 5px; }
+.metric-change.up,.metric-change.down { background: #eff6ee; color: #5a865e; }
+.metric-change.neutral { background: #f2f4f1; color: #768178; }
+.chart-grid { display: grid; gap: 12px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.chart-card { background: #fff; border: 1px solid #e9ece7; border-radius: 8px; min-width: 0; padding: 16px 16px 12px; }
+.chart-heading { align-items: flex-start; display: flex; justify-content: space-between; }
+.chart-heading h3 { color: #46544a; font-family: Manrope,sans-serif; font-size: 10px; margin: 0 0 4px; }
+.chart-heading p { color: #9ba39c; font-size: 8px; margin: 0; }
+.chart-heading button { background: transparent; border: 0; color: #9ba59d; cursor: pointer; font-size: 10px; letter-spacing: 1px; }
+.chart-body { display: flex; height: 175px; margin-top: 10px; }
+.chart-y-labels { color: #a2aaa3; display: flex; flex-direction: column; font-size: 7px; justify-content: space-between; padding: 3px 8px 19px 0; }
+.chart-plot { flex: 1; min-width: 0; position: relative; }
+.chart-lines { bottom: 18px; display: flex; flex-direction: column; justify-content: space-between; left: 0; position: absolute; right: 0; top: 0; }
+.chart-lines i { border-top: 1px dashed #edf0eb; }
+.chart-plot svg { height: calc(100% - 18px); overflow: visible; position: relative; width: 100%; z-index: 1; }
+.chart-x-labels { color: #a2aaa3; display: flex; font-size: 7px; justify-content: space-between; }
+.chart-legend { border-top: 1px solid #f0f2ef; display: flex; gap: 15px; margin-top: 5px; padding-top: 10px; }
+.chart-legend span { align-items: center; color: #89938b; display: inline-flex; font-size: 8px; gap: 5px; }
+.chart-legend i { border-radius: 50%; height: 7px; width: 7px; }
+.insight-card { align-items: flex-start; background: #f2f6ef; border: 1px solid #e8efe4; border-radius: 7px; color: #6c8e69; display: flex; gap: 10px; margin-top: 12px; padding: 12px 14px; }
+.insight-spark { font-size: 14px; }
+.insight-card strong { color: #547550; font-size: 9px; }
+.insight-card p { color: #788678; font-size: 9px; line-height: 1.5; margin: 4px 0 0; }
+.sample-note { align-items: center; color: #9ba49c; display: flex; font-size: 8px; gap: 6px; justify-content: flex-end; margin: 12px 0 0; }
+.sample-note span { background: #d0a35d; border-radius: 50%; display: inline-block; flex: none; height: 6px; width: 6px; }
+@keyframes arrive { from { opacity: .65; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media(max-width:900px) { .metric-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .chart-grid { grid-template-columns: minmax(0,1fr); } }
+@media(max-width:600px) { .performance-intro { align-items: flex-start; flex-direction: column; gap: 11px; } .metric-grid { gap: 8px; } .metric-card { padding: 11px; } .metric-value { font-size: 18px; } .metric-footer { align-items: flex-start; flex-direction: column; gap: 4px; } .chart-card { padding: 13px 11px 10px; } .period-label { font-size: 8px; } }

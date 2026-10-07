@@ -1,0 +1,222 @@
+<main class="trading-desk">
+  <header class="page-heading">
+    <div>
+      <div class="eyebrow">TRADING · ORDER-TO-CASH</div>
+      <h1>Trading desk</h1>
+      <p>Move a customer sale from quotation through delivery, invoicing, and receipt.</p>
+    </div>
+    <span class="demo-badge">LOCAL DEMO WORKFLOW</span>
+  </header>
+
+  <aside class="notice">
+    <strong>Connected demo workflow</strong>
+    <span>Changes are saved in this browser. Local-storage writes are not an atomic accounting transaction; verify linked records if an action reports a partial failure.</span>
+  </aside>
+  @if (feedback) { <p class="feedback" role="status">{{ feedback }}</p> }
+  @if (error) { <p class="error" role="alert">{{ error }}</p> }
+
+  <nav class="desk-tabs" aria-label="Trading workflow sections">
+    @if (canView('quotes')) { <button type="button" [class.active]="activeView === 'quotes'" (click)="activeView = 'quotes'">1 · Quotations</button> }
+    @if (canView('orders')) { <button type="button" [class.active]="activeView === 'orders'" (click)="activeView = 'orders'">2 · Sales orders</button> }
+    @if (canView('deliveries')) { <button type="button" [class.active]="activeView === 'deliveries'" (click)="activeView = 'deliveries'">3 · Deliveries</button> }
+    @if (canView('invoices')) { <button type="button" [class.active]="activeView === 'invoices'" (click)="activeView = 'invoices'">4 · Invoices & receipts</button> }
+  </nav>
+
+  @if (loading) {
+    <section class="state">Loading trading records…</section>
+  } @else {
+    @if (data; as desk) {
+    @if (activeView === 'quotes') {
+      <section class="panel quote-builder">
+        <div class="panel-heading"><div><span class="step">NEW QUOTATION</span><h2>Build a customer quote</h2><p>Price products by unit, tray, bird, or live-bird kilogram.</p></div></div>
+        <div class="quote-header">
+          <label>Customer
+            <select [(ngModel)]="customerName">
+              @for (customer of activeCustomers; track customer['_demoId']) { <option [value]="customer['name']">{{ customer['name'] }}</option> }
+            </select>
+          </label>
+          @if (activeCustomers.length) {
+            <div class="credit-hint">
+              <span>Credit terms: {{ selectedCustomer?.['paymentTerms'] || 'Prepayment required' }}</span>
+              <span>Outstanding {{ amount(selectedCustomer?.['outstanding']) }} · Limit {{ amount(selectedCustomer?.['creditLimit']) }}</span>
+            </div>
+          }
+        </div>
+        <div class="line-list">
+          @for (line of draftLines; track line; let row = $index) {
+            <article class="draft-line">
+              <label class="product-field">Product
+                <select [ngModel]="line.batch ? 'LIVE-BIRD' : line.sku" (ngModelChange)="selectProduct(line, $event)" [ngModelOptions]="{standalone: true}">
+                  @for (product of sellableProducts; track product['sku']) { <option [value]="product['sku']">{{ product['product'] }} · {{ product['sku'] }}</option> }
+                  <option value="LIVE-BIRD">Live broiler chicken</option>
+                </select>
+              </label>
+              @if (line.sku === 'LIVE-BIRD') {
+                <label>Live batch
+                  <select [ngModel]="line.batch" (ngModelChange)="selectBatch(line, $event)" [ngModelOptions]="{standalone: true}">
+                    <option value="">Select batch</option>
+                    @for (batch of activeBatches; track batch['_demoId']) { <option [value]="batch['batch']">{{ batch['batch'] }} · {{ batch['farm'] }} · {{ batch['birds'] }} birds</option> }
+                  </select>
+                </label>
+              }
+              <label>Qty
+                <input type="number" min="1" step="1" [(ngModel)]="line.quantity" [ngModelOptions]="{standalone: true}">
+              </label>
+              <label>Price basis
+                <select [(ngModel)]="line.pricingBasis" [ngModelOptions]="{standalone: true}">
+                  @if (line.sku === 'LIVE-BIRD') { <option value="bird">Per bird</option><option value="kg">Per kg</option> }
+                  @else {
+                    <option value="unit">Per {{ unitLabel(line) }}</option>
+                    <option value="kg">Per kg</option><option value="bird">Per bird</option>
+                    <option value="tray">Per tray</option><option value="carton">Per carton</option><option value="custom">Custom unit</option>
+                  }
+                </select>
+              </label>
+              @if (line.sku === 'LIVE-BIRD' && line.pricingBasis === 'kg') {
+                <label>Avg. kg / bird
+                  <input type="number" min="0.01" step="0.01" [(ngModel)]="line.averageWeight" [ngModelOptions]="{standalone: true}">
+                </label>
+              }
+              <label>Rate ₹
+                <input type="number" min="0.01" step="0.01" [(ngModel)]="line.unitPrice" [ngModelOptions]="{standalone: true}">
+              </label>
+              <div class="line-total"><span>LINE TOTAL</span><strong>{{ amount(lineTotal(line)) }}</strong></div>
+              <button class="remove-line" type="button" aria-label="Remove line" [disabled]="draftLines.length === 1" (click)="removeLine(row)">×</button>
+            </article>
+          }
+        </div>
+        <div class="quote-footer">
+          <div class="quote-notes"><label>Notes<textarea [(ngModel)]="quoteNotes" maxlength="500" rows="2" placeholder="Optional quote notes"></textarea></label></div>
+          <div class="quote-total"><span>QUOTATION TOTAL</span><strong>{{ amount(quoteTotal) }}</strong></div>
+        </div>
+        <div class="panel-actions">
+          <button class="secondary-button" type="button" (click)="addLine()" [disabled]="busy || !sellableProducts.length">＋ Add line</button>
+          <button class="primary-button" type="button" (click)="createQuotation()" [disabled]="busy || !canCreateDraft() || !customerName || !draftLines.length">Create quotation</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><div><span class="step">QUOTE PIPELINE</span><h2>Quotations</h2></div></div>
+        @if (!desk.quotations.length) { <p class="empty">No quotations yet.</p> }
+        @else {
+          <div class="table-wrap"><table><thead><tr><th>QUOTE</th><th>CUSTOMER</th><th>DATE</th><th>LINES</th><th>TOTAL</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+            <tbody>@for (quote of desk.quotations; track quote['_demoId']) {
+              <tr>
+                <td><strong>{{ quote['quotation'] }}</strong><small>{{ quote['validUntil'] ? 'Valid until ' + quote['validUntil'] : '' }}</small></td>
+                <td>{{ quote['customer'] }}</td><td>{{ quote['date'] }}</td><td>{{ quoteLineCount(quote) }}</td><td>{{ quote['total'] }}</td>
+                <td><span class="status">{{ quote['status'] }}</span></td>
+                <td class="actions">
+                  @if (quote['status'] === 'Draft' && rolePermissions.can('quotations', 'transition')) { <button type="button" (click)="sendQuotation(quote)" [disabled]="busy">Send</button> }
+                  @if (quote['status'] === 'Sent' && rolePermissions.can('quotations', 'transition')) { <button type="button" (click)="acceptQuotation(quote)" [disabled]="busy">Accept</button><button type="button" (click)="declineQuotation(quote)" [disabled]="busy">Decline</button> }
+                  @if (canConvert(quote)) { <button type="button" (click)="convertQuotation(quote)" [disabled]="busy">Create order</button> }
+                  @if (quote['orderId']) { <span class="muted">Converted</span> }
+                </td>
+              </tr>
+            }</tbody>
+          </table></div>
+        }
+      </section>
+    }
+
+    @if (activeView === 'orders') {
+      <section class="panel">
+        <div class="panel-heading"><div><span class="step">ORDER FULFILMENT</span><h2>Sales orders</h2><p>Confirming an order checks customer credit and reserves stock or live birds.</p></div></div>
+        @if (!desk.orders.length) { <p class="empty">No sales orders yet. Create one from an accepted quotation.</p> }
+        @else {
+          <div class="table-wrap"><table><thead><tr><th>ORDER</th><th>CUSTOMER</th><th>DATE</th><th>LINES</th><th>TOTAL</th><th>PAYMENT</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+            <tbody>@for (order of desk.orders; track order['_demoId']) {
+              <tr>
+                <td><strong>{{ order['order'] }}</strong><small>{{ order['quotationId'] ? 'From accepted quotation' : '' }}</small></td><td>{{ order['customer'] }}</td><td>{{ order['date'] }}</td><td>{{ orderLineCount(order) }}</td><td>{{ order['total'] }}</td><td>{{ order['payment'] }}</td><td><span class="status">{{ order['status'] }}</span></td>
+                <td class="actions">
+                  @if (order['status'] === 'Draft' && rolePermissions.can('orders', 'transition')) { <button type="button" (click)="confirmOrder(order)" [disabled]="busy">Confirm & reserve</button> }
+                  @if (canCreateDispatch(order)) { <button type="button" (click)="createDispatch(order)" [disabled]="busy">Create delivery</button> }
+                </td>
+              </tr>
+            }</tbody>
+          </table></div>
+        }
+      </section>
+    }
+
+    @if (activeView === 'deliveries') {
+      <section class="panel">
+        <div class="panel-heading"><div><span class="step">DELIVERY & PROOF</span><h2>Dispatches</h2><p>Record transport progress, actual quantities, mortality, and proof of delivery.</p></div></div>
+        @if (!desk.dispatches.length) { <p class="empty">No dispatches yet. Confirm a sales order to create one.</p> }
+        @else {
+          <div class="table-wrap"><table><thead><tr><th>DELIVERY</th><th>ORDER</th><th>CUSTOMER</th><th>VEHICLE / DRIVER</th><th>STATUS</th><th>POD</th><th>ACTIONS</th></tr></thead>
+            <tbody>@for (dispatch of desk.dispatches; track dispatch['_demoId']) {
+              <tr>
+                <td><strong>{{ dispatch['delivery'] }}</strong></td><td>{{ dispatch['order'] }}</td><td>{{ dispatch['customer'] }}</td><td>{{ dispatch['vehicle'] || '—' }}<small>{{ dispatch['driver'] || '' }}</small></td><td><span class="status">{{ dispatch['status'] }}</span></td><td>{{ dispatch['proofOfDelivery'] || '—' }}</td>
+                <td class="actions"><button type="button" (click)="selectDispatch(dispatch)">Open</button>
+                  @if (dispatch['status'] === 'Created' && rolePermissions.can('dispatch', 'transition')) { <button type="button" (click)="selectDispatch(dispatch); markDispatched(dispatch)" [disabled]="busy">Dispatch</button> }
+                  @if (dispatch['status'] === 'Dispatched' && rolePermissions.can('dispatch', 'transition')) { <button type="button" (click)="markInTransit(dispatch)" [disabled]="busy">In transit</button> }
+                </td>
+              </tr>
+            }</tbody>
+          </table></div>
+        }
+      </section>
+      @if (selectedDispatch; as dispatch) {
+        <section class="panel delivery-panel">
+          <div class="panel-heading"><div><span class="step">{{ dispatch['delivery'] }} · {{ dispatch['status'] }}</span><h2>Delivery details</h2></div><button class="text-button" type="button" (click)="selectedDispatch = undefined">Close</button></div>
+          @if (dispatch['status'] === 'Created') {
+            <div class="transport-fields">
+              <label>Vehicle<input [(ngModel)]="vehicle" placeholder="Vehicle registration"></label>
+              <label>Driver<input [(ngModel)]="driver" placeholder="Driver name"></label>
+              @for (line of dispatchLines; track line['_demoId']) { <span>{{ line['product'] }} · {{ line['quantity'] }} to ship</span> }
+              <button class="primary-button" type="button" (click)="markDispatched(dispatch)" [disabled]="busy || !rolePermissions.can('dispatch', 'transition')">Mark dispatched</button>
+            </div>
+          } @else if (dispatch['status'] === 'Dispatched') {
+            <p class="hint">Confirm the vehicle has started its route before recording delivery outcome.</p>
+            <button class="primary-button" type="button" (click)="markInTransit(dispatch)" [disabled]="busy || !rolePermissions.can('dispatch', 'transition')">Mark in transit</button>
+          } @else if (dispatch['status'] === 'In transit') {
+            <div class="table-wrap"><table class="outcome-table"><thead><tr><th>PRODUCT / BATCH</th><th>SHIPPED</th><th>DELIVERED</th><th>TRANSPORT MORTALITY</th></tr></thead><tbody>
+              @for (line of dispatchLines; track line['_demoId']) {
+                <tr><td>{{ line['product'] }}<small>{{ line['batch'] || line['sku'] }}</small></td><td>{{ line['quantity'] }}</td>
+                  <td><input type="number" min="0" [max]="line['quantity']" step="1" [ngModel]="deliveryValue(line, 'delivered')" (ngModelChange)="setDeliveryValue(line, 'delivered', $event)" [ngModelOptions]="{standalone: true}" aria-label="Delivered quantity"></td>
+                  <td>@if (isLive(line)) { <input type="number" min="0" [max]="line['quantity']" step="1" [ngModel]="deliveryValue(line, 'mortality')" (ngModelChange)="setDeliveryValue(line, 'mortality', $event)" [ngModelOptions]="{standalone: true}" aria-label="Transport mortality"> } @else { — }</td>
+                </tr>
+              }
+            </tbody></table></div>
+            <div class="delivery-fields"><label>Proof-of-delivery reference<input [(ngModel)]="proofOfDelivery" placeholder="Signature, image/document reference, or POD number"></label><label>Failure / exception note<input [(ngModel)]="failureReason" placeholder="Required if nothing was delivered"></label></div>
+            <button class="primary-button" type="button" (click)="completeDelivery(dispatch)" [disabled]="busy || !rolePermissions.can('dispatch', 'transition')">Record delivery outcome & invoice delivered quantity</button>
+          } @else {
+            <div class="completed-summary"><strong>{{ dispatch['status'] }}</strong><span>Delivered: {{ dispatch['actualDelivered'] || 0 }} · POD: {{ dispatch['proofOfDelivery'] || 'Not provided' }}</span><span>{{ dispatch['failureReason'] || '' }}</span></div>
+          }
+        </section>
+      }
+    }
+
+    @if (activeView === 'invoices') {
+      <section class="panel">
+        <div class="panel-heading"><div><span class="step">ACCOUNTS RECEIVABLE</span><h2>Invoices & receipts</h2><p>Invoices are raised from delivered quantities. Receipts reduce invoice and customer balances.</p></div></div>
+        @if (!desk.invoices.length) { <p class="empty">No workflow invoices yet. Complete a delivery to generate one.</p> }
+        @else {
+          <div class="table-wrap"><table><thead><tr><th>INVOICE</th><th>CUSTOMER</th><th>ISSUED / DUE</th><th>AMOUNT</th><th>BALANCE</th><th>STATUS</th><th>ACTION</th></tr></thead>
+            <tbody>@for (invoice of desk.invoices; track invoice['_demoId']) {
+              <tr><td><strong>{{ invoice['invoice'] }}</strong></td><td>{{ invoice['customer'] }}</td><td>{{ invoice['issued'] }}<small>Due {{ invoice['due'] }}</small></td><td>{{ invoice['amount'] }}</td><td>{{ invoice['balance'] }}</td><td><span class="status">{{ invoice['status'] }}</span></td><td>@if (hasInvoiceBalance(invoice) && rolePermissions.can('payments', 'create')) { <button class="row-button" type="button" (click)="openInvoice(invoice)">Record receipt</button> } @else { — }</td></tr>
+            }</tbody>
+          </table></div>
+        }
+        @if (selectedInvoice; as invoice) {
+          <form class="receipt-form" (ngSubmit)="recordReceipt(invoice)">
+            <div><strong>Receipt against {{ invoice['invoice'] }}</strong><span>{{ invoice['customer'] }} · outstanding {{ invoice['balance'] }}</span></div>
+            <label>Amount ₹<input name="receiptAmount" type="number" min="0.01" [max]="numberValue(invoice['balance'])" step="0.01" required [(ngModel)]="receiptAmount"></label>
+            <label>Method<select name="receiptMethod" [(ngModel)]="receiptMethod"><option>Bank transfer</option><option>Cash</option><option>UPI</option><option>Cheque</option></select></label>
+            <label>Reference<input name="receiptReference" [(ngModel)]="receiptReference" placeholder="Optional receipt reference"></label>
+            <button class="primary-button" type="submit" [disabled]="busy || !rolePermissions.can('payments', 'create')">Post receipt</button>
+            <button class="text-button" type="button" (click)="selectedInvoice = undefined">Cancel</button>
+          </form>
+        }
+        <div class="customer-balances"><h3>Customer balances</h3>
+          @for (customer of desk.customers; track customer['_demoId']) {
+            <div><span>{{ customer['name'] }} <small>{{ customer['paymentTerms'] || 'Terms not set' }}</small></span><strong>{{ customer['outstanding'] || '₹0' }} / {{ amount(customer['creditLimit']) }} credit limit</strong></div>
+          }
+        </div>
+      </section>
+    }
+    } @else {
+      <section class="state">Trading records are unavailable.</section>
+    }
+  }
+</main>

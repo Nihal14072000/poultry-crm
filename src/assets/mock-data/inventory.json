@@ -1,0 +1,11 @@
+{
+  "records": [
+    { "sku": "FD-001", "product": "Starter crumble", "category": "Feed", "warehouse": "Central store", "onHand": "1,280 kg", "reorderAt": "2,000 kg", "status": "Low stock" },
+    { "sku": "FD-014", "product": "Grower pellets", "category": "Feed", "warehouse": "North store", "onHand": "8,640 kg", "reorderAt": "3,000 kg", "status": "Healthy" },
+    { "sku": "MD-006", "product": "Electrolyte mix", "category": "Medicine", "warehouse": "Central store", "onHand": "84 packs", "reorderAt": "40 packs", "status": "Healthy" },
+    { "sku": "PK-020", "product": "Egg trays (30 cell)", "category": "Packaging", "warehouse": "East store", "onHand": "360 units", "reorderAt": "500 units", "status": "Low stock" },
+    { "sku": "MD-012", "product": "Vitamin supplement", "category": "Medicine", "warehouse": "North store", "onHand": "26 bottles", "reorderAt": "20 bottles", "status": "Expiring soon" },
+    { "sku": "EG-030", "product": "Farm fresh eggs · 30 pack", "category": "Eggs", "warehouse": "East store", "onHand": "360 trays", "reorderAt": "50 trays", "status": "Healthy" },
+    { "sku": "CH-001", "product": "Day-old broiler chick", "category": "Chicks", "warehouse": "Central store", "onHand": "8,000 birds", "reorderAt": "1,000 birds", "status": "Healthy" }
+  ]
+}

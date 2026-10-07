@@ -1,0 +1,79 @@
+<section class="daily-page">
+  <div class="page-heading">
+    <div><div class="eyebrow">GREENFIELD POULTRY <span>/</span> FARM OPERATIONS</div><h1>Daily operations</h1><p>Capture today’s flock and shed readings in one place.</p></div>
+    <div class="date-stamp"><span>▦</span> {{ todayLabel }}</div>
+  </div>
+
+  <div class="step-strip"><span class="step-number">1</span><strong>Location & flock</strong><i></i><span class="step-number">2</span><strong>Daily readings</strong><i></i><span class="step-number">3</span><strong>Review & save</strong></div>
+  @if (saved) { <div class="success-message" role="status"><strong>Daily entry saved</strong><span>Saved in this browser’s demo data. No backend request was made.</span><button type="button" aria-label="Dismiss" (click)="saved = false">×</button></div> }
+  @if (duplicateEntry) { <div class="validation-message" role="alert">A daily entry already exists for this batch and date. Choose a different date or batch.</div> }
+  @if (outOfSequenceEntry) { <div class="validation-message" role="alert">Entries for a batch must be recorded in date order. Select a date after the latest saved entry.</div> }
+  @if (errorMessage) { <div class="validation-message" role="alert">{{ errorMessage }}</div> }
+
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <div class="form-layout">
+      <div class="form-column">
+        <article class="form-card">
+          <div class="card-heading"><span class="card-step">01</span><div><h2>Location & flock</h2><p>Choose the farm and batch for today’s entry.</p></div></div>
+          <div class="field-grid three">
+            <label>Farm <select formControlName="farm" (change)="onFarmChanged()">@for (farm of farms; track farm['code']) { <option [value]="farm['name']">{{ farm['name'] }}</option> }</select></label>
+            <label>Shed <select formControlName="shed" (change)="onShedChanged()">@for (shed of availableSheds; track shed['code']) { <option [value]="shed['name']">{{ shed['name'] }}</option> }</select></label>
+            <label>Active batch <select formControlName="batch" (change)="onBatchChanged()">@for (batch of availableBatches; track batch['batch']) { <option [value]="batch['batch']">{{ batch['batch'] }}</option> }</select></label>
+          </div>
+          <label class="field-label date-field">Record date <input type="date" [max]="todayDate" formControlName="date" (change)="onDateChanged()">@if (form.controls.date.touched && form.controls.date.hasError('futureDate')) { <em>Choose today or an earlier date.</em> }</label>
+          <div class="flock-summary"><span class="summary-icon">✣</span><span><strong>{{ selectedBatch?.['type'] ?? 'Flock' }} · {{ selectedBatch?.['batch'] }}</strong><small>{{ selectedBatch?.['farm'] }} · {{ selectedBatch?.['age'] }} · Average weight {{ selectedBatch?.['averageWeight'] }}</small></span><span class="summary-status">{{ selectedBatch?.['status'] }}</span></div>
+        </article>
+
+        <article class="form-card">
+          <div class="card-heading"><span class="card-step">02</span><div><h2>Flock readings</h2><p>Record bird count, feed and growth for this shed.</p></div></div>
+          <div class="field-grid three">
+            <label>Opening birds <span class="input-with-unit"><input type="number" min="0" step="1" formControlName="openingBirds"><small>birds</small></span>@if (form.controls.openingBirds.touched && (form.controls.openingBirds.invalid || !isWholeNumber(form.controls.openingBirds.value))) { <em>Enter a whole opening bird count.</em> }</label>
+            <label>Mortality <span class="input-with-unit"><input type="number" min="0" step="1" formControlName="mortality"><small>birds</small></span>@if (form.controls.mortality.touched && (form.controls.mortality.invalid || !isWholeNumber(form.controls.mortality.value) || (form.controls.mortality.value ?? 0) > (form.controls.openingBirds.value ?? 0))) { <em>Enter a whole count that does not exceed opening birds.</em> }</label>
+            <label>Culling <span class="input-with-unit"><input type="number" min="0" step="1" formControlName="culling"><small>birds</small></span>@if (form.controls.culling.touched && (form.controls.culling.invalid || !isWholeNumber(form.controls.culling.value))) { <em>Enter a whole culling count.</em> }</label>
+            <label>Feed consumed <span class="input-with-unit"><input type="number" min="0" formControlName="feedConsumed"><small>kg</small></span>@if (form.controls.feedConsumed.touched && form.controls.feedConsumed.invalid) { <em>Enter a non-negative feed quantity.</em> }</label>
+            <label>Previous average weight <span class="input-with-unit"><input type="number" min="0.01" step="0.01" formControlName="previousAverageWeight"><small>kg</small></span>@if (form.controls.previousAverageWeight.touched && form.controls.previousAverageWeight.invalid) { <em>Weight must be greater than zero.</em> }</label>
+            <label>Average weight <span class="input-with-unit"><input type="number" min="0.01" step="0.01" formControlName="averageWeight"><small>kg</small></span>@if (form.controls.averageWeight.touched && form.controls.averageWeight.invalid) { <em>Weight must be greater than zero.</em> }</label>
+            <label>Water consumed <span class="input-with-unit"><input type="number" min="0" formControlName="water"><small>litres</small></span>@if (form.controls.water.touched && form.controls.water.invalid) { <em>Enter a non-negative water quantity.</em> }</label>
+          </div>
+          @if (form.touched && form.invalid) { <div class="validation-message" role="alert">Complete required fields and correct the highlighted values before saving.</div> }
+          @if ((form.controls.mortality.value ?? 0) + (form.controls.culling.value ?? 0) > (form.controls.openingBirds.value ?? 0)) { <div class="validation-message" role="alert">Mortality and culling combined cannot exceed the opening bird count.</div> }
+          @if (birdCountInvalid) { <div class="validation-message" role="alert">Opening birds, mortality, and culling must be non-negative whole numbers.</div> }
+        </article>
+
+        <article class="form-card">
+          <div class="card-heading"><span class="card-step">03</span><div><h2>Shed environment</h2><p>Optional readings help identify changes in flock conditions.</p></div></div>
+          <div class="field-grid three">
+            <label>Temperature <span class="input-with-unit"><input type="number" formControlName="temperature"><small>°C</small></span></label>
+            <label>Humidity <span class="input-with-unit"><input type="number" min="0" max="100" formControlName="humidity"><small>%</small></span>@if (form.controls.humidity.touched && form.controls.humidity.invalid) { <em>Enter a value between 0 and 100.</em> }</label>
+            <label>Notes <input type="text" formControlName="notes" placeholder="Add a note (optional)"></label>
+          </div>
+        </article>
+      </div>
+      <aside class="summary-card">
+        <h2>Today’s summary</h2><p>Calculated from your flock readings</p>
+        <div class="summary-row"><span>Opening birds</span><strong>{{ form.controls.openingBirds.value | number }}</strong></div>
+        <div class="summary-row negative"><span>Mortality & culling</span><strong>−{{ (form.controls.mortality.value ?? 0) + (form.controls.culling.value ?? 0) | number }}</strong></div>
+        <div class="closing-row"><span>Closing birds</span><strong>{{ closingBirds | number }}</strong></div>
+        <div class="summary-row"><span>Mortality rate</span><strong>{{ mortalityRate | number:'1.2-2' }}%</strong></div>
+        <div class="summary-row"><span>Feed consumed</span><strong>{{ form.controls.feedConsumed.value | number }} kg</strong></div>
+        <div class="summary-row"><span>Average weight</span><strong>{{ form.controls.averageWeight.value }} kg</strong></div>
+        <div class="summary-row"><span>Calculated FCR</span><strong>{{ fcr === null ? '—' : (fcr | number:'1.2-2') }}</strong></div>
+        <div class="summary-callout"><span>↗</span><p><strong>{{ mortalityRate <= 1.5 ? 'On target' : 'Review mortality' }}</strong><br>{{ mortalityRate <= 1.5 ? 'Mortality is within the expected range for this flock.' : 'Mortality is above the 1.5% reference threshold.' }}</p></div>
+        @if (openingCountMismatch) { <div class="validation-message" role="alert">Opening birds must match the batch’s current live bird count ({{ selectedBatch?.['birds'] | number }}). The batch 360 view is the source of truth.</div> }
+        <button class="save-button" type="submit" [disabled]="loadingMasterData || saving || entryInvalid">{{ saving ? 'Saving…' : 'Save daily entry' }} <span>→</span></button>
+        <div class="save-hint">You can review this entry before syncing.</div>
+      </aside>
+    </div>
+  </form>
+  @if (savedRecords.length) {
+    <section class="saved-records">
+      <div><h2>Recent saved entries</h2><p>Stored locally in this browser for demo purposes.</p></div>
+      <div class="saved-record-list">
+        @for (record of savedRecords.slice(0, 5); track record['_demoId']) {
+          <div class="saved-record"><strong>{{ record['batch'] }}</strong><span>{{ record['farm'] }} · {{ record['date'] }}</span><span>{{ record['closingBirds'] | number }} birds</span><span>{{ record['feedConsumed'] }} kg feed</span></div>
+        }
+      </div>
+    </section>
+  }
+  <p class="demo-note"><span>●</span> Demo workspace · Sample flock data</p>
+</section>

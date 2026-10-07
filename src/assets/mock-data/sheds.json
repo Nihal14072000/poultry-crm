@@ -1,0 +1,13 @@
+{
+  "records": [
+    { "code": "SH-001", "name": "Shed 01", "farm": "Greenfield North", "capacity": 5000, "occupancy": 0, "type": "Broiler" },
+    { "code": "SH-002", "name": "Shed 02", "farm": "Greenfield North", "capacity": 5000, "occupancy": 4820, "type": "Broiler" },
+    { "code": "SH-003", "name": "Shed 03", "farm": "Greenfield North", "capacity": 5000, "occupancy": 0, "type": "Broiler" },
+    { "code": "SH-004", "name": "Shed 04", "farm": "Greenfield North", "capacity": 5000, "occupancy": 4180, "type": "Broiler" },
+    { "code": "SH-005", "name": "Shed 01", "farm": "Willow Creek", "capacity": 4000, "occupancy": 3910, "type": "Broiler" },
+    { "code": "SH-006", "name": "Shed 02", "farm": "Willow Creek", "capacity": 4000, "occupancy": 0, "type": "Broiler" },
+    { "code": "SH-007", "name": "Shed 03", "farm": "Willow Creek", "capacity": 4000, "occupancy": 0, "type": "Broiler" },
+    { "code": "SH-008", "name": "Shed 03", "farm": "Sunny Acres", "capacity": 6000, "occupancy": 5360, "type": "Broiler" },
+    { "code": "SH-009", "name": "Shed 04", "farm": "Meadow Ridge", "capacity": 8000, "occupancy": 7260, "type": "Layer" }
+  ]
+}

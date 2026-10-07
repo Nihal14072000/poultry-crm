@@ -1,0 +1,9 @@
+{
+  "records": [
+    { "report": "Farm performance", "category": "Operations", "period": "Sep 01 – Sep 30, 2025", "updated": "Today, 08:30 AM", "status": "Ready" },
+    { "report": "Batch performance", "category": "Production", "period": "Sep 01 – Sep 30, 2025", "updated": "Today, 08:30 AM", "status": "Ready" },
+    { "report": "Stock valuation", "category": "Inventory", "period": "As of Oct 04, 2025", "updated": "Today, 07:15 AM", "status": "Ready" },
+    { "report": "Customer outstanding", "category": "Finance", "period": "As of Oct 04, 2025", "updated": "Yesterday", "status": "Ready" },
+    { "report": "Mortality & livability", "category": "Production", "period": "Sep 01 – Sep 30, 2025", "updated": "Today, 08:30 AM", "status": "Ready" }
+  ]
+}

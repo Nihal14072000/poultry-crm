@@ -1,0 +1,39 @@
+<section class="records-view" role="tabpanel">
+  @if (successMessage) { <div class="records-feedback success" role="status">{{ successMessage }}</div> }
+  @if (actionError) { <div class="records-feedback error" role="alert">{{ actionError }}</div> }
+  <div class="records-toolbar">
+    <div><h2>Active {{ title.toLowerCase() }}</h2><p>{{ records.length }} records across your operation</p></div>
+    <label class="table-search"><span>⌕</span><input type="search" [ngModel]="query" (ngModelChange)="updateQuery($event)" [placeholder]="'Search ' + title.toLowerCase()" [attr.aria-label]="'Search ' + title"></label>
+  </div>
+  @if (filteredRecords.length) {
+    <div class="table-scroll">
+      <table class="records-table">
+        <thead><tr>@for (column of columns; track column.key) { <th>{{ column.label }}</th> }@if (hasWorkflow) { <th>ACTIONS</th> }</tr></thead>
+        <tbody>
+          @for (record of filteredRecords; track record) {
+            <tr>
+              @for (column of columns; track column.key; let first = $first) {
+                <td>
+                  @if (column.key === 'status') { <span class="status-badge" [ngClass]="statusClass(record[column.key])"><i></i>{{ record[column.key] }}</span> }
+                  @else if (first) { <strong>{{ record[column.key] }}</strong> }
+                  @else { {{ record[column.key] }} }
+                </td>
+              }
+              @if (hasWorkflow) {
+                <td class="record-actions">
+                  @for (action of workflowActions(record); track action.nextStatus) {
+                    <button type="button" [disabled]="saving" (click)="runWorkflowAction(record, action)">{{ action.label }}</button>
+                  }
+                  @if (!workflowActions(record).length) { <span>—</span> }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <div class="empty-state"><strong>No matching records</strong><span>Try another search term.</span></div>
+  }
+  <p class="sample-note"><span>●</span> Demo workspace · Records are sample data.</p>
+</section>

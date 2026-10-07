@@ -1,0 +1,30 @@
+{
+  "metrics": [
+    { "label": "Total birds", "value": "48,290", "change": "+4.8%", "direction": "up", "icon": "birds", "tone": "green", "detail": "vs. last month" },
+    { "label": "Active batches", "value": "24", "change": "+2", "direction": "up", "icon": "batches", "tone": "blue", "detail": "across 8 farms" },
+    { "label": "Today's revenue", "value": "₹18,420", "change": "+12.6%", "direction": "up", "icon": "revenue", "tone": "amber", "detail": "vs. yesterday" },
+    { "label": "Mortality rate", "value": "1.24%", "change": "-0.18%", "direction": "down", "icon": "mortality", "tone": "rose", "detail": "within target" }
+  ],
+  "revenueTrend": [
+    { "label": "01 Oct", "value": 24 }, { "label": "04 Oct", "value": 38 }, { "label": "07 Oct", "value": 31 },
+    { "label": "10 Oct", "value": 48 }, { "label": "13 Oct", "value": 43 }, { "label": "16 Oct", "value": 58 },
+    { "label": "19 Oct", "value": 49 }, { "label": "22 Oct", "value": 69 }, { "label": "25 Oct", "value": 59 },
+    { "label": "28 Oct", "value": 78 }, { "label": "31 Oct", "value": 72 }
+  ],
+  "farmPerformance": [
+    { "name": "Greenfield North", "location": "Nashik, Maharashtra", "birds": 12840, "mortality": 1.1, "fcr": 1.58, "status": "On track", "trend": [9, 12, 10, 15, 13, 18, 16, 20] },
+    { "name": "Willow Creek", "location": "Pune, Maharashtra", "birds": 9640, "mortality": 1.6, "fcr": 1.64, "status": "Watch", "trend": [18, 16, 15, 13, 14, 10, 9, 8] },
+    { "name": "Sunny Acres", "location": "Satara, Maharashtra", "birds": 11220, "mortality": 0.9, "fcr": 1.55, "status": "On track", "trend": [7, 10, 9, 13, 14, 12, 17, 19] },
+    { "name": "Meadow Ridge", "location": "Kolhapur, Maharashtra", "birds": 14590, "mortality": 1.4, "fcr": 1.61, "status": "On track", "trend": [10, 13, 11, 15, 14, 18, 16, 21] }
+  ],
+  "alerts": [
+    { "title": "Feed stock running low", "description": "Starter crumble is below the 3-day safety level at Willow Creek.", "severity": "high", "time": "12 min ago" },
+    { "title": "Batch ready for lifting", "description": "Batch FW-2408 at Greenfield North is at target weight.", "severity": "medium", "time": "48 min ago" },
+    { "title": "Customer payment overdue", "description": "Sunrise Foods · Invoice INV-1048 · 6 days overdue.", "severity": "low", "time": "2 hours ago" }
+  ],
+  "recentActivity": [
+    { "title": "Daily record submitted", "description": "Batch FW-2412 · Greenfield North", "time": "10:42 AM", "type": "daily" },
+    { "title": "Sales order confirmed", "description": "SO-2084 · Sunrise Foods · ₹4,280", "time": "09:18 AM", "type": "sales" },
+    { "title": "Feed received into stock", "description": "PO-1187 · 2,400 kg grower pellets", "time": "Yesterday", "type": "inventory" }
+  ]
+}

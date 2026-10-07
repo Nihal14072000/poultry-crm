@@ -1,0 +1,109 @@
+<main class="assignments-page">
+  <header class="page-heading">
+    <div>
+      <div class="eyebrow">PEOPLE & LOGISTICS <span>/</span> FLEET</div>
+      <h1>Vehicle assignments</h1>
+      <p>Assign separately maintained company vehicles to active employees in the Driver department. Vehicle particulars are shown from the vehicle record.</p>
+    </div>
+    <button class="button button-secondary" type="button" (click)="refresh()" [disabled]="loading || saving">↻ Refresh</button>
+  </header>
+
+  @if (successMessage) { <p class="feedback success" role="status">{{ successMessage }}</p> }
+  @if (errorMessage) { <p class="feedback error" role="alert">{{ errorMessage }}</p> }
+
+  @if (loading) {
+    <section class="state">Loading vehicles, drivers, and assignments…</section>
+  } @else {
+    <section class="panel">
+      <div class="panel-heading">
+        <div><span class="step">NEW ASSIGNMENT</span><h2>Assign a vehicle to a driver</h2><p>Select existing records; vehicle details are automatically displayed below.</p></div>
+      </div>
+      @if (rolePermissions.can('vehicle-assignments', 'create')) {
+        <form class="assignment-form" (ngSubmit)="createAssignment()">
+          <label>Company vehicle
+            <select name="vehicle" required [(ngModel)]="selectedVehicleId">
+              <option value="">Select available vehicle</option>
+              @for (vehicle of availableVehicles; track vehicle['_demoId']) {
+                <option [value]="vehicle['_demoId']">{{ vehicle['vehicle'] }} · {{ vehicle['type'] }}</option>
+              }
+            </select>
+          </label>
+          <label>Driver
+            <select name="driver" required [(ngModel)]="selectedDriverId">
+              <option value="">Select available driver employee</option>
+              @for (driver of availableDrivers; track driver['_demoId']) {
+                <option [value]="driver['_demoId']">{{ driver['employee'] }} · {{ driver['licenseNo'] }}</option>
+              }
+            </select>
+          </label>
+          <label>Assignment date
+            <input name="assignedDate" type="date" required [(ngModel)]="assignedDate">
+          </label>
+          <button class="button button-primary" type="submit" [disabled]="saving || !selectedVehicleId || !selectedDriverId">{{ saving ? 'Saving…' : 'Assign vehicle' }}</button>
+        </form>
+      } @else {
+        <p class="read-only-note">You have read-only access to vehicle assignments.</p>
+      }
+
+      @if (selectedVehicle; as vehicle) {
+        <section class="vehicle-preview" aria-label="Selected vehicle details">
+          <div class="preview-heading"><span class="step">SELECTED VEHICLE</span><strong>{{ vehicle['vehicle'] }}</strong><span>{{ vehicle['type'] }}</span></div>
+          <dl>
+            <div><dt>State</dt><dd>{{ vehicle['state'] || '—' }}</dd></div>
+            <div><dt>Capacity</dt><dd>{{ vehicle['capacityKg'] ? vehicle['capacityKg'] + ' kg' : '—' }}</dd></div>
+            <div><dt>RE passing due</dt><dd>{{ vehicle['rePassingDueDate'] || '—' }}</dd></div>
+            <div><dt>Road tax due</dt><dd>{{ vehicle['roadTaxDueDate'] || '—' }}</dd></div>
+            <div><dt>Goods permit due</dt><dd>{{ vehicle['goodsPermitDueDate'] || '—' }}</dd></div>
+            <div><dt>State permit due</dt><dd>{{ vehicle['statePermitDueDate'] || '—' }}</dd></div>
+            <div><dt>PUC due</dt><dd>{{ vehicle['pucDueDate'] || '—' }}</dd></div>
+            <div><dt>Insurance due</dt><dd>{{ vehicle['insuranceDueDate'] || '—' }}</dd></div>
+            <div><dt>DR certificate due</dt><dd>{{ vehicle['drCertificateDueDate'] || '—' }}</dd></div>
+            <div><dt>Food certificate due</dt><dd>{{ vehicle['foodCertificateDueDate'] || '—' }}</dd></div>
+          </dl>
+        </section>
+      }
+      @if (selectedDriver; as driver) {
+        <section class="driver-preview" aria-label="Selected driver details">
+          <span class="step">SELECTED DRIVER</span>
+          <strong>{{ driver['employee'] }}</strong>
+          <span>Licence {{ driver['licenseNo'] || 'not recorded' }} · Due {{ driver['licenseDueDate'] || 'date not recorded' }} · {{ driver['phone'] || 'phone not recorded' }}</span>
+        </section>
+      }
+    </section>
+
+    <section class="panel history-panel">
+      <div class="panel-heading"><div><span class="step">ASSIGNMENT HISTORY</span><h2>Vehicle and driver assignments</h2><p>Return an assignment before reusing either the vehicle or the driver.</p></div></div>
+      @if (!assignments.length) {
+        <p class="empty">No assignments yet. Add vehicles and Driver department employees first, then assign them here.</p>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>VEHICLE</th><th>TYPE</th><th>STATE</th><th>CAPACITY</th><th>DRIVER</th><th>LICENSE NO.</th><th>LICENSE DUE</th><th>ASSIGNED</th><th>RETURNED</th><th>STATUS</th><th>ACTION</th></tr></thead>
+            <tbody>
+              @for (assignment of assignments; track assignment['_demoId']) {
+                <tr>
+                  <td><strong>{{ vehicleFor(assignment)?.['vehicle'] || 'Vehicle record unavailable' }}</strong></td>
+                  <td>{{ vehicleFor(assignment)?.['type'] || '—' }}</td>
+                  <td>{{ vehicleFor(assignment)?.['state'] || '—' }}</td>
+                  <td>{{ vehicleFor(assignment)?.['capacityKg'] ? vehicleFor(assignment)?.['capacityKg'] + ' kg' : '—' }}</td>
+                  <td>{{ driverFor(assignment)?.['employee'] || 'Driver employee record unavailable' }}</td>
+                  <td>{{ driverFor(assignment)?.['licenseNo'] || '—' }}</td>
+                  <td>{{ driverFor(assignment)?.['licenseDueDate'] || '—' }}</td>
+                  <td>{{ assignment['assignedDate'] || '—' }}</td>
+                  <td>{{ assignment['returnedDate'] || '—' }}</td>
+                  <td><span class="status" [class.returned]="assignment['status'] === 'Returned'">{{ assignment['status'] }}</span></td>
+                  <td>
+                    @if (assignment['status'] === 'Assigned' && rolePermissions.can('vehicle-assignments', 'transition')) {
+                      <button class="row-button" type="button" [disabled]="saving" (click)="returnAssignment(assignment)">Return vehicle</button>
+                    } @else { — }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+  <p class="demo-note">Demo workspace · Vehicle, driver, and assignment records are saved in this browser.</p>
+</main>

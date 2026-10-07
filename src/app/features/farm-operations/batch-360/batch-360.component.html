@@ -1,0 +1,45 @@
+<main class="detail-page">
+  <a class="back-link" routerLink="/farm-operations/batches">← All batches</a>
+  @if (loading) {
+    <div class="state-panel">Loading batch 360 view…</div>
+  } @else if (error || !batch) {
+    <div class="state-panel error" role="alert">{{ error }}</div>
+  } @else {
+    <header class="page-heading">
+      <div><div class="eyebrow">FARM OPERATIONS <span>/</span> {{ batch['farm'] }} <span>/</span> {{ batch['shed'] }}</div><h1>{{ batch['batch'] }} <span>360°</span></h1><p>{{ batch['type'] }} flock · {{ batch['age'] }} · {{ batch['status'] }}</p></div>
+      <a class="farm-link" [routerLink]="['/farm-operations/farms', farmCode]">View farm →</a>
+    </header>
+    @if (alerts.length) { <section class="alert-list" aria-label="Batch alerts">@for (alert of alerts; track alert) { <p role="status"><strong>!</strong>{{ alert }}</p> }</section> }
+    @if (feedback) { <p class="feedback" role="status">{{ feedback }}</p> }
+    @if (transactionError) { <p class="error-message" role="alert">{{ transactionError }}</p> }
+    @if (relatedLoadErrors.length) { <p class="error-message" role="status">Some related modules could not be loaded: {{ relatedLoadErrors.join(', ') }}.</p> }
+    <section class="metric-grid" aria-label="Batch performance metrics">
+      <article><span>LIVE BIRDS</span><strong>{{ batch['birds'] | number }}</strong><small>{{ batch['initialBirds'] || batch['birds'] | number }} placed</small></article>
+      <article><span>LIVABILITY</span><strong>{{ livability | number:'1.0-2' }}%</strong><small>Current birds / placed birds</small></article>
+      <article><span>MORTALITY</span><strong>{{ mortalityRate | number:'1.0-2' }}%</strong><small>Recorded mortality / placed birds</small></article>
+      <article><span>AVG. WEIGHT / FCR</span><strong>{{ latestDaily?.['averageWeight'] || batch['averageWeight'] || '—' }}</strong><small>Latest FCR {{ latestDaily?.['fcr'] || batch['fcr'] || '—' }}</small></article>
+    </section>
+    @if (canRecordMovement) { <section class="transaction-card">
+      <div><h2>Record bird movement</h2><p>Log mortality, culling, sale/lifting, transfer-out or an adjustment. The flock and capacity counts are updated.</p></div>
+      <div class="transaction-fields">
+        <label>Movement type<select [(ngModel)]="transactionType"><option *ngFor="let type of transactionTypes" [value]="type">{{ type }}</option></select></label>
+        <label>Bird count<input type="number" min="1" step="1" [max]="batch['birds']" [(ngModel)]="transactionQuantity"></label>
+        <label>Date<input type="date" [max]="todayDate" [(ngModel)]="transactionDate"></label>
+        <label class="notes-field">Notes<input type="text" maxlength="500" [(ngModel)]="transactionNotes" placeholder="Optional reference or note"></label>
+        <button type="button" class="primary-button" [disabled]="saving" (click)="recordTransaction()">{{ saving ? 'Recording…' : 'Record movement' }}</button>
+      </div>
+    </section> }
+    @else { <p class="empty-state">Bird movements are available after flock placement and while the batch has live birds.</p> }
+    <section class="section-card">
+      <div class="tab-list" role="tablist" aria-label="Batch records">
+        @for (tab of tabs; track tab.id) { <button type="button" role="tab" [attr.aria-selected]="activeTab === tab.id" [class.active]="activeTab === tab.id" (click)="activateTab(tab.id)">{{ tab.label }}</button> }
+      </div>
+      @if (!tabRecords.length) { <p class="empty-state">No {{ activeTabLabel }} are recorded for this batch yet.</p> }
+      @else {
+        <div class="table-scroll"><table><thead><tr>@for (key of recordKeys(tabRecords[0]); track key) { <th>{{ key }}</th> }</tr></thead><tbody>
+          @for (record of tabRecords; track record['_demoId'] ?? record) { <tr>@for (key of recordKeys(record); track key) { <td>{{ recordValue(record, key) }}</td> }</tr> }
+        </tbody></table></div>
+      }
+    </section>
+  }
+</main>

@@ -1,0 +1,9 @@
+{
+  "records": [
+    { "order": "SO-2084", "customer": "Sunrise Foods", "date": "Oct 04, 2025", "items": 3, "total": "₹4,280", "payment": "Credit", "status": "Confirmed" },
+    { "order": "SO-2083", "customer": "Harvest Basket Co.", "date": "Oct 04, 2025", "items": 2, "total": "₹1,960", "payment": "Paid", "status": "Dispatched" },
+    { "order": "SO-2082", "customer": "Daily Fresh Market", "date": "Oct 03, 2025", "items": 4, "total": "₹3,140", "payment": "Paid", "status": "Delivered" },
+    { "order": "SO-2081", "customer": "Valley Provisions", "date": "Oct 03, 2025", "items": 1, "total": "₹2,740", "payment": "Credit", "status": "In transit" },
+    { "order": "SO-2080", "customer": "Farmhouse Retail", "date": "Oct 02, 2025", "items": 2, "total": "₹860", "payment": "Paid", "status": "Delivered" }
+  ]
+}

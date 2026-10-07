@@ -1,0 +1,50 @@
+<main class="users-page">
+  <header class="page-heading">
+    <div><div class="eyebrow">IDENTITY & ACCESS</div><h1>Users & roles</h1><p>Assign organization roles and review the effective demo permission templates.</p></div>
+    <span class="demo-badge">DEMO RBAC</span>
+  </header>
+  <aside class="notice"><strong>Prototype access control</strong><span>Role assignments are stored in this browser. Enforce these permissions in a backend before production.</span></aside>
+  @if (success) { <p class="success" role="status">{{ success }}</p> }
+  @if (error) { <p class="error" role="alert">{{ error }}</p> }
+  <section class="card">
+    <div class="card-heading"><div><h2>Organization users</h2><p>Only an Organization Admin can change role assignments.</p></div><div class="heading-buttons"><button type="button" (click)="refresh()">Refresh</button>@if (canManageRoles) { <button type="button" class="add-button" (click)="addUserOpen = !addUserOpen">{{ addUserOpen ? 'Cancel' : '+ Add user' }}</button> }</div></div>
+    @if (addUserOpen) {
+      <form class="add-user-form" (ngSubmit)="addUser()">
+        <label>Name<input name="newName" [(ngModel)]="newUser.name" required maxlength="120"></label>
+        <label>Email<input name="newEmail" type="email" [(ngModel)]="newUser.email" required></label>
+        <label>Role<select name="newRole" [(ngModel)]="newUser.role"><option *ngFor="let role of assignableRoleNames" [value]="role">{{ role }}</option></select></label>
+        <label>Business unit / scope<input name="newBusinessUnit" [(ngModel)]="newUser.businessUnit" placeholder="Organization or assigned unit"></label>
+        <button class="save-button" type="submit" [disabled]="savingId === 'new-user'">{{ savingId === 'new-user' ? 'Creating…' : 'Create user' }}</button>
+      </form>
+    }
+    @if (loading) { <div class="state">Loading users…</div> }
+    @else if (!users.length) { <div class="state">No user accounts are configured.</div> }
+    @else {
+      <div class="table-scroll"><table><thead><tr><th>USER</th><th>BUSINESS UNIT / SCOPE</th><th>ROLE</th><th>PERMISSIONS</th><th>STATUS</th><th></th></tr></thead>
+        <tbody>@for (user of users; track trackUser(user)) {
+          <tr>
+            <td><strong>{{ user.name }}</strong><small>{{ user.email }}</small></td>
+            <td><input class="scope-input" [(ngModel)]="user.businessUnit" [ngModelOptions]="{standalone: true}" [disabled]="!canManageRoles" aria-label="User scope" placeholder="Organization or assigned scope"></td>
+            <td><select [(ngModel)]="user.role" [ngModelOptions]="{standalone: true}" [disabled]="!canManageRoles || user.status.toLowerCase() !== 'active' || isCurrentUser(user)"><option *ngFor="let role of assignableRoleNames" [value]="role">{{ role }}</option>@if (user.role === 'Super Admin') { <option [value]="user.role">{{ user.role }}</option> }</select></td>
+            <td>{{ permissionSummary(user.role) }}</td>
+            <td><select class="status-select" [(ngModel)]="user.status" [ngModelOptions]="{standalone: true}" [disabled]="!canManageRoles || isCurrentUser(user)"><option>Active</option><option>Inactive</option></select></td>
+            <td><button class="save-button" type="button" [disabled]="savingId === user['_demoId'] || !canManageRoles" (click)="saveUser(user)">{{ savingId === user['_demoId'] ? 'Saving…' : 'Save access' }}</button></td>
+          </tr>
+        }</tbody>
+      </table></div>
+    }
+  </section>
+  <section class="card permission-card">
+    <div class="card-heading"><div><h2>Role permission templates</h2><p>Effective permissions used by the current demo session guard and screen actions.</p></div><label>Role<select [ngModel]="selectedRole" (ngModelChange)="selectRole($event)"><option *ngFor="let role of roleNames" [value]="role">{{ role }}</option></select></label></div>
+    <div class="selected-role"><strong>{{ selectedRole }}</strong><span>{{ permissionsForSelectedRole().length }} permissions</span></div>
+    @if (canEditPermissionTemplate) {
+      <div class="permission-table-wrap"><table class="permission-table"><thead><tr><th>MODULE</th>@for (action of rolePermissions.permissionActions; track action) { <th>{{ action }}</th> }</tr></thead>
+        <tbody>@for (resource of rolePermissions.permissionResources; track resource) { <tr><td>{{ resource }}</td>@for (action of rolePermissions.permissionActions; track action) { <td><input type="checkbox" [checked]="hasPermission(resource, action)" (change)="togglePermission(resource, action, $event)" [attr.aria-label]="resource + ' ' + action"></td> }</tr> }</tbody>
+      </table></div>
+      <button class="save-button template-save" type="button" (click)="savePermissionTemplate()">Save permission template</button>
+    } @else {
+      <div class="permission-list">@for (permission of permissionsForSelectedRole(); track permission) { <span>{{ permission }}</span> }</div>
+      <p class="locked-note">Organization Admin and Super Admin permission templates are locked.</p>
+    }
+  </section>
+</main>

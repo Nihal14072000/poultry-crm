@@ -1,0 +1,26 @@
+<main class="login-page">
+  <section class="login-card">
+    <a class="brand" href="/" aria-label="Flockwise home"><span class="brand-mark"><i></i><i></i><i></i></span><span>flockwise<small>OPERATIONS</small></span></a>
+    <div class="eyebrow">POULTRY OPERATIONS WORKSPACE</div>
+    <h1>Welcome back</h1>
+    <p class="intro">Sign in to continue to your organization.</p>
+    <form (ngSubmit)="signIn()">
+      <label>Email address
+        <input type="email" name="email" [(ngModel)]="email" autocomplete="username" required placeholder="you@company.com">
+      </label>
+      <label>Password
+        <input type="password" name="password" [(ngModel)]="password" autocomplete="current-password" required placeholder="Enter password">
+      </label>
+      @if (error) { <p class="error" role="alert">{{ error }}</p> }
+      <button type="submit" [disabled]="loading || !email || !password">{{ loading ? 'Signing in…' : 'Sign in' }} <span>→</span></button>
+    </form>
+    <aside class="demo-access">
+      <strong>Demo access</strong>
+      <span>Organization Admin: alex.morgan&#64;example.test</span>
+      <span>Farm Manager: meera.joshi&#64;example.test</span>
+      <span>Warehouse Manager: ravi.patil&#64;example.test</span>
+      <span>Demo password: <code>{{ demoPassword }}</code></span>
+    </aside>
+    <p class="security-note">Demo session is stored in this browser tab only. Use backend authentication before production.</p>
+  </section>
+</main>

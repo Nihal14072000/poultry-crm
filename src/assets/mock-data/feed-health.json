@@ -1,0 +1,9 @@
+{
+  "records": [
+    { "item": "Starter crumble", "category": "Feed", "location": "Willow Creek · Shed 01", "onHand": "1,280 kg", "nextAction": "Reorder 720 kg", "status": "Low stock" },
+    { "item": "Grower pellets", "category": "Feed", "location": "Greenfield North", "onHand": "8,640 kg", "nextAction": "No action needed", "status": "Healthy" },
+    { "item": "Vitamin supplement", "category": "Medicine", "location": "Central store", "onHand": "26 bottles", "nextAction": "Use before Oct 22", "status": "Expiring soon" },
+    { "item": "Electrolyte mix", "category": "Medicine", "location": "Sunny Acres", "onHand": "84 packs", "nextAction": "No action needed", "status": "Healthy" },
+    { "item": "Layer premix", "category": "Feed", "location": "Meadow Ridge", "onHand": "3,120 kg", "nextAction": "Review consumption", "status": "Healthy" }
+  ]
+}

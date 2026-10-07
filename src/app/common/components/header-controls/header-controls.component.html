@@ -1,0 +1,49 @@
+<div class="header-controls">
+  <div class="header-control">
+    <button class="icon-button notification-button" type="button" aria-label="Notifications" [attr.aria-expanded]="notificationsOpen" (click)="toggleNotifications()">
+      <span class="bell-icon"></span><i></i>
+    </button>
+    @if (notificationsOpen) {
+      <section class="header-popover notification-popover" aria-label="All notifications">
+        <div class="popover-heading"><div><h2>Notifications</h2><p>{{ notifications.length }} notifications</p></div><button type="button" class="popover-close" aria-label="Close notifications" (click)="notificationsOpen = false">×</button></div>
+        @if (notificationsLoading) {
+          <div class="popover-state">Loading notifications…</div>
+        } @else if (notificationsError) {
+          <div class="popover-state error" role="alert">{{ notificationsError }}<button type="button" (click)="loadNotifications()">Retry</button></div>
+        } @else if (notifications.length) {
+          <div class="notification-list">
+            @for (notification of notifications; track notification['alert']) {
+              <article class="notification-item">
+                <span class="notification-severity" [ngClass]="notificationSeverityClass(notification)"></span>
+                <div><strong>{{ notification['alert'] }}</strong><p>{{ notification['relatedTo'] }} · {{ notification['category'] }}</p><small>{{ notification['created'] }} · {{ notification['status'] }}</small></div>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="popover-state">No notifications to show.</div>
+        }
+        <a class="popover-footer" routerLink="/insights-admin/notifications" (click)="notificationsOpen = false">Open notification center <span>→</span></a>
+      </section>
+    }
+  </div>
+  <div class="topbar-divider"></div>
+  <div class="header-control">
+    <button class="date-button" type="button" [attr.aria-expanded]="dateRangeOpen" (click)="toggleDateRange()"><span class="calendar-icon"></span><span>{{ selectedRangeLabel }}</span><span class="down-caret">⌄</span></button>
+    @if (dateRangeOpen) {
+      <section class="header-popover date-popover" aria-label="Select date range">
+        <div class="popover-heading"><div><h2>Date range</h2><p>Select the reporting period</p></div><button type="button" class="popover-close" aria-label="Close date range" (click)="dateRangeOpen = false">×</button></div>
+        <div class="date-presets">
+          <button type="button" (click)="selectDatePreset('today')">Today</button>
+          <button type="button" (click)="selectDatePreset('last-seven-days')">Last 7 days</button>
+          <button type="button" (click)="selectDatePreset('this-month')">This month</button>
+        </div>
+        <div class="date-fields">
+          <label>From<input type="date" [(ngModel)]="rangeStart"></label>
+          <label>To<input type="date" [(ngModel)]="rangeEnd"></label>
+        </div>
+        @if (dateRangeError) { <p class="date-error" role="alert">{{ dateRangeError }}</p> }
+        <div class="date-actions"><button type="button" class="date-cancel" (click)="dateRangeOpen = false">Cancel</button><button type="button" class="date-apply" (click)="applyDateRange()">Apply</button></div>
+      </section>
+    }
+  </div>
+</div>
