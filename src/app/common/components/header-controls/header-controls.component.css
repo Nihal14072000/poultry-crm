@@ -28,6 +28,7 @@
 .notification-item strong { color: #46554a; display: block; font-size: 10px; line-height: 1.4; }
 .notification-item p { color: #818d83; font-size: 9px; margin: 4px 0; }
 .notification-item small { color: #a0a9a1; font-size: 8px; }
+.notification-action { background: #edf5ee; border: 1px solid #d6e7d8; border-radius: 999px; color: #426e50; cursor: pointer; flex: none; font-size: 8px; font-weight: 700; margin-left: auto; padding: 6px 8px; }
 .popover-state { align-items: center; color: #78847b; display: flex; font-size: 10px; gap: 8px; justify-content: center; min-height: 90px; padding: 16px; }
 .popover-state.error { color: #9f5c4d; flex-direction: column; }
 .popover-state button { background: transparent; border: 0; color: #396b49; cursor: pointer; font-size: 9px; font-weight: 650; }

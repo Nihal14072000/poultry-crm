@@ -100,6 +100,22 @@ export class WorkspacePageComponent implements OnInit {
     return this.rolePermissions.can(this.resource, action);
   }
 
+  get isReportResource(): boolean {
+    return ['reports', 'analytics', 'profitability'].includes(this.resource);
+  }
+
+  get isNotificationResource(): boolean {
+    return this.resource === 'notifications';
+  }
+
+  get unreadNotificationsCount(): number {
+    return this.records.filter((record) => this.isNotificationUnread(record)).length;
+  }
+
+  isNotificationUnread(record: Record<string, string | number>): boolean {
+    return String(record['status'] ?? '').toLowerCase() === 'unread';
+  }
+
   refresh(): void {
     this.loading = true;
     this.loadDirectory(this.resource).subscribe({
@@ -228,6 +244,48 @@ export class WorkspacePageComponent implements OnInit {
   workflowActions(record: Record<string, string | number>): WorkflowAction[] {
     if (this.mode === 'read-only' || this.mode === 'append-only') return [];
     return this.workflows.getActions(this.resource, record);
+  }
+
+  recordActions(record: Record<string, string | number>): string[] {
+    if (this.isNotificationResource && String(record['status'] ?? '').toLowerCase() === 'unread') {
+      return ['Acknowledge'];
+    }
+    if (this.isReportResource && this.can('export')) {
+      return ['Export'];
+    }
+    return [];
+  }
+
+  acknowledgeNotification(record: Record<string, string | number>): void {
+    const id = String(record['_demoId'] ?? '');
+    if (!id) return;
+    this.saving = true;
+    this.actionError = '';
+    this.successMessage = '';
+    this.directories.updateRecord(this.resource, id, { ...record, status: 'Read' }).subscribe({
+      next: (updated) => {
+        this.records = this.records.map((current) => current['_demoId'] === id ? updated : current);
+        this.successMessage = 'Notification marked as read.';
+        this.saving = false;
+      },
+      error: () => {
+        this.actionError = 'Notification could not be marked as read.';
+        this.saving = false;
+      }
+    });
+  }
+
+  exportCurrentRecords(): void {
+    if (!this.isReportResource || !this.can('export')) return;
+    const rows = this.filteredRecords.length ? this.filteredRecords : this.records;
+    this.exportCsv(rows, `${this.resource}-report`);
+    this.successMessage = `Exported ${this.resource} data as CSV.`;
+  }
+
+  exportRecord(record: Record<string, string | number>): void {
+    if (!this.isReportResource || !this.can('export')) return;
+    this.exportCsv([record], `${this.resource}-${String(record[this.columns[0]?.key ?? 'record'] ?? 'record')}`.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'record');
+    this.successMessage = 'Report row exported as CSV.';
   }
 
   runWorkflowAction(record: Record<string, string | number>, action: WorkflowAction): void {
@@ -607,6 +665,29 @@ export class WorkspacePageComponent implements OnInit {
         this.saving = false;
       }
     });
+  }
+
+  private exportCsv(rows: Record<string, string | number>[], filename: string): void {
+    const columns: DirectoryColumn[] = this.columns.length
+      ? this.columns
+      : Object.keys(rows[0] ?? {}).map((key) => ({ key, label: key }));
+    const csvRows = [
+      columns.map((column) => `"${String(column.label ?? column.key).replace(/"/g, '""')}"`).join(','),
+      ...rows.map((row) => columns.map((column) => {
+        const value = row[column.key] ?? '';
+        const serialized = String(value).replace(/"/g, '""');
+        return `"${serialized}"`;
+      }).join(','))
+    ];
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${filename}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
   private masterDataChangeError(

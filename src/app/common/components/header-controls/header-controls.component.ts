@@ -82,8 +82,29 @@ export class HeaderControlsComponent {
     return `${this.formatDate(this.selectedRangeStart)} – ${this.formatDate(this.selectedRangeEnd)}`;
   }
 
+  get unreadNotificationsCount(): number {
+    return this.notifications.filter((notification) => this.isUnreadNotification(notification)).length;
+  }
+
+  isUnreadNotification(notification: Record<string, string | number>): boolean {
+    return String(notification['status'] ?? '').toLowerCase() === 'unread';
+  }
+
   notificationSeverityClass(notification: Record<string, string | number>): string {
     return String(notification['severity'] ?? '').toLowerCase();
+  }
+
+  acknowledgeNotification(notification: Record<string, string | number>): void {
+    const id = String(notification['_demoId'] ?? '');
+    if (!id || !this.isUnreadNotification(notification)) return;
+    this.directories.updateRecord('notifications', id, { ...notification, status: 'Read' }).subscribe({
+      next: (updated) => {
+        this.notifications = this.notifications.map((item) => String(item['_demoId'] ?? '') === id ? updated : item);
+      },
+      error: () => {
+        this.notificationsError = 'This notification could not be marked as read.';
+      }
+    });
   }
 
   private toDateInput(date: Date): string {

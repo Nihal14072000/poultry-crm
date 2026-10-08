@@ -7,9 +7,16 @@
     </div>
     <div class="heading-actions">
       <button class="button button-secondary" type="button" (click)="refresh()">↻ Refresh</button>
+      @if (isReportResource && can('export')) { <button class="button button-secondary" type="button" (click)="exportCurrentRecords()">⇩ Export</button> }
       @if (mode !== 'read-only' && can('create')) { <button class="button button-primary" type="button" (click)="openCreate()"><span>＋</span> {{ mode === 'append-only' ? 'Add movement' : 'Add record' }}</button> }
     </div>
   </div>
+  @if (isNotificationResource) {
+    <div class="notification-summary">
+      <div><span class="summary-label">Unread</span><strong>{{ unreadNotificationsCount }}</strong></div>
+      <div><span class="summary-label">Status</span><strong>{{ unreadNotificationsCount ? 'Action required' : 'All caught up' }}</strong></div>
+    </div>
+  }
   @if (successMessage) { <div class="success-banner" role="status"><span>✓</span>{{ successMessage }}<button type="button" aria-label="Dismiss success message" (click)="successMessage = ''">×</button></div> }
   @if (actionError && !editorOpen && !deleteCandidate) { <div class="page-error" role="alert">{{ actionError }}</div> }
 
@@ -31,7 +38,7 @@
     } @else {
       <div class="table-scroll">
         <table class="directory-table">
-          <thead><tr>@for (column of columns; track column.key) { <th><button type="button" class="sort-button" (click)="toggleSort(column.key)">{{ column.label }} @if (sortKey === column.key) { <span>{{ sortDescending ? '↓' : '↑' }}</span> }</button></th> }@if (mode !== 'read-only' || hasModuleWorkflow) { <th class="actions-heading">ACTIONS</th> }</tr></thead>
+          <thead><tr>@for (column of columns; track column.key) { <th><button type="button" class="sort-button" (click)="toggleSort(column.key)">{{ column.label }} @if (sortKey === column.key) { <span>{{ sortDescending ? '↓' : '↑' }}</span> }</button></th> }@if (mode !== 'read-only' || hasModuleWorkflow || isNotificationResource || isReportResource) { <th class="actions-heading">ACTIONS</th> }</tr></thead>
           <tbody>
             @for (record of pagedRecords; track $index) {
               <tr>
@@ -45,7 +52,7 @@
                     @else { {{ record[column.key] }} }
                   </td>
                 }
-                @if ((mode === 'editable' && (can('update') || can('delete'))) || (mode === 'append-only' && can('create')) || (hasModuleWorkflow && can('transition'))) { <td class="row-actions">@if (mode === 'editable' && can('update')) { <button type="button" class="action-text" (click)="openEdit(record)">Edit</button> }@if (mode === 'editable' && can('delete')) { <button type="button" class="action-text delete-action" (click)="requestDelete(record)">Delete</button> }@for (action of workflowActions(record); track action.nextStatus) { @if (can('transition')) { <button type="button" class="action-text workflow-action" [disabled]="saving" (click)="runWorkflowAction(record, action)">{{ action.label }}</button> } }</td> }
+                @if ((mode === 'editable' && (can('update') || can('delete'))) || (mode === 'append-only' && can('create')) || (hasModuleWorkflow && can('transition')) || isNotificationResource || isReportResource) { <td class="row-actions">@if (isNotificationResource && isNotificationUnread(record)) { <button type="button" class="action-text workflow-action" [disabled]="saving" (click)="acknowledgeNotification(record)">Acknowledge</button> }@if (isReportResource && can('export')) { <button type="button" class="action-text workflow-action" (click)="exportRecord(record)">Export</button> }@if (mode === 'editable' && can('update')) { <button type="button" class="action-text" (click)="openEdit(record)">Edit</button> }@if (mode === 'editable' && can('delete')) { <button type="button" class="action-text delete-action" (click)="requestDelete(record)">Delete</button> }@for (action of workflowActions(record); track action.nextStatus) { @if (can('transition')) { <button type="button" class="action-text workflow-action" [disabled]="saving" (click)="runWorkflowAction(record, action)">{{ action.label }}</button> } }</td> }
               </tr>
             }
           </tbody>

@@ -5,7 +5,7 @@
     </button>
     @if (notificationsOpen) {
       <section class="header-popover notification-popover" aria-label="All notifications">
-        <div class="popover-heading"><div><h2>Notifications</h2><p>{{ notifications.length }} notifications</p></div><button type="button" class="popover-close" aria-label="Close notifications" (click)="notificationsOpen = false">×</button></div>
+        <div class="popover-heading"><div><h2>Notifications</h2><p>{{ unreadNotificationsCount }} unread · {{ notifications.length }} total</p></div><button type="button" class="popover-close" aria-label="Close notifications" (click)="notificationsOpen = false">×</button></div>
         @if (notificationsLoading) {
           <div class="popover-state">Loading notifications…</div>
         } @else if (notificationsError) {
@@ -16,6 +16,9 @@
               <article class="notification-item">
                 <span class="notification-severity" [ngClass]="notificationSeverityClass(notification)"></span>
                 <div><strong>{{ notification['alert'] }}</strong><p>{{ notification['relatedTo'] }} · {{ notification['category'] }}</p><small>{{ notification['created'] }} · {{ notification['status'] }}</small></div>
+                @if (isUnreadNotification(notification)) {
+                  <button type="button" class="notification-action" (click)="acknowledgeNotification(notification)">Mark read</button>
+                }
               </article>
             }
           </div>
