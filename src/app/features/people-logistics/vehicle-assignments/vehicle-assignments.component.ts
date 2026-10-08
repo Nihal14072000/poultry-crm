@@ -1,6 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { ColDef } from 'ag-grid-community';
+import { DataGridComponent } from '../../../common/components/data-grid/data-grid.component';
+import { GridActionsCellComponent } from '../../../common/components/data-grid/grid-actions-cell.component';
 import { firstValueFrom } from 'rxjs';
 import { DirectoryService } from '../../../common/services/directory.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
@@ -17,7 +21,7 @@ function localDateString(): string {
 @Component({
   selector: 'app-vehicle-assignments',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, DataGridComponent, FormsModule, NgSelectModule],
   templateUrl: './vehicle-assignments.component.html',
   styleUrl: './vehicle-assignments.component.css'
 })
@@ -90,6 +94,60 @@ export class VehicleAssignmentsComponent implements OnInit {
       String(employee['status'] ?? '').toLowerCase() === 'active' &&
       !assignedIds.has(String(employee['_demoId'] ?? ''))
     );
+  }
+
+  get assignmentGridRows(): object[] {
+    return this.assignments.map((assignment) => {
+      const vehicle = this.vehicleFor(assignment);
+      const driver = this.driverFor(assignment);
+      return {
+        _demoId: assignment['_demoId'] ?? '',
+        vehicle: vehicle?.['vehicle'] || 'Vehicle record unavailable',
+        type: vehicle?.['type'] || '—',
+        state: vehicle?.['state'] || '—',
+        capacity: vehicle?.['capacityKg'] ? `${vehicle['capacityKg']} kg` : '—',
+        driver: driver?.['employee'] || 'Driver employee record unavailable',
+        licenseNo: driver?.['licenseNo'] || '—',
+        licenseDue: driver?.['licenseDueDate'] || '—',
+        assigned: assignment['assignedDate'] || '—',
+        returned: assignment['returnedDate'] || '—',
+        status: assignment['status'] ?? ''
+      };
+    });
+  }
+
+  get assignmentGridColumns(): ColDef[] {
+    return [
+      { field: 'vehicle', headerName: 'VEHICLE' },
+      { field: 'type', headerName: 'TYPE' },
+      { field: 'state', headerName: 'STATE' },
+      { field: 'capacity', headerName: 'CAPACITY' },
+      { field: 'driver', headerName: 'DRIVER' },
+      { field: 'licenseNo', headerName: 'LICENSE NO.' },
+      { field: 'licenseDue', headerName: 'LICENSE DUE' },
+      { field: 'assigned', headerName: 'ASSIGNED' },
+      { field: 'returned', headerName: 'RETURNED' },
+      { field: 'status', headerName: 'STATUS' },
+      {
+        headerName: 'ACTION',
+        sortable: false,
+        filter: false,
+        autoHeight: true,
+        wrapText: true,
+        cellRenderer: GridActionsCellComponent,
+        valueGetter: (params) => params.data?.['status'] === 'Assigned' &&
+          this.rolePermissions.can('vehicle-assignments', 'transition')
+          ? [{ label: 'Return vehicle', action: 'return', disabled: this.saving }]
+          : [{ label: '—', action: 'none', disabled: true }],
+        cellRendererParams: {
+          onAction: (action: string, row: Record<string, unknown>) => {
+            if (action !== 'return') return;
+            const assignment = this.assignments.find((item) => item['_demoId'] === row['_demoId']);
+            if (assignment) void this.returnAssignment(assignment);
+          }
+        }
+      }
+    ];
   }
 
   vehicleFor(assignment: FleetRecord): FleetRecord | undefined {

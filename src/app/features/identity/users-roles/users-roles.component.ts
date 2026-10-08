@@ -1,6 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { ColDef } from 'ag-grid-community';
+import { DataGridComponent } from '../../../common/components/data-grid/data-grid.component';
+import { GridActionsCellComponent } from '../../../common/components/data-grid/grid-actions-cell.component';
 import { DirectoryService } from '../../../common/services/directory.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { SessionAuthService } from '../../../common/services/session-auth.service';
@@ -10,7 +14,7 @@ import { forkJoin } from 'rxjs';
 @Component({
   selector: 'app-users-roles',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, DataGridComponent, FormsModule, NgSelectModule],
   templateUrl: './users-roles.component.html',
   styleUrl: './users-roles.component.css'
 })
@@ -33,6 +37,100 @@ export class UsersRolesComponent implements OnInit {
   ) {
     this.roleNames = rolePermissions.roleNames;
     this.permissionDraft = rolePermissions.getRolePermissions(this.selectedRole);
+  }
+
+  get userGridColumns(): ColDef[] {
+    return [
+      { field: 'name', headerName: 'USER', minWidth: 150 },
+      { field: 'email', headerName: 'EMAIL', minWidth: 190 },
+      {
+        field: 'businessUnit',
+        headerName: 'BUSINESS UNIT / SCOPE',
+        editable: () => this.canManageRoles,
+        minWidth: 180
+      },
+      {
+        field: 'role',
+        headerName: 'ROLE',
+        editable: (params) => !!params.data && this.canManageRoles &&
+          String(params.data['status']).toLowerCase() === 'active' && !this.isCurrentUser(params.data as DemoUser),
+        cellEditor: 'agSelectCellEditor',
+        cellEditorParams: (params: { data: DemoUser }) => ({
+          values: params.data.role === 'Super Admin'
+            ? [...this.assignableRoleNames, params.data.role]
+            : this.assignableRoleNames
+        }),
+        onCellValueChanged: (params) => {
+          if (params.data) params.data['permissions'] = this.permissionSummary(String(params.newValue));
+        },
+        minWidth: 170
+      },
+      { field: 'permissions', headerName: 'PERMISSIONS', minWidth: 150 },
+      {
+        field: 'status',
+        headerName: 'STATUS',
+        editable: (params) => !!params.data && this.canManageRoles && !this.isCurrentUser(params.data as DemoUser),
+        cellEditor: 'agSelectCellEditor',
+        cellEditorParams: { values: ['Active', 'Inactive'] },
+        minWidth: 120
+      },
+      {
+        headerName: 'ACTION',
+        sortable: false,
+        filter: false,
+        autoHeight: true,
+        wrapText: true,
+        cellRenderer: GridActionsCellComponent,
+        valueGetter: (params) => [{
+          label: this.savingId === params.data?.['_demoId'] ? 'Saving…' : 'Save access',
+          action: 'save',
+          disabled: !this.canManageRoles || this.savingId === params.data?.['_demoId']
+        }],
+        cellRendererParams: {
+          onAction: (_action: string, row: DemoUser) => this.saveUser(row)
+        },
+        minWidth: 130
+      }
+    ];
+  }
+
+  get permissionGridRows(): object[] {
+    return this.rolePermissions.permissionResources.map((resource) => Object.fromEntries([
+      ['resource', resource],
+      ...this.rolePermissions.permissionActions.map((action) => [
+        action,
+        this.hasPermission(resource, action)
+      ])
+    ]));
+  }
+
+  get permissionGridColumns(): ColDef[] {
+    return [
+      { field: 'resource', headerName: 'MODULE', minWidth: 190 },
+      ...this.rolePermissions.permissionActions.map((action): ColDef => ({
+        field: action,
+        headerName: action,
+        cellRenderer: 'agCheckboxCellRenderer',
+        cellEditor: 'agCheckboxCellEditor',
+        editable: () => this.canEditPermissionTemplate,
+        onCellValueChanged: (params) => this.setGridPermission(
+          String(params.data?.['resource'] ?? ''),
+          action,
+          Boolean(params.newValue)
+        ),
+        minWidth: 90
+      }))
+    ];
+  }
+
+  private setGridPermission(resource: string, action: string, enabled: boolean): void {
+    const permission = this.permissionKey(resource, action);
+    const wildcard = `${resource}.*`;
+    if (enabled) {
+      this.permissionDraft = [...new Set([...this.permissionDraft, permission])];
+    } else {
+      this.permissionDraft = this.permissionDraft.filter((item) => item !== permission && item !== wildcard);
+    }
   }
 
   ngOnInit(): void {

@@ -2,7 +2,7 @@
 .eyebrow { color: #8c978e; font-size: 9px; font-weight: 700; letter-spacing: .95px; }
 .eyebrow span { color: #c1c9c1; padding: 0 5px; }
 .page-heading { align-items: flex-end; display: flex; justify-content: space-between; margin-bottom: 18px; }
-.page-heading h1 { color: #26372d; font-family: Manrope,sans-serif; font-size: 25px; letter-spacing: -.6px; margin: 8px 0 4px; }
+.page-heading h1 { color: #26372d; font-family: Calibri,Arial,sans-serif; font-size: 25px; letter-spacing: -.6px; margin: 8px 0 4px; }
 .page-heading p { color: #858f87; font-size: 11px; margin: 0; }
 .date-stamp { align-items: center; color: #6e7a71; display: flex; font-size: 10px; gap: 8px; }
 .date-stamp span { color: #758a79; font-size: 15px; }
@@ -15,14 +15,13 @@
 .form-card,.summary-card { background: #fff; border: 1px solid #e9ece7; border-radius: 8px; padding: 18px; }
 .card-heading { align-items: center; display: flex; gap: 11px; margin-bottom: 17px; }
 .card-step { align-items: center; background: #f0f5ee; border-radius: 6px; color: #618465; display: flex; font-size: 9px; font-weight: 700; height: 29px; justify-content: center; width: 29px; }
-.card-heading h2,.summary-card h2 { color: #334239; font-family: Manrope,sans-serif; font-size: 12px; font-weight: 700; margin: 0 0 3px; }
+.card-heading h2,.summary-card h2 { color: #334239; font-family: Calibri,Arial,sans-serif; font-size: 12px; font-weight: 700; margin: 0 0 3px; }
 .card-heading p,.summary-card > p { color: #98a099; font-size: 9px; margin: 0; }
 .field-grid { display: grid; gap: 13px; }
 .field-grid.three { grid-template-columns: repeat(3,minmax(0,1fr)); }
 .field-grid label,.field-label { color: #626f66; display: flex; flex-direction: column; font-size: 9px; font-weight: 600; gap: 7px; }
-.field-grid input,.field-grid select,.field-label input { background: #fff; border: 1px solid #e3e8e1; border-radius: 5px; color: #4c5a50; font-size: 10px; height: 34px; min-width: 0; padding: 0 9px; width: 100%; }
+.field-grid input,.field-label input { background: #fff; border: 1px solid #e3e8e1; border-radius: 5px; color: #4c5a50; font-size: 10px; height: 34px; min-width: 0; padding: 0 9px; width: 100%; }
 .field-grid input::placeholder { color: #b0b7b1; }
-.field-grid select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9' viewBox='0 0 12 12'%3E%3Cpath d='m3 4 3 3 3-3' fill='none' stroke='%23808b82' stroke-width='1.4'/%3E%3C/svg%3E"); background-position: right 9px center; background-repeat: no-repeat; padding-right: 25px; }
 .input-with-unit { align-items: center; border: 1px solid #e3e8e1; border-radius: 5px; display: flex; height: 34px; overflow: hidden; }
 .input-with-unit input { border: 0; border-radius: 0; height: 32px; outline: 0; }
 .input-with-unit small { background: #f8f9f7; border-left: 1px solid #edf0eb; color: #8e9991; font-size: 8px; height: 100%; padding: 10px 8px; white-space: nowrap; }
@@ -58,7 +57,7 @@
 .demo-note { color: #9ba49c; font-size: 8px; margin: 14px 0 0; text-align: right; }
 .demo-note span { color: #d2a054; font-size: 8px; }
 .saved-records { background: #fff; border: 1px solid #e9ece7; border-radius: 8px; margin-top: 14px; padding: 16px 18px; }
-.saved-records h2 { color: #334239; font-family: Manrope,sans-serif; font-size: 12px; margin: 0 0 4px; }
+.saved-records h2 { color: #334239; font-family: Calibri,Arial,sans-serif; font-size: 12px; margin: 0 0 4px; }
 .saved-records p { color: #98a099; font-size: 9px; margin: 0; }
 .saved-record-list { margin-top: 12px; }
 .saved-record { align-items: center; border-top: 1px solid #eff1ed; color: #7a867d; display: grid; font-size: 9px; gap: 10px; grid-template-columns: 1fr 2fr 1fr 1fr; padding: 10px 2px; }

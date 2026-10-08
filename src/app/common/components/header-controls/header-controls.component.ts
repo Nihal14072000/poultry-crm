@@ -17,6 +17,7 @@ export class HeaderControlsComponent {
   notificationsError = '';
   notifications: Record<string, string | number>[] = [];
   notificationsLoaded = false;
+  notificationPopoverTop: number | null = null;
   dateRangeOpen = false;
   dateRangeError = '';
   rangeStart = this.toDateInput(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -26,7 +27,14 @@ export class HeaderControlsComponent {
 
   constructor(private readonly directories: DirectoryService) {}
 
-  toggleNotifications(): void {
+  toggleNotifications(event: MouseEvent): void {
+    const button = event.currentTarget;
+    if (button instanceof HTMLElement && button.parentElement) {
+      const buttonRect = button.getBoundingClientRect();
+      this.notificationPopoverTop = window.matchMedia('(max-width: 720px)').matches
+        ? buttonRect.bottom + 8
+        : buttonRect.bottom - button.parentElement.getBoundingClientRect().top + 8;
+    }
     this.notificationsOpen = !this.notificationsOpen;
     this.dateRangeOpen = false;
     if (this.notificationsOpen && !this.notificationsLoaded && !this.notificationsLoading) {

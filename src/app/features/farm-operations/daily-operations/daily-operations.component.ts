@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { DirectoryService } from '../../../common/services/directory.service';
 import { DirectoryResponse } from '../../../common/models/directory.model';
 import { concatMap, forkJoin, Observable, of } from 'rxjs';
@@ -10,7 +11,7 @@ import { RolePermissionService } from '../../../common/services/role-permission.
 @Component({
   selector: 'app-daily-operations',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, NgSelectModule, ReactiveFormsModule],
   templateUrl: './daily-operations.component.html',
   styleUrl: './daily-operations.component.css'
 })

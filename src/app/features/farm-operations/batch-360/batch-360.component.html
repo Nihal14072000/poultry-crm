@@ -22,7 +22,7 @@
     @if (canRecordMovement) { <section class="transaction-card">
       <div><h2>Record bird movement</h2><p>Log mortality, culling, sale/lifting, transfer-out or an adjustment. The flock and capacity counts are updated.</p></div>
       <div class="transaction-fields">
-        <label>Movement type<select [(ngModel)]="transactionType"><option *ngFor="let type of transactionTypes" [value]="type">{{ type }}</option></select></label>
+        <label>Movement type<ng-select class="app-select" labelForId="movement-type" [(ngModel)]="transactionType" [clearable]="false"><ng-option *ngFor="let type of transactionTypes" [value]="type">{{ type }}</ng-option></ng-select></label>
         <label>Bird count<input type="number" min="1" step="1" [max]="batch['birds']" [(ngModel)]="transactionQuantity"></label>
         <label>Date<input type="date" [max]="todayDate" [(ngModel)]="transactionDate"></label>
         <label class="notes-field">Notes<input type="text" maxlength="500" [(ngModel)]="transactionNotes" placeholder="Optional reference or note"></label>
@@ -36,9 +36,7 @@
       </div>
       @if (!tabRecords.length) { <p class="empty-state">No {{ activeTabLabel }} are recorded for this batch yet.</p> }
       @else {
-        <div class="table-scroll"><table><thead><tr>@for (key of recordKeys(tabRecords[0]); track key) { <th>{{ key }}</th> }</tr></thead><tbody>
-          @for (record of tabRecords; track record['_demoId'] ?? record) { <tr>@for (key of recordKeys(record); track key) { <td>{{ recordValue(record, key) }}</td> }</tr> }
-        </tbody></table></div>
+        <app-data-grid [columnDefs]="tabGridColumns" [rowData]="tabGridRows" />
       }
     </section>
   }

@@ -24,17 +24,15 @@
             <span>{{ group.label }}</span>
             <span class="group-chevron" [class.expanded]="expandedGroups[group.label]" aria-hidden="true"></span>
           </button>
-          @if (expandedGroups[group.label]) {
-            <div class="nav-group-links" [id]="'nav-group-' + $index">
-              @for (link of group.links; track link.path) {
-                <a class="nav-link" [routerLink]="link.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: link.path === '/workspace/overview' }">
-                  <span class="nav-icon" [attr.data-icon]="link.icon"></span>
-                  <span>{{ link.label }}</span>
-                  @if (link.path === '/farm-operations/daily-operations') { <span class="nav-ping"></span> }
-                </a>
-              }
-            </div>
-          }
+          <div class="nav-group-links" [class.collapsed]="!expandedGroups[group.label]" [id]="'nav-group-' + $index">
+            @for (link of group.links; track link.path) {
+              <a class="nav-link" [routerLink]="link.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: link.path === '/workspace/overview' }" [attr.aria-label]="link.label" [attr.title]="link.label" (click)="closeNavigationGroups()">
+                <span class="nav-icon" [attr.data-icon]="link.icon"></span>
+                <span>{{ link.label }}</span>
+                @if (link.path === '/farm-operations/daily-operations') { <span class="nav-ping"></span> }
+              </a>
+            }
+          </div>
         </section>
       }
     </nav>

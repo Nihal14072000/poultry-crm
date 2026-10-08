@@ -1,7 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { ColDef } from 'ag-grid-community';
 import { ActivatedRoute } from '@angular/router';
+import { DataGridComponent } from '../../../common/components/data-grid/data-grid.component';
+import { GridAction, GridActionsCellComponent } from '../../../common/components/data-grid/grid-actions-cell.component';
 import {
   DeliveryLineOutcome,
   TradingDeskData,
@@ -16,7 +20,7 @@ type DeskView = 'quotes' | 'orders' | 'deliveries' | 'invoices';
 @Component({
   selector: 'app-trading-desk',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, DataGridComponent, FormsModule, NgSelectModule],
   templateUrl: './trading-desk.component.html',
   styleUrl: './trading-desk.component.css'
 })
@@ -53,6 +57,168 @@ export class TradingDeskComponent implements OnInit {
     else if (path === 'dispatch') this.activeView = 'deliveries';
     else if (path === 'sales' || path === 'orders' || path === 'order-desk') this.activeView = 'orders';
     void this.refresh();
+  }
+
+  get quoteGridRows(): object[] {
+    return (this.data?.quotations ?? []).map((quote) => ({
+      ...quote,
+      lines: this.quoteLineCount(quote),
+      validUntil: quote['validUntil'] || '—'
+    }));
+  }
+
+  get quoteGridColumns(): ColDef[] {
+    return [
+      { field: 'quotation', headerName: 'QUOTE' },
+      { field: 'customer', headerName: 'CUSTOMER' },
+      { field: 'date', headerName: 'DATE' },
+      { field: 'lines', headerName: 'LINES' },
+      { field: 'total', headerName: 'TOTAL' },
+      { field: 'status', headerName: 'STATUS' },
+      { field: 'validUntil', headerName: 'VALID UNTIL' },
+      this.actionColumn((quote) => this.quotationActions(quote), (action, quote) => {
+        if (action === 'send') this.sendQuotation(quote);
+        else if (action === 'accept') this.acceptQuotation(quote);
+        else if (action === 'decline') this.declineQuotation(quote);
+        else if (action === 'convert') this.convertQuotation(quote);
+      })
+    ];
+  }
+
+  get orderGridRows(): object[] {
+    return (this.data?.orders ?? []).map((order) => ({ ...order, lines: this.orderLineCount(order) }));
+  }
+
+  get orderGridColumns(): ColDef[] {
+    return [
+      { field: 'order', headerName: 'ORDER' },
+      { field: 'customer', headerName: 'CUSTOMER' },
+      { field: 'date', headerName: 'DATE' },
+      { field: 'lines', headerName: 'LINES' },
+      { field: 'total', headerName: 'TOTAL' },
+      { field: 'payment', headerName: 'PAYMENT' },
+      { field: 'status', headerName: 'STATUS' },
+      this.actionColumn((order) => this.orderActions(order), (action, order) => {
+        if (action === 'confirm') this.confirmOrder(order);
+        else if (action === 'dispatch') this.createDispatch(order);
+      })
+    ];
+  }
+
+  get dispatchGridRows(): object[] {
+    return (this.data?.dispatches ?? []).map((dispatch) => ({
+      ...dispatch,
+      vehicleDriver: [dispatch['vehicle'], dispatch['driver']].filter(Boolean).join(' / ') || '—',
+      proofOfDelivery: dispatch['proofOfDelivery'] || '—'
+    }));
+  }
+
+  get dispatchGridColumns(): ColDef[] {
+    return [
+      { field: 'delivery', headerName: 'DELIVERY' },
+      { field: 'order', headerName: 'ORDER' },
+      { field: 'customer', headerName: 'CUSTOMER' },
+      { field: 'vehicleDriver', headerName: 'VEHICLE / DRIVER' },
+      { field: 'status', headerName: 'STATUS' },
+      { field: 'proofOfDelivery', headerName: 'POD' },
+      this.actionColumn((dispatch) => this.dispatchActions(dispatch), (action, dispatch) => {
+        if (action === 'open') this.selectDispatch(dispatch);
+        else if (action === 'dispatch') {
+          this.selectDispatch(dispatch);
+          this.markDispatched(dispatch);
+        } else if (action === 'transit') this.markInTransit(dispatch);
+      })
+    ];
+  }
+
+  get outcomeGridColumns(): ColDef[] {
+    return [
+      { field: 'product', headerName: 'PRODUCT / BATCH', valueFormatter: (params) => `${params.value ?? ''} · ${params.data?.['batch'] || params.data?.['sku'] || ''}` },
+      { field: 'quantity', headerName: 'SHIPPED' },
+      {
+        colId: 'delivered',
+        headerName: 'DELIVERED',
+        editable: true,
+        cellEditor: 'agNumberCellEditor',
+        valueGetter: (params) => this.deliveryValue(params.data as TradingRecord, 'delivered'),
+        onCellValueChanged: (params) => this.setDeliveryValue(params.data as TradingRecord, 'delivered', Number(params.newValue))
+      },
+      {
+        colId: 'mortality',
+        headerName: 'TRANSPORT MORTALITY',
+        editable: (params) => this.isLive(params.data as TradingRecord),
+        cellEditor: 'agNumberCellEditor',
+        valueGetter: (params) => this.deliveryValue(params.data as TradingRecord, 'mortality'),
+        onCellValueChanged: (params) => this.setDeliveryValue(params.data as TradingRecord, 'mortality', Number(params.newValue))
+      }
+    ];
+  }
+
+  get invoiceGridRows(): object[] {
+    return this.data?.invoices ?? [];
+  }
+
+  get invoiceGridColumns(): ColDef[] {
+    return [
+      { field: 'invoice', headerName: 'INVOICE' },
+      { field: 'customer', headerName: 'CUSTOMER' },
+      { field: 'issued', headerName: 'ISSUED' },
+      { field: 'due', headerName: 'DUE' },
+      { field: 'amount', headerName: 'AMOUNT' },
+      { field: 'balance', headerName: 'BALANCE' },
+      { field: 'status', headerName: 'STATUS' },
+      this.actionColumn(
+        (invoice) => this.hasInvoiceBalance(invoice) && this.rolePermissions.can('payments', 'create')
+          ? [{ label: 'Record receipt', action: 'receipt' }]
+          : [{ label: '—', action: 'none', disabled: true }],
+        (action, invoice) => {
+          if (action === 'receipt') this.openInvoice(invoice);
+        }
+      )
+    ];
+  }
+
+  private actionColumn(
+    actions: (record: TradingRecord) => GridAction[],
+    onAction: (action: string, record: TradingRecord) => void
+  ): ColDef {
+    return {
+      headerName: 'ACTIONS',
+      sortable: false,
+      filter: false,
+      autoHeight: true,
+      wrapText: true,
+      cellRenderer: GridActionsCellComponent,
+      valueGetter: (params) => actions(params.data as TradingRecord),
+      cellRendererParams: { onAction: (action: string, row: TradingRecord) => onAction(action, row) },
+      minWidth: 150
+    };
+  }
+
+  private quotationActions(quote: TradingRecord): GridAction[] {
+    const actions: GridAction[] = [];
+    if (quote['status'] === 'Draft' && this.rolePermissions.can('quotations', 'transition')) actions.push({ label: 'Send', action: 'send', disabled: this.busy });
+    if (quote['status'] === 'Sent' && this.rolePermissions.can('quotations', 'transition')) actions.push(
+      { label: 'Accept', action: 'accept', disabled: this.busy },
+      { label: 'Decline', action: 'decline', disabled: this.busy }
+    );
+    if (this.canConvert(quote)) actions.push({ label: 'Create order', action: 'convert', disabled: this.busy });
+    if (quote['orderId']) actions.push({ label: 'Converted', action: 'none', disabled: true });
+    return actions.length ? actions : [{ label: '—', action: 'none', disabled: true }];
+  }
+
+  private orderActions(order: TradingRecord): GridAction[] {
+    const actions: GridAction[] = [];
+    if (order['status'] === 'Draft' && this.rolePermissions.can('orders', 'transition')) actions.push({ label: 'Confirm & reserve', action: 'confirm', disabled: this.busy });
+    if (this.canCreateDispatch(order)) actions.push({ label: 'Create delivery', action: 'dispatch', disabled: this.busy });
+    return actions.length ? actions : [{ label: '—', action: 'none', disabled: true }];
+  }
+
+  private dispatchActions(dispatch: TradingRecord): GridAction[] {
+    const actions: GridAction[] = [{ label: 'Open', action: 'open' }];
+    if (dispatch['status'] === 'Created' && this.rolePermissions.can('dispatch', 'transition')) actions.push({ label: 'Dispatch', action: 'dispatch', disabled: this.busy });
+    if (dispatch['status'] === 'Dispatched' && this.rolePermissions.can('dispatch', 'transition')) actions.push({ label: 'In transit', action: 'transit', disabled: this.busy });
+    return actions;
   }
 
   async refresh(): Promise<void> {

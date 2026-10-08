@@ -1,10 +1,10 @@
 <div class="header-controls">
   <div class="header-control">
-    <button class="icon-button notification-button" type="button" aria-label="Notifications" [attr.aria-expanded]="notificationsOpen" (click)="toggleNotifications()">
+    <button class="icon-button notification-button" type="button" aria-label="Notifications" [attr.aria-expanded]="notificationsOpen" (click)="toggleNotifications($event)">
       <span class="bell-icon"></span><i></i>
     </button>
     @if (notificationsOpen) {
-      <section class="header-popover notification-popover" aria-label="All notifications">
+      <section class="header-popover notification-popover" aria-label="All notifications" [style.top.px]="notificationPopoverTop">
         <div class="popover-heading"><div><h2>Notifications</h2><p>{{ unreadNotificationsCount }} unread · {{ notifications.length }} total</p></div><button type="button" class="popover-close" aria-label="Close notifications" (click)="notificationsOpen = false">×</button></div>
         @if (notificationsLoading) {
           <div class="popover-state">Loading notifications…</div>

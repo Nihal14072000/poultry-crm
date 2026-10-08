@@ -3,7 +3,7 @@
 .records-feedback.success { background: #eff7ed; color: #456f4d; }
 .records-feedback.error { background: #fff3ef; color: #a25243; }
 .records-toolbar { align-items: flex-end; display: flex; justify-content: space-between; margin-bottom: 13px; padding: 0 16px; }
-.records-toolbar h2 { color: #36453b; font-family: Manrope,sans-serif; font-size: 13px; margin: 0 0 4px; }
+.records-toolbar h2 { color: #36453b; font-family: Calibri,Arial,sans-serif; font-size: 13px; margin: 0 0 4px; }
 .records-toolbar p { color: #929b94; font-size: 9px; margin: 0; }
 .table-search { align-items: center; border: 1px solid #e5e9e3; border-radius: 5px; color: #8c968e; display: flex; gap: 6px; height: 31px; padding: 0 9px; width: 200px; }
 .table-search span { font-size: 17px; }

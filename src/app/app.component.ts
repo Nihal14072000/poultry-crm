@@ -160,4 +160,10 @@ export class AppComponent {
     this.expandedGroups[label] = !this.expandedGroups[label];
   }
 
+  closeNavigationGroups(): void {
+    for (const group of Object.keys(this.expandedGroups)) {
+      this.expandedGroups[group] = false;
+    }
+  }
+
 }

@@ -6,32 +6,7 @@
     <label class="table-search"><span>⌕</span><input type="search" [ngModel]="query" (ngModelChange)="updateQuery($event)" [placeholder]="'Search ' + title.toLowerCase()" [attr.aria-label]="'Search ' + title"></label>
   </div>
   @if (filteredRecords.length) {
-    <div class="table-scroll">
-      <table class="records-table">
-        <thead><tr>@for (column of columns; track column.key) { <th>{{ column.label }}</th> }@if (hasWorkflow) { <th>ACTIONS</th> }</tr></thead>
-        <tbody>
-          @for (record of filteredRecords; track record) {
-            <tr>
-              @for (column of columns; track column.key; let first = $first) {
-                <td>
-                  @if (column.key === 'status') { <span class="status-badge" [ngClass]="statusClass(record[column.key])"><i></i>{{ record[column.key] }}</span> }
-                  @else if (first) { <strong>{{ record[column.key] }}</strong> }
-                  @else { {{ record[column.key] }} }
-                </td>
-              }
-              @if (hasWorkflow) {
-                <td class="record-actions">
-                  @for (action of workflowActions(record); track action.nextStatus) {
-                    <button type="button" [disabled]="saving" (click)="runWorkflowAction(record, action)">{{ action.label }}</button>
-                  }
-                  @if (!workflowActions(record).length) { <span>—</span> }
-                </td>
-              }
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <app-data-grid [columnDefs]="gridColumns" [rowData]="gridRows" />
   } @else {
     <div class="empty-state"><strong>No matching records</strong><span>Try another search term.</span></div>
   }

@@ -1,7 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { ColDef } from 'ag-grid-community';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { DataGridComponent } from '../data-grid/data-grid.component';
+import { GridActionsCellComponent, GridAction } from '../data-grid/grid-actions-cell.component';
 import { catchError, distinctUntilChanged, map, of, switchMap, tap } from 'rxjs';
 import { DirectoryService } from '../../services/directory.service';
 import { DirectoryColumn } from '../../models/directory.model';
@@ -14,7 +18,7 @@ import { RolePermissionService } from '../../services/role-permission.service';
 @Component({
   selector: 'app-workspace-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, DataGridComponent, FormsModule, NgSelectModule, RouterLink],
   templateUrl: './workspace-page.component.html',
   styleUrl: './workspace-page.component.css'
 })
@@ -46,6 +50,7 @@ export class WorkspacePageComponent implements OnInit {
 
   constructor(
     private readonly route: ActivatedRoute,
+    private readonly router: Router,
     private readonly directories: DirectoryService,
     private readonly workflows: ModuleWorkflowService,
     private readonly farmOperations: FarmOperationsService,
@@ -106,6 +111,75 @@ export class WorkspacePageComponent implements OnInit {
 
   get isNotificationResource(): boolean {
     return this.resource === 'notifications';
+  }
+
+  get gridRows(): object[] {
+    return this.filteredRecords;
+  }
+
+  get gridColumns(): ColDef[] {
+    const definitions: ColDef[] = this.columns.map((column) => ({
+      field: column.key,
+      headerName: column.label,
+      minWidth: 130
+    }));
+    if (this.mode !== 'read-only' || this.hasModuleWorkflow || this.isNotificationResource || this.isReportResource ||
+      this.records.some((record) => this.detailPath(record))) {
+      definitions.push({
+        headerName: 'ACTIONS',
+        sortable: false,
+        filter: false,
+        autoHeight: true,
+        wrapText: true,
+        cellRenderer: GridActionsCellComponent,
+        valueGetter: (params) => this.gridActions(params.data),
+        cellRendererParams: {
+          onAction: (action: string, row: Record<string, string | number>) => this.runGridAction(action, row)
+        }
+      });
+    }
+    return definitions;
+  }
+
+  private gridActions(record: Record<string, string | number> | undefined): GridAction[] {
+    if (!record) return [];
+    const actions: GridAction[] = [];
+    if (this.detailPath(record)) actions.push({ label: 'Open', action: 'open' });
+    if (this.isNotificationResource && this.isNotificationUnread(record)) actions.push({ label: 'Acknowledge', action: 'acknowledge', disabled: this.saving });
+    if (this.isReportResource && this.can('export')) actions.push({ label: 'Export', action: 'export' });
+    if (this.mode === 'editable' && this.can('update')) actions.push({ label: 'Edit', action: 'edit' });
+    if (this.mode === 'editable' && this.can('delete')) actions.push({ label: 'Delete', action: 'delete' });
+    if (this.mode === 'append-only' && this.can('create')) actions.push({ label: 'Add', action: 'add' });
+    if (this.can('transition')) {
+      actions.push(...this.workflowActions(record).map((action) => ({
+        label: action.label,
+        action: `workflow:${action.nextStatus}`,
+        disabled: this.saving
+      })));
+    }
+    return actions.length ? actions : [{ label: '—', action: 'none', disabled: true }];
+  }
+
+  private runGridAction(action: string, row: Record<string, string | number>): void {
+    const record = this.records.find((item) => item['_demoId'] === row['_demoId']) ?? row;
+    if (action === 'open') {
+      const path = this.detailPath(record);
+      if (path) void this.router.navigate(path);
+    } else if (action === 'acknowledge') {
+      this.acknowledgeNotification(record);
+    } else if (action === 'export') {
+      this.exportRecord(record);
+    } else if (action === 'edit') {
+      this.openEdit(record);
+    } else if (action === 'delete') {
+      this.requestDelete(record);
+    } else if (action === 'add') {
+      this.openCreate();
+    } else if (action.startsWith('workflow:')) {
+      const status = action.slice('workflow:'.length);
+      const workflow = this.workflowActions(record).find((item) => item.nextStatus === status);
+      if (workflow) this.runWorkflowAction(record, workflow);
+    }
   }
 
   get unreadNotificationsCount(): number {

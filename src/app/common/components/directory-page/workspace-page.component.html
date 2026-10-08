@@ -25,7 +25,7 @@
       <div class="record-count"><strong>{{ filteredRecords.length }}</strong> records <span>·</span> Updated just now</div>
       <div class="filters">
         <label class="table-search"><span>⌕</span><input type="search" [ngModel]="query" (ngModelChange)="setQuery($event)" placeholder="Search {{ title.toLowerCase() }}..." aria-label="Search records"></label>
-        <select [ngModel]="statusFilter" (ngModelChange)="setStatus($event)" aria-label="Filter by status">@for (status of statuses; track status) { <option [value]="status">{{ status }}</option> }</select>
+        <ng-select class="app-select compact-select" [ngModel]="statusFilter" (ngModelChange)="setStatus($event)" aria-label="Filter by status" [clearable]="false"><ng-option *ngFor="let status of statuses" [value]="status">{{ status }}</ng-option></ng-select>
         <button type="button" class="filter-button" aria-label="More filters">☷</button>
       </div>
     </div>
@@ -36,29 +36,7 @@
     } @else if (!filteredRecords.length) {
       <div class="state-panel empty"><strong>No matching records</strong><span>Try changing your search or status filter.</span></div>
     } @else {
-      <div class="table-scroll">
-        <table class="directory-table">
-          <thead><tr>@for (column of columns; track column.key) { <th><button type="button" class="sort-button" (click)="toggleSort(column.key)">{{ column.label }} @if (sortKey === column.key) { <span>{{ sortDescending ? '↓' : '↑' }}</span> }</button></th> }@if (mode !== 'read-only' || hasModuleWorkflow || isNotificationResource || isReportResource) { <th class="actions-heading">ACTIONS</th> }</tr></thead>
-          <tbody>
-            @for (record of pagedRecords; track $index) {
-              <tr>
-                @for (column of columns; track column.key; let first = $first) {
-                  <td>
-                    @if (column.key === 'status') { <span class="status-badge" [ngClass]="statusClass(record[column.key])"><i></i>{{ record[column.key] }}</span> }
-                    @else if (first) {
-                      @if (detailPath(record); as path) { <a class="primary-value detail-link" [routerLink]="path">{{ record[column.key] }}</a> }
-                      @else { <strong class="primary-value">{{ record[column.key] }}</strong> }
-                    }
-                    @else { {{ record[column.key] }} }
-                  </td>
-                }
-                @if ((mode === 'editable' && (can('update') || can('delete'))) || (mode === 'append-only' && can('create')) || (hasModuleWorkflow && can('transition')) || isNotificationResource || isReportResource) { <td class="row-actions">@if (isNotificationResource && isNotificationUnread(record)) { <button type="button" class="action-text workflow-action" [disabled]="saving" (click)="acknowledgeNotification(record)">Acknowledge</button> }@if (isReportResource && can('export')) { <button type="button" class="action-text workflow-action" (click)="exportRecord(record)">Export</button> }@if (mode === 'editable' && can('update')) { <button type="button" class="action-text" (click)="openEdit(record)">Edit</button> }@if (mode === 'editable' && can('delete')) { <button type="button" class="action-text delete-action" (click)="requestDelete(record)">Delete</button> }@for (action of workflowActions(record); track action.nextStatus) { @if (can('transition')) { <button type="button" class="action-text workflow-action" [disabled]="saving" (click)="runWorkflowAction(record, action)">{{ action.label }}</button> } }</td> }
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-      <div class="table-footer"><span>Showing {{ pagedRecords.length ? ((currentPage - 1) * pageSize) + 1 : 0 }}–{{ (currentPage - 1) * pageSize + pagedRecords.length }} of {{ filteredRecords.length }} matching · {{ records.length }} total</span><div><button type="button" [disabled]="currentPage === 1" (click)="previousPage()">← Previous</button><button type="button" class="current-page">{{ currentPage }} / {{ pageCount }}</button><button type="button" [disabled]="currentPage >= pageCount" (click)="nextPage()">Next →</button></div></div>
+      <app-data-grid [columnDefs]="gridColumns" [rowData]="gridRows" />
     }
   </div>
   <p class="demo-note"><span>●</span> Demo workspace · This view is powered by local JSON sample data.</p>
@@ -74,10 +52,10 @@
           @for (column of columns; track column.key) {
             <label>{{ column.label }}
               @if (column.key === 'status') {
-                <select [(ngModel)]="editorRecord[column.key]" [ngModelOptions]="{standalone: true}" [disabled]="hasModuleWorkflow && editorMode === 'edit'" [attr.aria-invalid]="showFieldError(column.key)" [attr.aria-describedby]="showFieldError(column.key) ? 'field-error-' + column.key : null">
-                  <option value="">Select status</option>
-                  @for (status of statusOptions(); track status) { <option [value]="status">{{ status }}</option> }
-                </select>
+                <ng-select class="app-select" labelForId="editor-status" [(ngModel)]="editorRecord[column.key]" [ngModelOptions]="{standalone: true}" [disabled]="hasModuleWorkflow && editorMode === 'edit'" [attr.aria-invalid]="showFieldError(column.key)" [attr.aria-describedby]="showFieldError(column.key) ? 'field-error-' + column.key : null" [clearable]="false">
+                  <ng-option value="">Select status</ng-option>
+                  @for (status of statusOptions(); track status) { <ng-option [value]="status">{{ status }}</ng-option> }
+                </ng-select>
               } @else {
                 <input [type]="fieldInputType(column.key)" [attr.min]="minimumValue(column.key)" [attr.max]="percentageMax(column.key)" [attr.maxlength]="column.key.toLowerCase().includes('note') ? 500 : 120" [attr.required]="!['notes', 'note', 'comments', 'remark', 'email', 'assignedTo'].includes(column.key) ? true : null" [attr.list]="editorMode === 'create' && suggestionsFor(column.key).length ? suggestionsId(column.key) : null" [(ngModel)]="editorRecord[column.key]" [ngModelOptions]="{standalone: true}" [placeholder]="'Enter ' + column.label.toLowerCase()" [attr.aria-invalid]="showFieldError(column.key)" [attr.aria-describedby]="showFieldError(column.key) ? 'field-error-' + column.key : null">
                 @if (editorMode === 'create' && suggestionsFor(column.key).length) {

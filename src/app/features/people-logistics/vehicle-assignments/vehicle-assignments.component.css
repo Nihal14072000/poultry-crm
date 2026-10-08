@@ -1,6 +1,6 @@
 .assignments-page { animation: arrive .25s ease-out; }
 .page-heading { align-items: flex-end; display: flex; justify-content: space-between; margin-bottom: 22px; }
-.page-heading h1 { color: #26372d; font-family: Manrope,sans-serif; font-size: 25px; letter-spacing: -.6px; margin: 8px 0 4px; }
+.page-heading h1 { color: #26372d; font-family: Calibri,Arial,sans-serif; font-size: 25px; letter-spacing: -.6px; margin: 8px 0 4px; }
 .page-heading p { color: #858f87; font-size: 11px; margin: 0; }
 .eyebrow,.step { color: #8c978e; font-size: 9px; font-weight: 700; letter-spacing: .95px; }
 .eyebrow span { color: #c1c9c1; padding: 0 5px; }
@@ -10,11 +10,11 @@
 .button:disabled,.row-button:disabled { cursor: not-allowed; opacity: .55; }
 .panel { background: #fff; border: 1px solid #e9ece7; border-radius: 9px; margin-bottom: 16px; overflow: hidden; }
 .panel-heading { align-items: flex-start; border-bottom: 1px solid #eef0ed; display: flex; justify-content: space-between; padding: 17px 19px; }
-.panel-heading h2 { color: #334239; font-family: Manrope,sans-serif; font-size: 14px; margin: 5px 0 3px; }
+.panel-heading h2 { color: #334239; font-family: Calibri,Arial,sans-serif; font-size: 14px; margin: 5px 0 3px; }
 .panel-heading p { color: #909a92; font-size: 9px; margin: 0; }
 .assignment-form { align-items: end; display: grid; gap: 13px; grid-template-columns: 1.2fr 1.2fr .8fr auto; padding: 17px 19px; }
 .assignment-form label { color: #657169; display: flex; flex-direction: column; font-size: 9px; font-weight: 650; gap: 6px; }
-.assignment-form input,.assignment-form select { background: white; border: 1px solid #e1e7e0; border-radius: 5px; color: #49584e; font-size: 10px; height: 35px; min-width: 0; padding: 0 9px; width: 100%; }
+.assignment-form input { background: white; border: 1px solid #e1e7e0; border-radius: 5px; color: #49584e; font-size: 10px; height: 35px; min-width: 0; padding: 0 9px; width: 100%; }
 .vehicle-preview { background: #f9fbf8; border: 1px solid #e8eee6; border-radius: 7px; margin: 0 19px 18px; padding: 13px 15px; }
 .preview-heading { align-items: baseline; display: flex; flex-wrap: wrap; gap: 10px; }
 .preview-heading strong { color: #334239; font-size: 11px; }

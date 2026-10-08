@@ -1,6 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ColDef } from 'ag-grid-community';
+import { DataGridComponent } from '../../../../../common/components/data-grid/data-grid.component';
+import { GridActionsCellComponent } from '../../../../../common/components/data-grid/grid-actions-cell.component';
 import { DirectoryColumn } from '../../../../../common/models/directory.model';
 import { DirectoryService } from '../../../../../common/services/directory.service';
 import { ModuleWorkflowService } from '../../../../../common/services/module-workflow.service';
@@ -9,7 +12,7 @@ import { WorkflowAction } from '../../../../../common/models/workflow.model';
 @Component({
   selector: 'app-production-records',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, DataGridComponent, FormsModule],
   templateUrl: './production-records.component.html',
   styleUrl: './production-records.component.css'
 })
@@ -34,6 +37,44 @@ export class ProductionRecordsComponent {
     const term = this.query.trim().toLowerCase();
     if (!term) return this.records;
     return this.records.filter((record) => Object.values(record).some((value) => String(value).toLowerCase().includes(term)));
+  }
+
+  get gridRows(): object[] {
+    return this.filteredRecords;
+  }
+
+  get gridColumns(): ColDef[] {
+    const definitions: ColDef[] = this.columns.map((column) => ({
+      field: column.key,
+      headerName: column.label,
+      minWidth: 130
+    }));
+    if (this.hasWorkflow) {
+      definitions.push({
+        headerName: 'ACTIONS',
+        sortable: false,
+        filter: false,
+        autoHeight: true,
+        wrapText: true,
+        cellRenderer: GridActionsCellComponent,
+        valueGetter: (params) => {
+          const actions = this.workflowActions(params.data).map((action) => ({
+            label: action.label,
+            action: action.nextStatus,
+            disabled: this.saving
+          }));
+          return actions.length ? actions : [{ label: '—', action: 'none', disabled: true }];
+        },
+        cellRendererParams: {
+          onAction: (nextStatus: string, row: Record<string, string | number>) => {
+            const record = this.records.find((item) => item['_demoId'] === row['_demoId']);
+            const action = record && this.workflowActions(record).find((item) => item.nextStatus === nextStatus);
+            if (record && action) this.runWorkflowAction(record, action);
+          }
+        }
+      });
+    }
+    return definitions;
   }
 
   updateQuery(query: string): void {

@@ -21,20 +21,20 @@
       @if (rolePermissions.can('vehicle-assignments', 'create')) {
         <form class="assignment-form" (ngSubmit)="createAssignment()">
           <label>Company vehicle
-            <select name="vehicle" required [(ngModel)]="selectedVehicleId">
-              <option value="">Select available vehicle</option>
+            <ng-select class="app-select" labelForId="vehicle-select" name="vehicle" required [(ngModel)]="selectedVehicleId" [clearable]="false">
+              <ng-option value="">Select available vehicle</ng-option>
               @for (vehicle of availableVehicles; track vehicle['_demoId']) {
-                <option [value]="vehicle['_demoId']">{{ vehicle['vehicle'] }} · {{ vehicle['type'] }}</option>
+                <ng-option [value]="vehicle['_demoId']">{{ vehicle['vehicle'] }} · {{ vehicle['type'] }}</ng-option>
               }
-            </select>
+            </ng-select>
           </label>
           <label>Driver
-            <select name="driver" required [(ngModel)]="selectedDriverId">
-              <option value="">Select available driver employee</option>
+            <ng-select class="app-select" labelForId="driver-select" name="driver" required [(ngModel)]="selectedDriverId" [clearable]="false">
+              <ng-option value="">Select available driver employee</ng-option>
               @for (driver of availableDrivers; track driver['_demoId']) {
-                <option [value]="driver['_demoId']">{{ driver['employee'] }} · {{ driver['licenseNo'] }}</option>
+                <ng-option [value]="driver['_demoId']">{{ driver['employee'] }} · {{ driver['licenseNo'] }}</ng-option>
               }
-            </select>
+            </ng-select>
           </label>
           <label>Assignment date
             <input name="assignedDate" type="date" required [(ngModel)]="assignedDate">
@@ -76,32 +76,7 @@
       @if (!assignments.length) {
         <p class="empty">No assignments yet. Add vehicles and Driver department employees first, then assign them here.</p>
       } @else {
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>VEHICLE</th><th>TYPE</th><th>STATE</th><th>CAPACITY</th><th>DRIVER</th><th>LICENSE NO.</th><th>LICENSE DUE</th><th>ASSIGNED</th><th>RETURNED</th><th>STATUS</th><th>ACTION</th></tr></thead>
-            <tbody>
-              @for (assignment of assignments; track assignment['_demoId']) {
-                <tr>
-                  <td><strong>{{ vehicleFor(assignment)?.['vehicle'] || 'Vehicle record unavailable' }}</strong></td>
-                  <td>{{ vehicleFor(assignment)?.['type'] || '—' }}</td>
-                  <td>{{ vehicleFor(assignment)?.['state'] || '—' }}</td>
-                  <td>{{ vehicleFor(assignment)?.['capacityKg'] ? vehicleFor(assignment)?.['capacityKg'] + ' kg' : '—' }}</td>
-                  <td>{{ driverFor(assignment)?.['employee'] || 'Driver employee record unavailable' }}</td>
-                  <td>{{ driverFor(assignment)?.['licenseNo'] || '—' }}</td>
-                  <td>{{ driverFor(assignment)?.['licenseDueDate'] || '—' }}</td>
-                  <td>{{ assignment['assignedDate'] || '—' }}</td>
-                  <td>{{ assignment['returnedDate'] || '—' }}</td>
-                  <td><span class="status" [class.returned]="assignment['status'] === 'Returned'">{{ assignment['status'] }}</span></td>
-                  <td>
-                    @if (assignment['status'] === 'Assigned' && rolePermissions.can('vehicle-assignments', 'transition')) {
-                      <button class="row-button" type="button" [disabled]="saving" (click)="returnAssignment(assignment)">Return vehicle</button>
-                    } @else { — }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+        <app-data-grid [columnDefs]="assignmentGridColumns" [rowData]="assignmentGridRows" />
       }
     </section>
   }

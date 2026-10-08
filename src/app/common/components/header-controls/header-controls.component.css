@@ -15,7 +15,7 @@
 .notification-popover { width: min(370px, calc(100vw - 28px)); }
 .date-popover { width: min(330px, calc(100vw - 28px)); }
 .popover-heading { align-items: flex-start; border-bottom: 1px solid #edf0ec; display: flex; justify-content: space-between; padding: 15px 16px 12px; }
-.popover-heading h2 { color: #35443a; font-family: Manrope,sans-serif; font-size: 13px; margin: 0 0 4px; }
+.popover-heading h2 { color: #35443a; font-family: Calibri,Arial,sans-serif; font-size: 13px; margin: 0 0 4px; }
 .popover-heading p { color: #909a92; font-size: 9px; margin: 0; }
 .popover-close { background: transparent; border: 0; color: #89958c; cursor: pointer; font-size: 19px; line-height: 16px; }
 .notification-list { max-height: min(55vh, 380px); overflow-y: auto; }
@@ -43,3 +43,16 @@
 .date-actions { border-top: 1px solid #edf0ec; display: flex; gap: 7px; justify-content: flex-end; padding: 11px 15px; }
 .date-apply { background: #315f45; border: 1px solid #315f45; color: #fff; }
 @media(max-width:720px) { .header-controls { gap: 9px; } .date-button { gap: 0; } .date-button span:not(.calendar-icon) { display: none; } }
+@media(max-width:720px) {
+  .notification-popover {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 68px);
+    position: fixed;
+    right: 14px;
+    width: min(370px, calc(100vw - 28px));
+  }
+  .notification-list { flex: 1; min-height: 0; }
+  .notification-item > div { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .notification-item strong,.notification-item p { overflow-wrap: anywhere; }
+}

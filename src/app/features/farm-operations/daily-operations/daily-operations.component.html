@@ -16,9 +16,9 @@
         <article class="form-card">
           <div class="card-heading"><span class="card-step">01</span><div><h2>Location & flock</h2><p>Choose the farm and batch for today’s entry.</p></div></div>
           <div class="field-grid three">
-            <label>Farm <select formControlName="farm" (change)="onFarmChanged()">@for (farm of farms; track farm['code']) { <option [value]="farm['name']">{{ farm['name'] }}</option> }</select></label>
-            <label>Shed <select formControlName="shed" (change)="onShedChanged()">@for (shed of availableSheds; track shed['code']) { <option [value]="shed['name']">{{ shed['name'] }}</option> }</select></label>
-            <label>Active batch <select formControlName="batch" (change)="onBatchChanged()">@for (batch of availableBatches; track batch['batch']) { <option [value]="batch['batch']">{{ batch['batch'] }}</option> }</select></label>
+            <label>Farm <ng-select class="app-select" labelForId="farm-select" formControlName="farm" (change)="onFarmChanged()" [clearable]="false"><ng-option *ngFor="let farm of farms" [value]="farm['name']">{{ farm['name'] }}</ng-option></ng-select></label>
+            <label>Shed <ng-select class="app-select" labelForId="shed-select" formControlName="shed" (change)="onShedChanged()" [clearable]="false"><ng-option *ngFor="let shed of availableSheds" [value]="shed['name']">{{ shed['name'] }}</ng-option></ng-select></label>
+            <label>Active batch <ng-select class="app-select" labelForId="active-batch-select" formControlName="batch" (change)="onBatchChanged()" [clearable]="false"><ng-option *ngFor="let batch of availableBatches" [value]="batch['batch']">{{ batch['batch'] }}</ng-option></ng-select></label>
           </div>
           <label class="field-label date-field">Record date <input type="date" [max]="todayDate" formControlName="date" (change)="onDateChanged()">@if (form.controls.date.touched && form.controls.date.hasError('futureDate')) { <em>Choose today or an earlier date.</em> }</label>
           <div class="flock-summary"><span class="summary-icon">✣</span><span><strong>{{ selectedBatch?.['type'] ?? 'Flock' }} · {{ selectedBatch?.['batch'] }}</strong><small>{{ selectedBatch?.['farm'] }} · {{ selectedBatch?.['age'] }} · Average weight {{ selectedBatch?.['averageWeight'] }}</small></span><span class="summary-status">{{ selectedBatch?.['status'] }}</span></div>

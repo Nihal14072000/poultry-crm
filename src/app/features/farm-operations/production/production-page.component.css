@@ -3,7 +3,7 @@
 .page-heading { align-items: flex-end; display: flex; justify-content: space-between; margin-bottom: 20px; }
 .eyebrow { color: #8c978e; font-size: 9px; font-weight: 700; letter-spacing: .95px; }
 .eyebrow span { color: #c1c9c1; padding: 0 5px; }
-.page-heading h1 { color: #26372d; font-family: Manrope,sans-serif; font-size: 25px; letter-spacing: -.6px; margin: 8px 0 4px; }
+.page-heading h1 { color: #26372d; font-family: Calibri,Arial,sans-serif; font-size: 25px; letter-spacing: -.6px; margin: 8px 0 4px; }
 .page-heading p { color: #858f87; font-size: 11px; margin: 0; }
 .demo-tag { align-items: center; background: #fff; border: 1px solid #e9ece7; border-radius: 5px; color: #8c978e; display: inline-flex; font-size: 8px; font-weight: 650; gap: 6px; letter-spacing: .45px; padding: 7px 9px; }
 .demo-tag i,.sample-note span { background: #d0a35d; border-radius: 50%; height: 6px; width: 6px; }
@@ -15,7 +15,7 @@
 .tab-count { align-items: center; background: #eef4ec; border-radius: 9px; color: #5e815f; display: inline-flex; font-size: 8px; height: 16px; justify-content: center; width: 16px; }
 .performance-view,.records-view { animation: arrive .18s ease-out; }
 .performance-intro,.records-toolbar { align-items: flex-end; display: flex; justify-content: space-between; margin-bottom: 13px; }
-.performance-intro h2,.records-toolbar h2 { color: #36453b; font-family: Manrope,sans-serif; font-size: 13px; margin: 0 0 4px; }
+.performance-intro h2,.records-toolbar h2 { color: #36453b; font-family: Calibri,Arial,sans-serif; font-size: 13px; margin: 0 0 4px; }
 .performance-intro p,.records-toolbar p { color: #929b94; font-size: 9px; margin: 0; }
 .period-label { align-items: center; background: white; border: 1px solid #e8ece6; border-radius: 5px; color: #77837a; display: flex; font-size: 9px; gap: 7px; padding: 7px 9px; }
 .period-label span { color: #778c7b; font-size: 12px; }
@@ -23,7 +23,7 @@
 .metric-card { background: #fff; border: 1px solid #e9ece7; border-radius: 8px; min-width: 0; padding: 14px 15px; }
 .metric-label { align-items: center; color: #79847c; display: flex; font-size: 9px; justify-content: space-between; }
 .metric-dot { background: #eaf2e8; border-radius: 50%; height: 7px; width: 7px; }
-.metric-value { color: #2c3d32; display: block; font-family: Manrope,sans-serif; font-size: 22px; letter-spacing: -.5px; margin: 12px 0 8px; }
+.metric-value { color: #2c3d32; display: block; font-family: Calibri,Arial,sans-serif; font-size: 22px; letter-spacing: -.5px; margin: 12px 0 8px; }
 .metric-footer { align-items: center; color: #9ba39c; display: flex; flex-wrap: wrap; font-size: 8px; gap: 6px; }
 .metric-change { border-radius: 4px; font-size: 8px; font-weight: 650; padding: 4px 5px; }
 .metric-change.up { background: #eff6ee; color: #5a865e; }
@@ -32,7 +32,7 @@
 .chart-grid { display: grid; gap: 12px; grid-template-columns: repeat(2,minmax(0,1fr)); }
 .chart-card { background: #fff; border: 1px solid #e9ece7; border-radius: 8px; min-width: 0; padding: 16px 16px 12px; }
 .chart-heading { align-items: flex-start; display: flex; justify-content: space-between; }
-.chart-heading h3 { color: #46544a; font-family: Manrope,sans-serif; font-size: 10px; margin: 0 0 4px; }
+.chart-heading h3 { color: #46544a; font-family: Calibri,Arial,sans-serif; font-size: 10px; margin: 0 0 4px; }
 .chart-heading p { color: #9ba39c; font-size: 8px; margin: 0; }
 .chart-heading button { background: transparent; border: 0; color: #9ba59d; cursor: pointer; font-size: 10px; letter-spacing: 1px; }
 .chart-body { display: flex; height: 175px; margin-top: 10px; }

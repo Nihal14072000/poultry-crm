@@ -41,7 +41,7 @@
       <article class="panel revenue-panel">
         <div class="panel-heading">
           <div><h2>Revenue overview</h2><p>Track your sales performance over time</p></div>
-          <label class="period-select"><select aria-label="Revenue period" [(ngModel)]="selectedPeriod"><option>Last 30 days</option><option>Last 7 days</option><option>This year</option></select></label>
+          <label class="period-select"><ng-select class="app-select compact-select" aria-label="Revenue period" [(ngModel)]="selectedPeriod" [clearable]="false" [searchable]="false"><ng-option [value]="'Last 30 days'">Last 30 days</ng-option><ng-option [value]="'Last 7 days'">Last 7 days</ng-option><ng-option [value]="'This year'">This year</ng-option></ng-select></label>
         </div>
         <div class="revenue-summary"><strong>₹284,650</strong><span class="change-pill up">↑ 8.2%</span><small>vs. previous period</small></div>
         <div class="chart-wrap">
@@ -85,23 +85,7 @@
           <div><h2>Farm performance</h2><p>Health and productivity across your locations</p></div>
           <a class="text-link" routerLink="/farm-operations/farms">All farms <span>→</span></a>
         </div>
-        <div class="farm-table-wrap">
-          <table class="farm-table">
-            <thead><tr><th>FARM</th><th>ACTIVE BIRDS</th><th>MORTALITY</th><th>FCR</th><th>7-DAY TREND</th><th>STATUS</th></tr></thead>
-            <tbody>
-              @for (farm of data.farmPerformance; track farm.name) {
-                <tr>
-                  <td><a class="farm-name" [routerLink]="['/farm-operations/farms', farm.name]"><strong>{{ farm.name }}</strong><small>{{ farm.location }}</small></a></td>
-                  <td class="bird-count">{{ farm.birds | number }}</td>
-                  <td>{{ farm.mortality }}%</td>
-                  <td>{{ farm.fcr }}</td>
-                  <td><svg class="sparkline" viewBox="0 0 74 28" aria-label="7 day farm trend"><polyline [attr.points]="sparkline(farm.trend)" fill="none" [attr.stroke]="farm.status === 'Watch' ? '#d5a45f' : '#629171'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline></svg></td>
-                  <td><span class="status-pill" [ngClass]="farm.status === 'Watch' ? 'watch' : 'on-track'"><i></i>{{ farm.status }}</span></td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+        <app-data-grid [columnDefs]="farmGridColumns" [rowData]="farmGridRows" />
       </article>
       <article class="panel activity-panel">
         <div class="panel-heading"><div><h2>Recent activity</h2><p>Latest updates from your team</p></div><a class="text-link" routerLink="/insights-admin/audit">Activity log <span>→</span></a></div>

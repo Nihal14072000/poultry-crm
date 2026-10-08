@@ -1,7 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { ColDef } from 'ag-grid-community';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { DataGridComponent } from '../../../common/components/data-grid/data-grid.component';
 import { FarmOperationsData, FarmOperationsService } from '../../../common/services/farm-operations.service';
 import { DirectoryService } from '../../../common/services/directory.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
@@ -19,7 +22,7 @@ function localDateString(): string {
 @Component({
   selector: 'app-batch-360',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, DataGridComponent, FormsModule, NgSelectModule, RouterLink],
   templateUrl: './batch-360.component.html',
   styleUrl: './batch-360.component.css'
 })
@@ -150,6 +153,17 @@ export class Batch360Component implements OnInit {
     if (this.activeTab === 'transactions') return this.transactions;
     const resource = this.tabs.find((tab) => tab.id === this.activeTab)?.resource ?? '';
     return (this.related[resource] ?? []).filter((record) => record['batch'] === this.batch?.['batch']);
+  }
+
+  get tabGridRows(): object[] {
+    return this.tabRecords.map((record) => Object.fromEntries(
+      this.recordKeys(record).map((key) => [key, this.recordValue(record, key)])
+    ));
+  }
+
+  get tabGridColumns(): ColDef[] {
+    const first = this.tabRecords[0];
+    return first ? this.recordKeys(first).map((key) => ({ field: key, headerName: key })) : [];
   }
 
   recordTransaction(): void {
