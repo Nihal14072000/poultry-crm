@@ -16,7 +16,6 @@ export class DataGridComponent {
   @Input() rowData: object[] = [];
   @Input() paginationPageSize = 10;
   @Input() pagination = true;
-
   readonly gridOptions: GridOptions = {
     defaultColDef: {
       filter: true,

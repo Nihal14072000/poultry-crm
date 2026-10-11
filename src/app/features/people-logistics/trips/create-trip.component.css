@@ -26,6 +26,7 @@ select:focus,input:focus { border-color: #a3c793; box-shadow: 0 0 0 2px rgba(163
 .add-vendor { margin-left: auto; min-width: 105px; }
 .add-vendor:disabled { cursor: not-allowed; opacity: .55; }
 .vendor-hint { color: #8c978e; font-size: 9px; margin: -6px 0 12px 43px; }
+.delivery-plan-hint { color: #8c978e; font-size: 9px; line-height: 1.5; margin: 14px 0 12px; }
 .vendor-card { border: 1px solid #e9ede7; border-radius: 7px; margin-top: 12px; overflow: hidden; }
 .vendor-card-heading { align-items: flex-start; background: #fbfcfa; border-bottom: 1px solid #edf0eb; display: flex; gap: 12px; padding: 13px 14px; }
 .vendor-number { align-items: center; background: #eaf1e9; border-radius: 50%; color: #527c5b; display: inline-flex; flex: 0 0 26px; font-size: 9px; font-weight: 700; height: 26px; justify-content: center; margin-top: 4px; }
@@ -40,6 +41,7 @@ select:focus,input:focus { border-color: #a3c793; box-shadow: 0 0 0 2px rgba(163
 .pickup-table tbody th small { color: #8c978e; font-size: 8px; font-weight: 400; }
 .pickup-table td { min-width: 125px; vertical-align: top; }
 .pickup-table td input { height: 32px; max-width: 180px; }
+.delivery-total-row th { background: #fbfcfa; color: #536157; font-size: 9px; text-align: right; }
 .item-icon { align-items: center; background: #edf4ec; border-radius: 5px; color: #4c7653; display: inline-flex; font-size: 8px; height: 21px; justify-content: center; margin-right: 8px; width: 21px; }
 .item-icon.culls { background: #f7f1e7; color: #987741; }
 .item-icon.feed { background: #edf1f6; color: #5c7090; }
@@ -55,6 +57,7 @@ select:focus,input:focus { border-color: #a3c793; box-shadow: 0 0 0 2px rgba(163
 .summary-grid .grand-total { background: #315f45; border-color: #315f45; grid-column: span 2; }
 .summary-grid .grand-total span,.summary-grid .grand-total strong { color: #fff; }
 .summary-grid .grand-total strong { font-size: 17px; }
+.summary-grid .delivery-grand-total { background: #edf4ec; border-color: #dfe9dc; grid-column: span 2; }
 .summary-note { color: #8c978e; font-size: 8px; margin: 10px 0 0; }
 .form-actions { align-items: center; display: flex; justify-content: space-between; padding: 1px 0 10px; }
 .button { align-items: center; border-radius: 6px; cursor: pointer; display: inline-flex; font-size: 10px; font-weight: 600; height: 36px; justify-content: center; min-width: 105px; padding: 0 14px; text-decoration: none; }
@@ -79,7 +82,8 @@ select:focus,input:focus { border-color: #a3c793; box-shadow: 0 0 0 2px rgba(163
   .date-field { max-width: none; }
   .vendor-card-heading { padding: 11px; }
   .vendor-hint { margin-left: 0; }
-  .pickup-table { min-width: 550px; }
+  .pickup-table { min-width: 700px; }
   .summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .summary-grid .grand-total { grid-column: span 2; }
 }
+.destination-meta { margin: -3px 14px 10px; }

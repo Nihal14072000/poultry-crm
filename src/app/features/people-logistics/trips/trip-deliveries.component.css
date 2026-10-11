@@ -1,0 +1,70 @@
+.delivery-page { animation: arrive .2s ease-out; }
+.page-heading,.section-heading,.trip-card,.reconcile { align-items:center; display:flex; justify-content:space-between; gap:16px; }
+.page-heading { margin-bottom:20px; }
+.page-heading h1 { color:#26372d; font-size:25px; margin:8px 0 4px; }
+.page-heading p,.trip-card p,.reconcile p { color:#858f87; font-size:12px; margin:5px 0; }
+.eyebrow,.step { color:#8c978e; font-size:9px; font-weight:700; letter-spacing:.95px; }
+.eyebrow span { color:#c1c9c1; padding:0 5px; }
+.panel { background:#fff; border:1px solid #e9ece7; border-radius:9px; margin-bottom:14px; padding:17px 19px; }
+.filters,.details-grid,.form-grid,.summary-grid { display:grid; gap:12px; }
+.filters { grid-template-columns:repeat(4,minmax(0,1fr)); }
+label { color:#536157; display:flex; flex-direction:column; font-size:11px; font-weight:600; gap:6px; }
+input,select,textarea { background:#fff; border:1px solid #dfe5dd; border-radius:5px; color:#34443a; font:inherit; min-height:37px; padding:8px 10px; width:100%; }
+.button { align-items:center; border:0; border-radius:6px; cursor:pointer; display:inline-flex; font-size:11px; font-weight:650; justify-content:center; min-height:38px; padding:0 14px; text-decoration:none; white-space:nowrap; }
+.button-primary { background:#315f45; color:white; }
+.button-secondary { background:white; border:1px solid #e2e7e0; color:#536157; }
+.button:disabled { cursor:not-allowed; opacity:.55; }
+.trip-list { display:grid; gap:10px; }
+.trip-card h2 { color:#334239; font-size:17px; margin:8px 0 2px; }
+.trip-card small { color:#879289; font-size:10px; }
+.status { background:#eff6ef; border-radius:10px; color:#5d8961; display:inline-flex; font-size:9px; padding:6px 9px; }
+.details-grid { grid-template-columns:repeat(4,minmax(0,1fr)); margin-top:14px; }
+.details-grid div,.summary-grid article { display:flex; flex-direction:column; gap:5px; min-width:0; }
+.details-grid small,.summary-grid small { color:#88938a; font-size:9px; }
+.details-grid strong { color:#405047; font-size:11px; overflow-wrap:anywhere; }
+.section-heading { margin-bottom:14px; }
+.section-heading h2,.reconcile h2 { color:#334239; font-size:16px; margin:5px 0 0; }
+.progress { background:#eaf0e9; border-radius:8px; height:8px; margin-top:16px; overflow:hidden; }
+.progress span { background:#4d8059; display:block; height:100%; transition:width .2s ease; }
+.summary-grid { grid-template-columns:repeat(6,minmax(0,1fr)); margin-bottom:14px; }
+.summary-grid article { background:#f8faf7; border:1px solid #e8ede6; border-radius:8px; padding:12px; }
+.summary-grid strong { color:#34443a; font-size:17px; }
+.table-wrap { overflow-x:auto; }
+table { border-collapse:collapse; min-width:700px; text-align:left; width:100%; }
+th,td { border-bottom:1px solid #f0f2ef; color:#536157; font-size:10px; padding:11px 9px; }
+thead th { color:#89948b; font-size:9px; letter-spacing:.4px; white-space:nowrap; }
+td strong,td small { display:block; }
+td small { color:#879289; margin-top:3px; }
+.link-button { background:transparent; border:0; color:#315f45; cursor:pointer; font:inherit; font-size:10px; font-weight:700; padding:5px 0; }
+.readonly,.calculation { background:#f8faf7; border-radius:6px; color:#536157; font-size:11px; padding:10px 12px; }
+.form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.form-grid .wide { grid-column:1/-1; }
+.payment-row { border-top:1px solid #edf0eb; padding:13px 0; }
+.payment-summary { align-items:center; display:flex; gap:12px; justify-content:space-between; }
+.payment-vendor { align-self:center; display:flex; flex-direction:column; gap:5px; min-width:0; }
+.payment-vendor strong { color:#405047; font-size:12px; }
+.payment-vendor small { color:#879289; font-size:10px; }
+.payment-entry { align-items:end; display:grid; gap:12px; grid-template-columns:minmax(150px,1fr) minmax(150px,1fr) auto; margin-top:12px; max-width:780px; }
+.payment-history { color:#657268; display:grid; font-size:10px; gap:5px; margin-top:10px; }
+.payment-history strong { color:#536157; }
+.payment-history-row { align-items:center; display:flex; gap:12px; justify-content:space-between; }
+.payment-hint { color:#879289; display:block; font-size:10px; margin-top:8px; }
+.pickup-receipt { border-top:1px solid #edf0eb; padding:13px 0; }
+.pickup-receipt-heading { align-items:center; color:#405047; display:flex; font-size:12px; justify-content:space-between; }
+.pickup-receipt-heading span { color:#879289; font-size:10px; }
+.destination-edit-row { align-items:center; border-top:1px solid #edf0eb; color:#536157; display:grid; font-size:11px; gap:12px; grid-template-columns:1fr 2fr auto; padding:12px 0; }
+.pickup-entry-grid { align-items:end; display:grid; gap:12px; grid-template-columns:repeat(3,minmax(0,1fr)); margin-top:12px; }
+.pickup-entry-grid .wide { grid-column:span 2; }
+.check { align-items:center; flex-direction:row; }
+.check input { accent-color:#315f45; height:17px; min-height:auto; width:17px; }
+.save-button { margin-top:12px; }
+.reconcile { background:#f8faf7; }
+.reconciliation-approval { display:grid; gap:10px; margin-top:12px; max-width:520px; }
+.reconciliation-approval .check { align-items:center; flex-direction:row; }
+.feedback { border-radius:6px; font-size:11px; margin-bottom:14px; padding:10px 12px; }
+.feedback.error { background:#fff3ef; color:#a25243; }
+.feedback.success { background:#eef7ee; color:#3c7045; }
+.empty,.state { color:#879289; font-size:12px; padding:24px 8px; text-align:center; }
+@keyframes arrive { from { opacity:.7; transform:translateY(2px); } to { opacity:1; transform:translateY(0); } }
+@media(max-width:800px) { .details-grid,.summary-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .filters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:560px) { .page-heading,.trip-card,.reconcile { align-items:stretch; flex-direction:column; } .panel { padding:14px 12px; } .details-grid,.summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .filters,.form-grid,.payment-entry,.pickup-entry-grid { grid-template-columns:1fr; } .payment-summary,.pickup-receipt-heading { align-items:stretch; flex-direction:column; } .destination-edit-row { align-items:stretch; grid-template-columns:1fr; } .form-grid .wide,.pickup-entry-grid .wide { grid-column:auto; } .button { min-height:44px; } }

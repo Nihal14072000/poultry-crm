@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { TripRecord } from '../../../common/models/trip.model';
 import { TripService } from '../../../common/services/trip.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
+import { SessionAuthService } from '../../../common/services/session-auth.service';
 
 @Component({
   selector: 'app-trips',
@@ -16,16 +17,28 @@ export class TripsComponent implements OnInit {
   trips: TripRecord[] = [];
   loading = true;
   errorMessage = '';
-  readonly successMessage: string;
+  successMessage: string;
 
   constructor(
     private readonly tripService: TripService,
-    router: Router,
-    readonly rolePermissions: RolePermissionService
+    private readonly router: Router,
+    readonly rolePermissions: RolePermissionService,
+    readonly auth: SessionAuthService
   ) {
     const state = router.getCurrentNavigation()?.extras.state as { successMessage?: string } | undefined;
     this.successMessage = state?.successMessage ?? '';
   }
+
+  get canOpenTripDeliveries(): boolean {
+    return ['Farm Supervisor', 'Supervisor', 'Sales Manager', 'Organization Admin'].includes(this.auth.currentUser?.role ?? '');
+  }
+
+  get tripDeliveriesLabel(): string {
+    return ['Sales Manager', 'Organization Admin'].includes(this.auth.currentUser?.role ?? '')
+      ? 'Trip deliveries' : 'My assigned trips';
+  }
+
+  isDeleted(trip: TripRecord): boolean { return trip['status'] === 'Deleted'; }
 
   async ngOnInit(): Promise<void> {
     try {

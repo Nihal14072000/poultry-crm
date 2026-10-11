@@ -5,7 +5,7 @@ import { SessionAuthService } from './session-auth.service';
 const allResources = [
   'dashboard', 'farms', 'sheds', 'batches', 'daily-operations', 'broiler', 'layer', 'breeder', 'hatchery',
   'feed-health', 'feed', 'health', 'medication', 'products', 'warehouses', 'inventory', 'transfers',
-  'stock-ledger', 'suppliers', 'procurement', 'customers', 'quotations', 'orders', 'sales', 'dispatch',
+  'stock-ledger', 'suppliers', 'vendor-destinations', 'procurement', 'customers', 'quotations', 'orders', 'sales', 'dispatch',
   'leads', 'opportunities', 'follow-ups', 'complaints', 'employees', 'fleet', 'vehicles', 'vehicle-assignments', 'trips', 'finance', 'receivables',
   'payables', 'payments', 'expenses', 'profitability', 'reports', 'analytics', 'notifications',
   'organization', 'users-roles', 'documents', 'audit', 'administration'
@@ -19,11 +19,11 @@ const roleResources: Record<string, string[]> = {
   'Organization Admin': allResources,
   Owner: allResources,
   'Farm Manager': ['dashboard', 'farms', 'sheds', 'batches', 'daily-operations', 'broiler', 'layer', 'breeder', 'hatchery', 'feed-health', 'feed', 'health', 'medication', 'employees', 'documents', 'notifications', 'reports', 'analytics', 'audit'],
-  'Farm Supervisor': ['dashboard', 'farms', 'sheds', 'batches', 'daily-operations', 'broiler', 'layer', 'breeder', 'feed-health', 'feed', 'health', 'medication', 'documents', 'notifications'],
+  'Farm Supervisor': ['dashboard', 'farms', 'sheds', 'batches', 'daily-operations', 'broiler', 'layer', 'breeder', 'feed-health', 'feed', 'health', 'medication', 'trips', 'documents', 'notifications'],
   Veterinarian: ['dashboard', 'farms', 'sheds', 'batches', 'daily-operations', 'health', 'medication', 'feed-health', 'documents', 'notifications', 'reports'],
   'Warehouse Manager': ['dashboard', 'products', 'warehouses', 'inventory', 'transfers', 'stock-ledger', 'suppliers', 'feed-health', 'documents', 'notifications', 'reports'],
   'Procurement Manager': ['dashboard', 'products', 'warehouses', 'inventory', 'transfers', 'stock-ledger', 'suppliers', 'procurement', 'expenses', 'documents', 'notifications', 'reports'],
-  'Sales Manager': ['dashboard', 'customers', 'quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints', 'products', 'receivables', 'suppliers', 'vehicles', 'employees', 'trips', 'documents', 'notifications', 'reports', 'analytics'],
+  'Sales Manager': ['dashboard', 'customers', 'quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints', 'products', 'receivables', 'suppliers', 'vendor-destinations', 'vehicles', 'employees', 'trips', 'documents', 'notifications', 'reports', 'analytics'],
   'Sales Executive': ['dashboard', 'customers', 'quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints', 'products', 'documents', 'notifications'],
   Accountant: ['dashboard', 'finance', 'receivables', 'payables', 'payments', 'expenses', 'profitability', 'sales', 'procurement', 'reports', 'analytics', 'documents', 'notifications', 'audit'],
   'HR Manager': ['dashboard', 'employees', 'administration', 'documents', 'notifications', 'reports'],
@@ -46,8 +46,14 @@ export class RolePermissionService {
   can(resource: string, action: PermissionAction = 'read'): boolean {
     const user = this.auth.currentUser;
     if (!user || user.status.toLowerCase() !== 'active') return false;
+    const moduleAccess = this.moduleResources(user.moduleAccess);
+    if (moduleAccess && resource !== 'dashboard' && !moduleAccess.resources.has(resource)) return false;
+    if (moduleAccess?.resources.has(resource) && action === 'read') return true;
     if (resource === 'trips') {
-      return action === 'read' || (user.role === 'Sales Manager' && ['create', 'update'].includes(action));
+      return action === 'read' ||
+        (user.role === 'Sales Manager' && ['create', 'update', 'delete', 'transition'].includes(action)) ||
+        (user.role === 'Organization Admin' && ['create', 'update', 'delete', 'transition', 'approve'].includes(action)) ||
+        (['Farm Supervisor', 'Supervisor'].includes(user.role) && action === 'transition');
     }
     const allowedResources = roleResources[user.role] ?? [];
     if (!allowedResources.includes(resource)) return false;
@@ -92,8 +98,8 @@ export class RolePermissionService {
         approve: ['procurement', 'expenses']
       },
       'Sales Manager': {
-        create: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'trips', 'leads', 'opportunities', 'follow-ups', 'complaints'],
-        update: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'trips', 'leads', 'opportunities', 'follow-ups', 'complaints'],
+        create: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'trips', 'vendor-destinations', 'leads', 'opportunities', 'follow-ups', 'complaints'],
+        update: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'trips', 'vendor-destinations', 'leads', 'opportunities', 'follow-ups', 'complaints'],
         transition: ['quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints'],
         approve: ['orders', 'sales']
       },
@@ -197,7 +203,8 @@ export class RolePermissionService {
     return [
       ...otherPermissions,
       'trips.read',
-      ...(role === 'Sales Manager' ? ['trips.create', 'trips.update'] : [])
+      ...(role === 'Sales Manager' ? ['trips.create', 'trips.update', 'trips.delete'] : []),
+      ...(role === 'Organization Admin' ? ['trips.create', 'trips.update', 'trips.delete', 'trips.transition', 'trips.approve'] : [])
     ];
   }
 
@@ -234,6 +241,18 @@ export class RolePermissionService {
     return parsed as Record<string, string[]>;
   }
 
+  private moduleResources(moduleAccess?: string): { resources: Set<string> } | null {
+    if (!moduleAccess?.trim()) return null;
+    const modules: Record<string, string[]> = {
+      inventory: ['products', 'warehouses', 'inventory', 'transfers', 'stock-ledger'],
+      trading: ['customers', 'suppliers', 'vendor-destinations', 'procurement', 'quotations', 'orders', 'sales', 'dispatch'],
+      'people-logistics': ['employees', 'fleet', 'vehicles', 'vehicle-assignments', 'trips'],
+      finance: ['finance', 'receivables', 'payables', 'payments', 'expenses', 'profitability']
+    };
+    const selected = moduleAccess.split(/[;,|]/).map((value) => value.trim().toLowerCase()).filter(Boolean);
+    return { resources: new Set(selected.flatMap((module) => modules[module] ?? [])) };
+  }
+
   private canAsRole(role: string, resource: string, action: PermissionAction): boolean {
     if (this.auth.currentUser?.role === role) return this.can(resource, action);
     const permittedResources = roleResources[role] ?? [];
@@ -245,7 +264,7 @@ export class RolePermissionService {
       Veterinarian: { create: ['health', 'medication'], update: ['health', 'medication'], transition: ['health', 'medication'] },
       'Warehouse Manager': { create: ['products', 'warehouses', 'transfers', 'stock-ledger'], update: ['products', 'warehouses', 'transfers'], delete: ['products', 'warehouses'], transition: ['transfers'] },
       'Procurement Manager': { create: ['procurement', 'suppliers', 'expenses'], update: ['procurement', 'suppliers', 'expenses'], transition: ['procurement', 'expenses'], approve: ['procurement', 'expenses'] },
-      'Sales Manager': { create: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'trips', 'leads', 'opportunities', 'follow-ups', 'complaints'], update: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'trips', 'leads', 'opportunities', 'follow-ups', 'complaints'], transition: ['quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints'], approve: ['orders', 'sales'] },
+      'Sales Manager': { create: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'trips', 'vendor-destinations', 'leads', 'opportunities', 'follow-ups', 'complaints'], update: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'trips', 'vendor-destinations', 'leads', 'opportunities', 'follow-ups', 'complaints'], transition: ['quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints'], approve: ['orders', 'sales'] },
       'Sales Executive': { create: ['quotations', 'orders', 'leads', 'opportunities', 'follow-ups', 'complaints'], update: ['quotations', 'orders', 'leads', 'opportunities', 'follow-ups', 'complaints'], transition: ['quotations', 'orders', 'leads', 'opportunities', 'follow-ups', 'complaints'] },
       Accountant: { create: ['payments', 'expenses', 'receivables', 'payables'], update: ['payments', 'expenses', 'receivables', 'payables'], transition: ['payments', 'expenses', 'receivables', 'payables'], approve: ['payments', 'expenses'] },
       'HR Manager': { create: ['employees'], update: ['employees'], delete: ['employees'] },

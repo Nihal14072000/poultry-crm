@@ -108,7 +108,7 @@ export class JsonFileAdapter extends DataAdapter {
       if (!wasInitialized) localStorage.setItem(this.initializedKey(resource), 'true');
       const resourceRecords = this.migrateResourceRecords(resource, migrated.records);
       if (resourceRecords !== migrated.records) this.writeRecords(resource, resourceRecords);
-      return resourceRecords;
+      return this.ensureDemoAccounts(resource, resourceRecords);
     }
     const migrated = this.migrateLegacyFleet(resource);
     if (migrated) {
@@ -127,6 +127,23 @@ export class JsonFileAdapter extends DataAdapter {
     if (!this.browser) throw new Error('Local demo changes can only be saved in a browser.');
     localStorage.setItem(this.storageKey(resource), JSON.stringify(records));
     localStorage.setItem(this.initializedKey(resource), 'true');
+  }
+
+  private ensureDemoAccounts(resource: string, records: Record<string, string | number>[]): Record<string, string | number>[] {
+    if (resource !== 'users-roles') return records;
+    const knownEmails = new Set(records.map((record) => String(record['email'] ?? '').toLowerCase()));
+    const missingAccounts = (this.fixtureRecords(resource) ?? []).filter((record) => {
+      const email = String(record['email'] ?? '').toLowerCase();
+      const role = String(record['role'] ?? '').toLowerCase();
+      return !knownEmails.has(email) && (email === 'rustum@example.test' || ['farm supervisor', 'supervisor'].includes(role));
+    });
+    if (!missingAccounts.length) return records;
+    const updated = [...records, ...missingAccounts.map((account) => ({
+      ...account,
+      _demoId: `users-roles-${String(account['email'] ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+    }))];
+    this.writeRecords(resource, updated);
+    return updated;
   }
 
   private fixtureRecords(resource: string): Record<string, string | number>[] | undefined {

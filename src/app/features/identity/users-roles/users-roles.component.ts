@@ -169,7 +169,10 @@ export class UsersRolesComponent implements OnInit {
     this.savingId = id;
     this.error = '';
     this.success = '';
-    const updated = { ...user, permissions: this.permissionSummary(user.role) };
+    const updated = {
+      ...user,
+      permissions: user.moduleAccess ? this.moduleAccessSummary(user.moduleAccess) : this.permissionSummary(user.role)
+    };
     this.directories.updateRecord('users-roles', id, updated as Record<string, string | number>).subscribe({
       next: (saved) => {
         const savedUser = this.toDemoUser(saved);
@@ -230,6 +233,17 @@ export class UsersRolesComponent implements OnInit {
 
   permissionSummary(role: string): string {
     return this.rolePermissions.getRolePermissions(role).length + ' permissions';
+  }
+
+  private moduleAccessSummary(moduleAccess: string): string {
+    const labels: Record<string, string> = {
+      inventory: 'Inventory',
+      trading: 'Trading',
+      'people-logistics': 'People & logistics',
+      finance: 'Finance'
+    };
+    return moduleAccess.split(/[;,|]/).map((module) => labels[module.trim().toLowerCase()])
+      .filter(Boolean).join(', ');
   }
 
   requiresScope(role: string): boolean {
@@ -305,6 +319,7 @@ export class UsersRolesComponent implements OnInit {
       email: String(record['email'] ?? ''),
       role: String(record['role'] ?? ''),
       permissions: String(record['permissions'] ?? ''),
+      moduleAccess: String(record['moduleAccess'] ?? ''),
       status: String(record['status'] ?? '')
     };
     const businessUnit = record['businessUnit'];

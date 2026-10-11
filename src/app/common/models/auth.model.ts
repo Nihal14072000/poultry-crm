@@ -3,6 +3,7 @@ export interface DemoUser {
   email: string;
   role: string;
   permissions: string;
+  moduleAccess?: string;
   businessUnit?: string;
   status: string;
   _demoId?: string | number;

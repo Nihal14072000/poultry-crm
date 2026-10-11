@@ -8,6 +8,9 @@
     @if (rolePermissions.can('trips', 'create')) {
       <a class="button button-primary" routerLink="/people-logistics/trips/new">＋ Create trip</a>
     }
+    @if (canOpenTripDeliveries) {
+      <a class="button button-primary" routerLink="/people-logistics/trips/deliveries">{{ tripDeliveriesLabel }}</a>
+    }
   </header>
 
   @if (successMessage) { <p class="feedback success" role="status">{{ successMessage }}</p> }
@@ -15,7 +18,7 @@
 
   <section class="panel">
     <div class="panel-heading">
-      <div><span class="step">TRIP REGISTER</span><h2>Vehicle trips</h2><p>Each trip is linked to one vehicle, driver and one or more vendor pickups.</p></div>
+      <div><span class="step">TRIP REGISTER</span><h2>Vehicle trips</h2><p>Each trip records supplier pickups and planned deliveries to one or more vendor destinations.</p></div>
     </div>
     @if (loading) {
       <p class="state">Loading trips…</p>
@@ -26,30 +29,23 @@
     } @else {
       <div class="table-wrap">
         <table>
-          <thead><tr><th>TRIP</th><th>DATE</th><th>VEHICLE</th><th>DRIVER</th><th>ROUTE</th><th>VENDORS</th><th>BIRDS</th><th>FEED</th><th>GRAND TOTAL</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+          <thead><tr><th>TRIP</th><th>DATE</th><th>VEHICLE</th><th>DRIVER</th><th>ROUTE</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
           <tbody>
             @for (trip of trips; track trip['_demoId']) {
-              <tr>
+              <tr [class.deleted-trip]="isDeleted(trip)">
                 <td>
-                  <a class="trip-link" [routerLink]="['/people-logistics/trips', trip['_demoId']]">
-                    {{ trip['tripNumber'] || 'Trip details' }}
-                  </a>
+                  @if (isDeleted(trip)) { <span>{{ trip['tripNumber'] || 'Trip details' }}</span> }
+                  @else { <a class="trip-link" [routerLink]="['/people-logistics/trips', trip['_demoId']]">{{ trip['tripNumber'] || 'Trip details' }}</a> }
                 </td>
                 <td>{{ trip['tripDate'] || '—' }}</td>
                 <td>{{ trip['vehicleName'] || '—' }}</td>
                 <td>{{ trip['driverName'] || '—' }}</td>
                 <td>{{ trip['route'] || '—' }}</td>
-                <td>{{ trip['vendorNames'] || trip['vendorName'] || '—' }}</td>
-                <td>{{ trip['totalBirds'] || 0 }}</td>
-                <td>{{ trip['totalFeed'] || 0 }} {{ trip['feedUnit'] || '' }}</td>
-                <td>{{ (trip['grandTotal'] || 0) | currency:'INR':'symbol':'1.2-2' }}</td>
                 <td><span class="status">{{ trip['status'] || '—' }}</span></td>
                 <td class="actions-cell">
-                  @if (rolePermissions.can('trips', 'update')) {
+                  @if (!isDeleted(trip) && rolePermissions.can('trips', 'update')) {
                     <a class="edit-link" [routerLink]="['/people-logistics/trips', trip['_demoId'], 'edit']">Edit</a>
-                  } @else {
-                    <span>—</span>
-                  }
+                  } @else { <span>—</span> }
                 </td>
               </tr>
             }
@@ -58,5 +54,5 @@
       </div>
     }
   </section>
-  <p class="demo-note">Vendor pickup quantities are stored on the trip, separate from supplier orders and deliveries.</p>
+  <p class="demo-note">Supplier receipt quantities and vendor destination plans are stored separately for each trip.</p>
 </main>

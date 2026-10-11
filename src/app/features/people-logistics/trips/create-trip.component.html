@@ -3,7 +3,7 @@
     <div>
       <div class="eyebrow">PEOPLE & LOGISTICS <span>/</span> VEHICLE MANAGEMENT <span>/</span> TRIPS</div>
       <h1>{{ editTripId ? 'Edit Trip' : 'Create Trip' }}</h1>
-      <p>{{ editTripId ? 'Update vehicle, driver, route and vendor pickup details.' : 'Add vehicle, driver, route and vendor pickup details for the trip.' }}</p>
+      <p>{{ editTripId ? 'Update vehicle, driver, route, supplier pickups and vendor delivery destinations.' : 'Plan supplier pickups and vendor deliveries for this trip.' }}</p>
     </div>
     <a class="back-link" routerLink="/people-logistics/trips">← Trips</a>
   </header>
@@ -13,7 +13,7 @@
   @if (loading) {
     <section class="panel state">Loading vehicles, drivers, vendors and feed units…</section>
   } @else if (!canSave) {
-    <p class="feedback error" role="alert">Only Sales Managers can create or edit trips.</p>
+    <p class="feedback error" role="alert">Only Organization Admins and Sales Managers can create or edit trips.</p>
   } @else {
     <form (ngSubmit)="submitTrip()" novalidate>
       <section class="panel assignment-panel">
@@ -73,50 +73,53 @@
       <section class="panel vendor-panel">
         <div class="section-heading">
           <span class="section-icon" aria-hidden="true">02</span>
-          <div><span class="step">VENDOR DETAILS</span><h2>Vendor pickups</h2></div>
+          <div><span class="step">SUPPLIER RECEIPTS</span><h2>Supplier pickups</h2></div>
           <button class="button button-secondary add-vendor" type="button" (click)="addVendor()" [disabled]="vendorPickups.length >= vendors.length">
             ＋ Add vendor
           </button>
         </div>
-        <p class="vendor-hint">Select a different vendor for each pickup. Each pickup’s items, quantities and rates are saved with that vendor.</p>
+        <p class="vendor-hint">Enter quantities and total weights in kilograms. Line totals are calculated as weight × rate per kg.</p>
         @for (vendorPickup of vendorPickups; track vendorPickup.key; let index = $index) {
           <div class="vendor-card">
             <div class="vendor-card-heading">
               <span class="vendor-number">{{ (index + 1) | number:'2.0-0' }}</span>
               <label>Vendor name <span class="required">*</span>
                 <select [name]="'vendor-' + vendorPickup.key" required [(ngModel)]="vendorPickup.vendorId">
-                  <option value="">Select an active vendor</option>
+                <option value="">Select an active supplier</option>
                   @for (vendor of availableVendors(vendorPickup); track vendor['_demoId']) {
                     <option [value]="vendor['_demoId']">{{ vendor['name'] }} · {{ vendor['category'] }}</option>
                   }
                 </select>
                 @if (vendorError(vendorPickup)) { <small class="field-error">{{ vendorError(vendorPickup) }}</small> }
-                @if (!vendors.length) { <small class="field-hint">No active vendors are available to you.</small> }
+                  @if (!vendors.length) { <small class="field-hint">No active suppliers are available to you.</small> }
               </label>
               @if (vendorPickups.length > 1) {
-                <button class="remove-vendor" type="button" (click)="removeVendor(vendorPickup.key)" [attr.aria-label]="'Remove vendor pickup ' + (index + 1)">Remove</button>
+                <button class="remove-vendor" type="button" (click)="removeVendor(vendorPickup.key)" [attr.aria-label]="'Remove supplier pickup ' + (index + 1)">Remove</button>
               }
             </div>
             <div class="pickup-table-wrap">
               <table class="pickup-table">
-                <thead><tr><th>ITEM</th><th>QUANTITY</th><th>RATE (₹ / UNIT)</th><th>TOTAL (₹)</th></tr></thead>
+                <thead><tr><th>ITEM</th><th>QUANTITY</th><th>WEIGHT (KG)</th><th>RATE (₹ / KG)</th><th>TOTAL (₹)</th></tr></thead>
                 <tbody>
                   <tr>
                     <th scope="row"><span class="item-icon broiler" aria-hidden="true">B</span>Broiler <small>birds</small></th>
                     <td><input [name]="'broiler-quantity-' + vendorPickup.key" type="number" min="0" step="1" inputmode="numeric" [attr.aria-label]="'Vendor ' + (index + 1) + ' broiler quantity'" [(ngModel)]="vendorPickup.broiler.quantity">@if (quantityError(vendorPickup, 'broiler')) { <small class="field-error">{{ quantityError(vendorPickup, 'broiler') }}</small> }</td>
-                    <td><input [name]="'broiler-rate-' + vendorPickup.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor ' + (index + 1) + ' broiler rate in rupees'" [(ngModel)]="vendorPickup.broiler.rate">@if (rateError(vendorPickup, 'broiler')) { <small class="field-error">{{ rateError(vendorPickup, 'broiler') }}</small> }</td>
+                    <td><input [name]="'broiler-weight-' + vendorPickup.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor ' + (index + 1) + ' broiler weight in kilograms'" [(ngModel)]="vendorPickup.broiler.weight">@if (weightError(vendorPickup, 'broiler')) { <small class="field-error">{{ weightError(vendorPickup, 'broiler') }}</small> }</td>
+                    <td><input [name]="'broiler-rate-' + vendorPickup.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor ' + (index + 1) + ' broiler rate in rupees per kilogram'" [(ngModel)]="vendorPickup.broiler.rate">@if (rateError(vendorPickup, 'broiler')) { <small class="field-error">{{ rateError(vendorPickup, 'broiler') }}</small> }</td>
                     <td class="calculated">{{ lineTotal(vendorPickup, 'broiler') | currency:'INR':'symbol':'1.2-2' }}</td>
                   </tr>
                   <tr>
                     <th scope="row"><span class="item-icon culls" aria-hidden="true">C</span>Culls <small>birds</small></th>
                     <td><input [name]="'culls-quantity-' + vendorPickup.key" type="number" min="0" step="1" inputmode="numeric" [attr.aria-label]="'Vendor ' + (index + 1) + ' culls quantity'" [(ngModel)]="vendorPickup.culls.quantity">@if (quantityError(vendorPickup, 'culls')) { <small class="field-error">{{ quantityError(vendorPickup, 'culls') }}</small> }</td>
-                    <td><input [name]="'culls-rate-' + vendorPickup.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor ' + (index + 1) + ' culls rate in rupees'" [(ngModel)]="vendorPickup.culls.rate">@if (rateError(vendorPickup, 'culls')) { <small class="field-error">{{ rateError(vendorPickup, 'culls') }}</small> }</td>
+                    <td><input [name]="'culls-weight-' + vendorPickup.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor ' + (index + 1) + ' culls weight in kilograms'" [(ngModel)]="vendorPickup.culls.weight">@if (weightError(vendorPickup, 'culls')) { <small class="field-error">{{ weightError(vendorPickup, 'culls') }}</small> }</td>
+                    <td><input [name]="'culls-rate-' + vendorPickup.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor ' + (index + 1) + ' culls rate in rupees per kilogram'" [(ngModel)]="vendorPickup.culls.rate">@if (rateError(vendorPickup, 'culls')) { <small class="field-error">{{ rateError(vendorPickup, 'culls') }}</small> }</td>
                     <td class="calculated">{{ lineTotal(vendorPickup, 'culls') | currency:'INR':'symbol':'1.2-2' }}</td>
                   </tr>
                   <tr>
                     <th scope="row"><span class="item-icon feed" aria-hidden="true">F</span>Feed <small>{{ feedUnit || 'unit unavailable' }}</small></th>
                     <td><input [name]="'feed-quantity-' + vendorPickup.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor ' + (index + 1) + ' feed quantity'" [(ngModel)]="vendorPickup.feed.quantity">@if (quantityError(vendorPickup, 'feed')) { <small class="field-error">{{ quantityError(vendorPickup, 'feed') }}</small> }</td>
-                    <td><input [name]="'feed-rate-' + vendorPickup.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor ' + (index + 1) + ' feed rate in rupees'" [(ngModel)]="vendorPickup.feed.rate">@if (rateError(vendorPickup, 'feed')) { <small class="field-error">{{ rateError(vendorPickup, 'feed') }}</small> }</td>
+                    <td><input [name]="'feed-weight-' + vendorPickup.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor ' + (index + 1) + ' feed weight in kilograms'" [(ngModel)]="vendorPickup.feed.weight">@if (weightError(vendorPickup, 'feed')) { <small class="field-error">{{ weightError(vendorPickup, 'feed') }}</small> }</td>
+                    <td><input [name]="'feed-rate-' + vendorPickup.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor ' + (index + 1) + ' feed rate in rupees per kilogram'" [(ngModel)]="vendorPickup.feed.rate">@if (rateError(vendorPickup, 'feed')) { <small class="field-error">{{ rateError(vendorPickup, 'feed') }}</small> }</td>
                     <td class="calculated">{{ lineTotal(vendorPickup, 'feed') | currency:'INR':'symbol':'1.2-2' }}</td>
                   </tr>
                 </tbody>
@@ -124,11 +127,62 @@
             </div>
           </div>
         }
-        @if (!vendorPickups.length) { <p class="field-error pickup-error" role="alert">Add at least one vendor pickup.</p> }
+        @if (!vendorPickups.length) { <p class="field-error pickup-error" role="alert">Add at least one supplier pickup.</p> }
+      </section>
+
+      <section class="panel assignment-panel">
+        <div class="section-heading"><span class="section-icon" aria-hidden="true">03</span><div><span class="step">VENDOR SALES</span><h2>Supervisor & vendor destinations</h2></div><button class="button button-secondary add-vendor" type="button" (click)="addDeliveryStop()" [disabled]="deliveryStops.length >= deliveryVendors.length">＋ Add destination</button></div>
+        <div class="assignment-grid">
+          <label>Assigned supervisor
+            <select name="supervisor" [(ngModel)]="selectedSupervisorEmail">
+              <option value="">Select a supervisor</option>
+              @for (supervisor of supervisors; track supervisor['email']) { <option [value]="supervisor['email']">{{ supervisor['name'] }} · {{ supervisor['email'] }}</option> }
+            </select>
+            <small class="field-hint">Only this account can enter deliveries for the trip.</small>
+          </label>
+        </div>
+        <p class="delivery-plan-hint">Plan bird and feed quantities, weights, and rates for each vendor destination. Sales totals use weight × rate; actual handoffs are entered by the assigned Supervisor.</p>
+        @if (!deliveryVendors.length) { <p class="field-hint">Add active delivery vendors in Trading → Delivery vendors before creating a trip.</p> }
+        @for (stop of deliveryStops; track stop.key; let index = $index) {
+          <div class="vendor-card">
+            <div class="vendor-card-heading"><span class="vendor-number">{{ (index + 1) | number:'2.0-0' }}</span><label>Delivery vendor <span class="required">*</span><select [name]="'delivery-vendor-' + stop.key" [(ngModel)]="stop.vendorDestinationId"><option value="">Select an active delivery vendor</option>@for (vendor of availableDeliveryVendors(stop); track vendor['_demoId']) { <option [value]="vendor['_demoId']">{{ vendor['name'] }} · {{ vendor['address'] }}</option> }</select></label>@if (deliveryStops.length > 1) { <button class="remove-vendor" type="button" (click)="removeDeliveryStop(stop.key)">Remove</button> }</div>
+            @if (selectedDeliveryVendor(stop); as destination) { <p class="field-hint destination-meta">{{ destination['address'] }} · {{ destination['contact'] || 'No contact' }} {{ destination['phone'] || '' }}</p> }
+            <div class="pickup-table-wrap">
+              <table class="pickup-table delivery-plan-table">
+                <thead><tr><th>ITEM</th><th>PLANNED QUANTITY</th><th>WEIGHT (KG)</th><th>RATE (₹ / KG)</th><th>TOTAL (₹)</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><span class="item-icon broiler" aria-hidden="true">B</span>Broiler <small>birds</small></th>
+                    <td><input [name]="'delivery-broiler-' + stop.key" type="number" min="0" step="1" inputmode="numeric" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' planned broiler birds'" [(ngModel)]="stop.broilerQuantity"></td>
+                    <td><input [name]="'delivery-broiler-weight-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' planned broiler weight in kilograms'" [(ngModel)]="stop.broilerWeight"></td>
+                    <td><input [name]="'delivery-broiler-rate-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' broiler rate in rupees per kilogram'" [(ngModel)]="stop.broilerRate"></td>
+                    <td class="calculated">{{ deliveryLineTotal(stop, 'broiler') | currency:'INR':'symbol':'1.2-2' }}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><span class="item-icon culls" aria-hidden="true">C</span>Culls <small>birds</small></th>
+                    <td><input [name]="'delivery-culls-' + stop.key" type="number" min="0" step="1" inputmode="numeric" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' planned cull birds'" [(ngModel)]="stop.cullsQuantity"></td>
+                    <td><input [name]="'delivery-culls-weight-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' planned cull weight in kilograms'" [(ngModel)]="stop.cullsWeight"></td>
+                    <td><input [name]="'delivery-culls-rate-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' cull rate in rupees per kilogram'" [(ngModel)]="stop.cullsRate"></td>
+                    <td class="calculated">{{ deliveryLineTotal(stop, 'culls') | currency:'INR':'symbol':'1.2-2' }}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><span class="item-icon feed" aria-hidden="true">F</span>Feed <small>{{ feedUnit }}</small></th>
+                    <td><input [name]="'delivery-feed-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' planned feed quantity in ' + feedUnit" [(ngModel)]="stop.feedQuantity"></td>
+                    <td><input [name]="'delivery-feed-weight-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' planned feed weight in kilograms'" [(ngModel)]="stop.feedWeight"></td>
+                    <td><input [name]="'delivery-feed-rate-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' feed rate in rupees per kilogram'" [(ngModel)]="stop.feedRate"></td>
+                    <td class="calculated">{{ deliveryLineTotal(stop, 'feed') | currency:'INR':'symbol':'1.2-2' }}</td>
+                  </tr>
+                  <tr class="delivery-total-row"><th colspan="4" scope="row">Planned vendor total</th><td class="calculated">{{ deliveryStopTotal(stop) | currency:'INR':'symbol':'1.2-2' }}</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+        @if (submitted && deliveryStopError) { <p class="field-error pickup-error" role="alert">{{ deliveryStopError }}</p> }
       </section>
 
       <section class="summary-panel" aria-label="Trip summary">
-        <div class="summary-heading"><span class="section-icon" aria-hidden="true">03</span><div><span class="step">TRIP SUMMARY</span><h2>Pickup totals</h2></div></div>
+        <div class="summary-heading"><span class="section-icon" aria-hidden="true">04</span><div><span class="step">TRIP SUMMARY</span><h2>Supplier receipt totals</h2></div></div>
         <div class="summary-grid">
           <div><span>Total Vendors</span><strong>{{ summary.vendors }}</strong></div>
           <div><span>Total Broiler</span><strong>{{ summary.broiler | number }}</strong><small>birds</small></div>
@@ -136,6 +190,7 @@
           <div><span>Total Birds</span><strong>{{ summary.birds | number }}</strong><small>broiler + culls</small></div>
           <div><span>Total Feed</span><strong>{{ summary.feed | number:'1.0-2' }}</strong><small>{{ feedUnit }}</small></div>
           <div class="grand-total"><span>Grand Total</span><strong>{{ summary.grandTotal | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+          <div class="delivery-grand-total"><span>Planned Vendor Sales</span><strong>{{ deliveryGrandTotal | currency:'INR':'symbol':'1.2-2' }}</strong><small>planned destinations</small></div>
         </div>
         <p class="summary-note">Bird counts and feed weight are shown separately because they use different units.</p>
       </section>

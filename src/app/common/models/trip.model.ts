@@ -1,5 +1,6 @@
 export interface TripLineInput {
   quantity: number | null;
+  weight?: number | null;
   rate: number | null;
 }
 
@@ -9,6 +10,8 @@ export interface CreateTripInput {
   driverId: string;
   route: string;
   vendorPickups: VendorPickupInput[];
+  supervisorEmail?: string;
+  vendorDeliveries?: VendorDeliveryInput[];
 }
 
 export interface VendorPickupInput {
@@ -18,8 +21,22 @@ export interface VendorPickupInput {
   feed: TripLineInput;
 }
 
+export interface VendorDeliveryInput {
+  vendorDestinationId: string;
+  broilerQuantity: number | null;
+  broilerWeight?: number | null;
+  broilerRate: number | null;
+  cullsQuantity: number | null;
+  cullsWeight?: number | null;
+  cullsRate: number | null;
+  feedQuantity?: number | null;
+  feedWeight?: number | null;
+  feedRate?: number | null;
+}
+
 export interface TripPickupLine {
   quantity: number;
+  weight?: number;
   rate: number;
   total: number;
 }

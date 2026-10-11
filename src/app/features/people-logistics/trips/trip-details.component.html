@@ -3,7 +3,7 @@
     <div>
       <div class="eyebrow">PEOPLE & LOGISTICS <span>/</span> VEHICLE MANAGEMENT <span>/</span> TRIPS</div>
       <h1>{{ trip?.['tripNumber'] || 'Trip details' }}</h1>
-      <p>Vehicle trip and vendor pickup details.</p>
+      <p>Vehicle trip, supplier pickup, and vendor delivery details.</p>
     </div>
     <a class="button button-secondary" routerLink="/people-logistics/trips">← Back to trips</a>
   </header>
@@ -33,40 +33,81 @@
 
     <section class="panel pickups-panel">
       <div class="section-heading">
-        <div><span class="step">VENDOR DETAILS</span><h2>Pickup breakdown</h2></div>
+        <div><span class="step">SUPPLIER RECEIPTS</span><h2>Pickup breakdown</h2></div>
       </div>
       @if (!vendorPickups.length) {
-        <p class="empty">This trip has no saved vendor pickup breakdown.</p>
+        <p class="empty">This trip has no saved supplier pickup breakdown.</p>
       } @else {
         @for (pickup of vendorPickups; track pickup.vendorId; let index = $index) {
           <article class="vendor-card">
             <header class="vendor-heading">
               <span class="vendor-number">{{ (index + 1) | number:'2.0-0' }}</span>
-              <div><span class="step">VENDOR</span><h3>{{ pickup.vendorName }}</h3></div>
-              <strong class="vendor-total">{{ pickup.total | currency:'INR':'symbol':'1.2-2' }}</strong>
+              <div><span class="step">SUPPLIER</span><h3>{{ pickup['vendorName'] }}</h3></div>
+              <strong class="vendor-total">Proposed {{ pickup.total | currency:'INR':'symbol':'1.2-2' }}@if (actualPickup(pickup.vendorId)) { <small>Actual {{ actualPickupTotal(pickup.vendorId) | currency:'INR':'symbol':'1.2-2' }}</small> } @else { <small>Actual not recorded</small> }</strong>
             </header>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>ITEM</th><th>QUANTITY</th><th>RATE (₹ / UNIT)</th><th>LINE TOTAL (₹)</th></tr></thead>
+                <thead><tr><th>ITEM</th><th>PROPOSED QTY</th><th>PROPOSED WT (KG)</th><th>ACTUAL QTY</th><th>ACTUAL WT (KG)</th><th>RATE (₹ / KG)</th><th>PROPOSED COST (₹)</th><th>ACTUAL COST (₹)</th></tr></thead>
                 <tbody>
                   <tr>
                     <th scope="row">Broiler</th>
                     <td>{{ pickup.broiler.quantity | number }}</td>
+                    <td>{{ pickup.broiler.weight ?? '—' }}</td>
+                    <td>{{ actualPickupValue(pickup.vendorId, 'broiler', 'Quantity') | number }}</td>
+                    <td>{{ actualPickupValue(pickup.vendorId, 'broiler', 'Weight') | number:'1.1-2' }}</td>
                     <td>{{ pickup.broiler.rate | currency:'INR':'symbol':'1.2-2' }}</td>
                     <td>{{ pickup.broiler.total | currency:'INR':'symbol':'1.2-2' }}</td>
+                    <td>{{ actualPickupValue(pickup.vendorId, 'broiler', 'Total') | currency:'INR':'symbol':'1.2-2' }}</td>
                   </tr>
                   <tr>
                     <th scope="row">Culls</th>
                     <td>{{ pickup.culls.quantity | number }}</td>
+                    <td>{{ pickup.culls.weight ?? '—' }}</td>
+                    <td>{{ actualPickupValue(pickup.vendorId, 'culls', 'Quantity') | number }}</td>
+                    <td>{{ actualPickupValue(pickup.vendorId, 'culls', 'Weight') | number:'1.1-2' }}</td>
                     <td>{{ pickup.culls.rate | currency:'INR':'symbol':'1.2-2' }}</td>
                     <td>{{ pickup.culls.total | currency:'INR':'symbol':'1.2-2' }}</td>
+                    <td>{{ actualPickupValue(pickup.vendorId, 'culls', 'Total') | currency:'INR':'symbol':'1.2-2' }}</td>
                   </tr>
                   <tr>
                     <th scope="row">Feed <small>{{ trip['feedUnit'] || '' }}</small></th>
                     <td>{{ pickup.feed.quantity | number:'1.0-2' }}</td>
+                    <td>{{ pickup.feed.weight ?? '—' }}</td>
+                    <td>{{ actualPickupValue(pickup.vendorId, 'feed', 'Quantity') | number:'1.0-2' }}</td>
+                    <td>{{ actualPickupValue(pickup.vendorId, 'feed', 'Weight') | number:'1.1-2' }}</td>
                     <td>{{ pickup.feed.rate | currency:'INR':'symbol':'1.2-2' }}</td>
                     <td>{{ pickup.feed.total | currency:'INR':'symbol':'1.2-2' }}</td>
+                    <td>{{ actualPickupValue(pickup.vendorId, 'feed', 'Total') | currency:'INR':'symbol':'1.2-2' }}</td>
                   </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        }
+      }
+    </section>
+
+    <section class="panel pickups-panel">
+      <div class="section-heading">
+        <div><span class="step">VENDOR DELIVERIES</span><h2>Delivery destinations</h2></div>
+      </div>
+      @if (!vendorDestinations.length) {
+        <p class="empty">This trip has no saved vendor delivery destinations.</p>
+      } @else {
+        @for (destination of vendorDestinations; track destination['vendorDestinationId']; let index = $index) {
+          <article class="vendor-card">
+            <header class="vendor-heading">
+              <span class="vendor-number">{{ (index + 1) | number:'2.0-0' }}</span>
+              <div><span class="step">DELIVERY VENDOR</span><h3>{{ destination['vendorName'] }}</h3><small>{{ destination['address'] }} · {{ destination['contact'] }} · {{ destination['phone'] }}</small></div>
+              <strong class="vendor-total">{{ destination['deliveryTotal'] | currency:'INR':'symbol':'1.2-2' }}</strong>
+            </header>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ITEM</th><th>PROPOSED QTY</th><th>PROPOSED WT (KG)</th><th>ACTUAL QTY</th><th>ACTUAL WT (KG)</th><th>RATE (₹ / KG)</th><th>PROPOSED SALES (₹)</th><th>ACTUAL SALES (₹)</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">Broiler</th><td>{{ destination['orderedBroiler'] | number }}</td><td>{{ destination['orderedBroilerWeight'] }}</td><td>{{ actualQuantity(destination, 'broiler') | number }}</td><td>{{ actualWeight(destination, 'broiler') | number:'1.1-2' }}</td><td>{{ destination['broilerRate'] | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ destination['broilerTotal'] | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ actualLineSales(destination, 'broiler') | currency:'INR':'symbol':'1.2-2' }}</td></tr>
+                  <tr><th scope="row">Culls</th><td>{{ destination['orderedCulls'] | number }}</td><td>{{ destination['orderedCullsWeight'] }}</td><td>{{ actualQuantity(destination, 'culls') | number }}</td><td>{{ actualWeight(destination, 'culls') | number:'1.1-2' }}</td><td>{{ destination['cullsRate'] | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ destination['cullsTotal'] | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ actualLineSales(destination, 'culls') | currency:'INR':'symbol':'1.2-2' }}</td></tr>
+                  <tr><th scope="row">Feed ({{ trip['feedUnit'] }})</th><td>{{ destination['orderedFeed'] | number }}</td><td>{{ destination['orderedFeedWeight'] }}</td><td>{{ actualQuantity(destination, 'feed') | number:'1.0-2' }}</td><td>{{ actualWeight(destination, 'feed') | number:'1.1-2' }}</td><td>{{ destination['feedRate'] | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ destination['feedTotal'] | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ actualLineSales(destination, 'feed') | currency:'INR':'symbol':'1.2-2' }}</td></tr>
                 </tbody>
               </table>
             </div>
@@ -83,7 +124,11 @@
         <div><span>Total Culls</span><strong>{{ (trip['totalCulls'] || 0) | number }}</strong><small>birds</small></div>
         <div><span>Total Birds</span><strong>{{ (trip['totalBirds'] || 0) | number }}</strong><small>broiler + culls</small></div>
         <div><span>Total Feed</span><strong>{{ (trip['totalFeed'] || 0) | number:'1.0-2' }}</strong><small>{{ trip['feedUnit'] || '' }}</small></div>
-        <div class="grand-total"><span>Grand Total</span><strong>{{ (trip['grandTotal'] || 0) | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+        <div><span>Proposed vendor sales</span><strong>{{ plannedSalesTotal() | currency:'INR':'symbol':'1.2-2' }}</strong><small>planned weight × rate</small></div>
+        <div><span>Actual vendor sales</span><strong>{{ actualSalesTotal() | currency:'INR':'symbol':'1.2-2' }}</strong><small>delivered weight × rate</small></div>
+        <div><span>Profit</span><strong>{{ grossProfit() | currency:'INR':'symbol':'1.2-2' }}</strong><small>actual supplier cost − actual vendor sales</small></div>
+        <div><span>Proposed supplier cost</span><strong>{{ (trip['grandTotal'] || 0) | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+        <div><span>Actual supplier cost</span><strong>{{ actualSupplierCostTotal() | currency:'INR':'symbol':'1.2-2' }}</strong><small>{{ supplierReceipts.length ? 'from actual receipts' : 'not recorded yet' }}</small></div>
       </div>
     </section>
 

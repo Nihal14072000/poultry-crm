@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TripRecord, VendorPickupInput } from '../../../common/models/trip.model';
+import { TripRecord, VendorDeliveryInput, VendorPickupInput } from '../../../common/models/trip.model';
 import { DirectoryService } from '../../../common/services/directory.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { SessionAuthService } from '../../../common/services/session-auth.service';
@@ -15,14 +15,28 @@ interface VendorPickupForm extends VendorPickupInput {
   key: number;
 }
 
+interface VendorDeliveryForm extends VendorDeliveryInput {
+  key: number;
+  broilerWeight: number | null;
+  cullsWeight: number | null;
+  feedQuantity: number | null;
+  feedWeight: number | null;
+  feedRate: number | null;
+}
+
 function emptyPickup(key: number): VendorPickupForm {
   return {
     key,
     vendorId: '',
-    broiler: { quantity: null, rate: null },
-    culls: { quantity: null, rate: null },
-    feed: { quantity: null, rate: null }
+    broiler: { quantity: null, weight: null, rate: null },
+    culls: { quantity: null, weight: null, rate: null },
+    feed: { quantity: null, weight: null, rate: null }
   };
+}
+
+function emptyDeliveryStop(key: number): VendorDeliveryForm {
+  return { key, vendorDestinationId: '', broilerQuantity: null, broilerWeight: null, broilerRate: null,
+    cullsQuantity: null, cullsWeight: null, cullsRate: null, feedQuantity: null, feedWeight: null, feedRate: null };
 }
 
 function today(): string {
@@ -41,6 +55,10 @@ export class CreateTripComponent implements OnInit {
   vehicles: TripRecord[] = [];
   drivers: TripRecord[] = [];
   vendors: TripRecord[] = [];
+  supervisors: TripRecord[] = [];
+  deliveryVendors: TripRecord[] = [];
+  deliveryStops: VendorDeliveryForm[] = [emptyDeliveryStop(1)];
+  selectedSupervisorEmail = '';
   savedRoutes: string[] = [];
   selectedVehicleId = '';
   selectedDriverId = '';
@@ -54,6 +72,7 @@ export class CreateTripComponent implements OnInit {
   submitted = false;
   errorMessage = '';
   private nextPickupKey = 2;
+  private nextDeliveryKey = 2;
 
   constructor(
     private readonly directories: DirectoryService,
@@ -67,12 +86,14 @@ export class CreateTripComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.editTripId = this.activatedRoute.snapshot.paramMap.get('tripId') ?? '';
     try {
-      const [vehicles, employees, suppliers, products, trips] = await Promise.all([
+      const [vehicles, employees, suppliers, products, trips, users, deliveryVendors] = await Promise.all([
         firstValueFrom(this.directories.getDirectory('vehicles')),
         firstValueFrom(this.directories.getDirectory('employees')),
         firstValueFrom(this.directories.getDirectory('suppliers')),
         firstValueFrom(this.directories.getDirectory('products')),
-        firstValueFrom(this.directories.getDirectory('trips'))
+        firstValueFrom(this.directories.getDirectory('trips')),
+        firstValueFrom(this.directories.getDirectory('users-roles')),
+        firstValueFrom(this.directories.getDirectory('vendor-destinations'))
       ]);
       this.vehicles = vehicles.records.filter((record) =>
         String(record['status'] ?? '').toLowerCase() === 'active' &&
@@ -88,6 +109,9 @@ export class CreateTripComponent implements OnInit {
         String(record['status'] ?? '').toLowerCase() === 'active' &&
         this.rolePermissions.canAccessRecord('suppliers', record)
       );
+      this.supervisors = users.records.filter((record) => String(record['status'] ?? '').toLowerCase() === 'active' &&
+        ['farm supervisor', 'supervisor'].includes(String(record['role'] ?? '').toLowerCase()));
+      this.deliveryVendors = deliveryVendors.records.filter((record) => String(record['status'] ?? '').toLowerCase() === 'active');
       this.savedRoutes = [...new Set(trips.records
         .filter((record) => this.rolePermissions.canAccessRecord('trips', record))
         .map((record) => String(record['route'] ?? '').trim())
@@ -108,14 +132,29 @@ export class CreateTripComponent implements OnInit {
         this.selectedVehicleId = String(trip['vehicleId'] ?? '');
         this.selectedDriverId = String(trip['driverId'] ?? '');
         this.route = String(trip['route'] ?? '');
+        this.selectedSupervisorEmail = String(trip['supervisorEmail'] ?? '');
+        try {
+          const savedStops: unknown = JSON.parse(String(trip['vendorDeliveries'] ?? '[]'));
+          this.deliveryStops = Array.isArray(savedStops) && savedStops.length
+            ? savedStops.map((item, index) => {
+              const stop = item as Record<string, unknown>;
+              return { key: index + 1, vendorDestinationId: String(stop['vendorDestinationId'] ?? ''),
+                broilerQuantity: Number(stop['orderedBroiler'] ?? 0), broilerWeight: Number(stop['orderedBroilerWeight'] ?? 0),
+                broilerRate: Number(stop['broilerRate'] ?? 0), cullsQuantity: Number(stop['orderedCulls'] ?? 0),
+                cullsWeight: Number(stop['orderedCullsWeight'] ?? 0), cullsRate: Number(stop['cullsRate'] ?? 0),
+                feedQuantity: Number(stop['orderedFeed'] ?? 0), feedWeight: Number(stop['orderedFeedWeight'] ?? 0),
+                feedRate: Number(stop['feedRate'] ?? 0) };
+            }) : [emptyDeliveryStop(1)];
+          this.nextDeliveryKey = this.deliveryStops.length + 1;
+        } catch { this.deliveryStops = [emptyDeliveryStop(1)]; }
         this.tripDate = String(trip['tripDate'] ?? today());
         this.vendorPickups = details.vendorPickups.length
           ? details.vendorPickups.map((pickup, index) => ({
             key: index + 1,
             vendorId: pickup.vendorId,
-            broiler: { quantity: pickup.broiler.quantity, rate: pickup.broiler.rate },
-            culls: { quantity: pickup.culls.quantity, rate: pickup.culls.rate },
-            feed: { quantity: pickup.feed.quantity, rate: pickup.feed.rate }
+            broiler: { quantity: pickup.broiler.quantity, weight: pickup.broiler.weight ?? null, rate: pickup.broiler.rate },
+            culls: { quantity: pickup.culls.quantity, weight: pickup.culls.weight ?? null, rate: pickup.culls.rate },
+            feed: { quantity: pickup.feed.quantity, weight: pickup.feed.weight ?? null, rate: pickup.feed.rate }
           }))
           : [emptyPickup(1)];
         this.nextPickupKey = this.vendorPickups.length + 1;
@@ -127,6 +166,33 @@ export class CreateTripComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  recordId(record: TripRecord): string { return String(record['_demoId'] ?? ''); }
+
+  availableDeliveryVendors(stop: VendorDeliveryForm): TripRecord[] {
+    const used = new Set(this.deliveryStops.filter((item) => item.key !== stop.key).map((item) => item.vendorDestinationId));
+    return this.deliveryVendors.filter((item) => this.recordId(item) === stop.vendorDestinationId || !used.has(this.recordId(item)));
+  }
+
+  selectedDeliveryVendor(stop: VendorDeliveryForm): TripRecord | undefined {
+    return this.deliveryVendors.find((item) => this.recordId(item) === stop.vendorDestinationId);
+  }
+
+  addDeliveryStop(): void {
+    if (this.deliveryStops.length < this.deliveryVendors.length) this.deliveryStops = [...this.deliveryStops, emptyDeliveryStop(this.nextDeliveryKey++)];
+  }
+
+  removeDeliveryStop(key: number): void {
+    if (this.deliveryStops.length > 1) this.deliveryStops = this.deliveryStops.filter((item) => item.key !== key);
+  }
+
+  get deliveryStopError(): string {
+    if (!this.deliveryStops.length) return 'Add at least one vendor destination.';
+    const ids = this.deliveryStops.map((item) => item.vendorDestinationId);
+    if (ids.some((id) => !id) || new Set(ids).size !== ids.length) return 'Select a different vendor destination for each stop.';
+    if (this.deliveryStops.some((item) => [item.broilerQuantity, item.cullsQuantity].some((quantity) => quantity !== null && (!Number.isSafeInteger(quantity) || quantity < 0)) || [item.broilerWeight, item.cullsWeight, item.feedWeight].some((weight) => weight !== null && (!Number.isFinite(weight) || weight < 0 || Math.abs(weight * 100 - Math.round(weight * 100)) > 1e-8)) || [item.broilerRate, item.cullsRate, item.feedRate].some((rate) => rate !== null && (!Number.isFinite(rate) || rate < 0 || Math.abs(rate * 100 - Math.round(rate * 100)) > 1e-8)) || (item.feedQuantity !== null && (!Number.isFinite(item.feedQuantity) || item.feedQuantity < 0 || (this.feedUnit.toLowerCase() === 'kg' && Math.abs(item.feedQuantity * 100 - Math.round(item.feedQuantity * 100)) > 1e-8))) || (Number(item.broilerQuantity ?? 0) > 0 && Number(item.broilerWeight ?? 0) <= 0) || (Number(item.cullsQuantity ?? 0) > 0 && Number(item.cullsWeight ?? 0) <= 0) || (Number(item.feedQuantity ?? 0) > 0 && Number(item.feedWeight ?? 0) <= 0) || (Number(item.feedQuantity ?? 0) === 0 && Number(item.feedWeight ?? 0) > 0) || Number(item.broilerQuantity ?? 0) + Number(item.cullsQuantity ?? 0) <= 0)) return 'Each vendor stop needs positive whole-bird quantities, valid weights and rates, and a weight for any feed quantity.';
+    return '';
   }
 
   get canSave(): boolean {
@@ -189,12 +255,27 @@ export class CreateTripComponent implements OnInit {
 
   lineTotal(pickup: VendorPickupForm, kind: PickupKind): number {
     const line = pickup[kind];
-    const total = (line.quantity ?? 0) * (line.rate ?? 0);
-    if ((line.quantity !== null && line.quantity < 0) || (line.rate !== null && line.rate < 0) || !Number.isFinite(total)) {
+    const total = (line.weight ?? 0) * (line.rate ?? 0);
+    if ((line.weight !== null && (line.weight ?? 0) < 0) || (line.rate !== null && line.rate < 0) || !Number.isFinite(total)) {
       return 0;
     }
     const rounded = Math.round(total * 100) / 100;
     return Number.isFinite(rounded) ? rounded : 0;
+  }
+
+  deliveryLineTotal(stop: VendorDeliveryForm, kind: 'broiler' | 'culls' | 'feed'): number {
+    const weight = stop[`${kind}Weight`] ?? 0;
+    const rate = stop[`${kind}Rate`] ?? 0;
+    const total = weight * rate;
+    return Number.isFinite(total) ? Math.round(total * 100) / 100 : 0;
+  }
+
+  deliveryStopTotal(stop: VendorDeliveryForm): number {
+    return Math.round((this.deliveryLineTotal(stop, 'broiler') + this.deliveryLineTotal(stop, 'culls') + this.deliveryLineTotal(stop, 'feed')) * 100) / 100;
+  }
+
+  get deliveryGrandTotal(): number {
+    return Math.round(this.deliveryStops.reduce((sum, stop) => sum + this.deliveryStopTotal(stop), 0) * 100) / 100;
   }
 
   quantityError(pickup: VendorPickupForm, kind: PickupKind): string {
@@ -222,6 +303,15 @@ export class CreateTripComponent implements OnInit {
     return '';
   }
 
+  weightError(pickup: VendorPickupForm, kind: PickupKind): string {
+    const weight = pickup[kind].weight ?? null;
+    if (weight === null) return '';
+    if (!Number.isFinite(weight) || weight < 0) return 'Enter a non-negative weight.';
+    const hundredths = weight * 100;
+    return !Number.isFinite(hundredths) || Math.abs(hundredths - Math.round(hundredths)) > 1e-8
+      ? 'Use no more than two decimal places.' : '';
+  }
+
   vendorError(pickup: VendorPickupForm): string {
     if (!pickup.vendorId) return this.submitted ? 'Select a vendor.' : '';
     if (this.vendorPickups.some((other) => other.key !== pickup.key && other.vendorId === pickup.vendorId)) {
@@ -233,6 +323,10 @@ export class CreateTripComponent implements OnInit {
     for (const kind of ['broiler', 'culls', 'feed'] as const) {
       const quantityError = this.quantityError(pickup, kind);
       if (quantityError) return quantityError;
+      const weightError = this.weightError(pickup, kind);
+      if (weightError) return weightError;
+      if ((pickup[kind].quantity ?? 0) > 0 && (pickup[kind].weight ?? 0) <= 0) return `Enter a positive ${kind} weight in kilograms.`;
+      if ((pickup[kind].quantity ?? 0) === 0 && (pickup[kind].weight ?? 0) > 0) return `Enter a ${kind} quantity for the recorded weight.`;
       const rateError = this.rateError(pickup, kind);
       if (rateError) return rateError;
     }
@@ -253,8 +347,9 @@ export class CreateTripComponent implements OnInit {
     if (!this.canSave || this.saving) return;
     if (!this.selectedVehicleId || !this.selectedDriverId || !this.route.trim() ||
     !this.tripDate ||
-      !this.vendorPickups.length || this.hasPickupError || this.capacityError || !this.feedUnit) {
-      this.errorMessage = 'Review the required trip details and correct the highlighted fields.';
+      !this.vendorPickups.length || this.hasPickupError || this.capacityError || !this.feedUnit ||
+      !this.selectedSupervisorEmail || this.deliveryStopError) {
+      this.errorMessage = 'Review the trip assignment, assigned supervisor, vendor destinations, and pickup details.';
       return;
     }
 
@@ -265,7 +360,9 @@ export class CreateTripComponent implements OnInit {
         vehicleId: this.selectedVehicleId,
         driverId: this.selectedDriverId,
         route: this.route,
-        vendorPickups: this.vendorPickups
+        vendorPickups: this.vendorPickups,
+        supervisorEmail: this.selectedSupervisorEmail,
+        vendorDeliveries: this.deliveryStops.map(({ key: _key, ...stop }) => stop)
       };
       if (this.editTripId) {
         await this.tripService.updateTrip(this.editTripId, input, this.auth.currentUser?.name ?? '');

@@ -19,6 +19,7 @@
 .vendor-heading { align-items: center; background: #fbfcfa; border-bottom: 1px solid #edf0eb; display: flex; gap: 11px; padding: 11px 13px; }
 .vendor-number { align-items: center; background: #eaf1e9; border-radius: 50%; color: #527c5b; display: inline-flex; flex: 0 0 27px; font-size: 9px; font-weight: 700; height: 27px; justify-content: center; }
 .vendor-heading h3 { color: #334239; font-size: 11px; margin: 4px 0 0; }
+.vendor-heading small { color: #879289; display: block; font-size: 8px; margin-top: 4px; }
 .vendor-total { color: #3f6146; font-size: 11px; margin-left: auto; white-space: nowrap; }
 .table-wrap { overflow-x: auto; }
 table { border-collapse: collapse; text-align: left; width: 100%; }

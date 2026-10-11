@@ -51,6 +51,7 @@ export class SessionAuthService {
         email: String(user['email'] ?? ''),
         role: String(user['role'] ?? 'Read Only'),
         permissions: String(user['permissions'] ?? ''),
+        moduleAccess: String(user['moduleAccess'] ?? ''),
         businessUnit: String(user['businessUnit'] ?? directoryUser?.['businessUnit'] ?? ''),
         status: String(user['status'] ?? ''),
         _demoId: user['_demoId'],

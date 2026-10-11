@@ -22,6 +22,9 @@ td strong { color: #445248; }
 .edit-link:hover { text-decoration: underline; }
 .edit-link:focus-visible { border-radius: 2px; outline: 2px solid #a3c793; outline-offset: 2px; }
 .actions-cell { text-align: center; }
+.deleted-trip td { background: #f4f5f4; color: #9ba29c; }
+.deleted-trip .trip-link { color: #9ba29c; cursor: default; }
+.deleted-trip .status { background: #e9ece9; color: #7f8780; }
 .status { background: #eff6ef; border-radius: 10px; color: #5d8961; display: inline-flex; font-size: 8px; padding: 5px 8px; }
 .empty,.state { color: #879289; font-size: 10px; padding: 18px 19px; }
 .state { text-align: center; }

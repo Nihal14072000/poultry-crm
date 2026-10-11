@@ -131,6 +131,10 @@
     { "code": "SU-034", "name": "AgriVet Supply", "category": "Veterinary", "phone": "+91 98900 21863", "orders": "9", "outstanding": "₹0", "status": "Active" },
     { "code": "SU-042", "name": "Western Grain Co.", "category": "Feed", "phone": "+91 97654 83120", "orders": "7", "outstanding": "₹4,120", "status": "Active" }
   ] },
+  "vendor-destinations": { "records": [
+    { "code": "VD-001", "name": "Greenfield Poultry Vendors", "address": "Market Road, Nashik", "contact": "Receiving Desk", "phone": "", "status": "Active" },
+    { "code": "VD-002", "name": "Fresh Basket Vendors", "address": "Central Market, Pune", "contact": "Receiving Desk", "phone": "", "status": "Active" }
+  ] },
   "quotations": { "records": [
     { "quotation": "QT-0428", "customer": "Sunrise Foods", "date": "Oct 04, 2025", "validUntil": "Oct 11, 2025", "total": "₹4,280", "owner": "A. Morgan", "status": "Sent" },
     { "quotation": "QT-0427", "customer": "Harvest Basket Co.", "date": "Oct 03, 2025", "validUntil": "Oct 10, 2025", "total": "₹1,960", "owner": "N. Desai", "status": "Accepted" }
@@ -140,7 +144,11 @@
     { "order": "SO-2084", "customer": "Sunrise Foods", "date": "Oct 04, 2025", "items": "3", "total": "₹4,280", "payment": "Credit", "status": "Confirmed" },
     { "order": "SO-2083", "customer": "Harvest Basket Co.", "date": "Oct 04, 2025", "items": "2", "total": "₹1,960", "payment": "Paid", "status": "Dispatched" }
   ] },
-  "order-lines": { "records": [] },
+  "order-lines": { "records": [
+    { "orderId": "orders-1", "product": "Broiler birds", "category": "Broiler", "unit": "bird", "quantity": 100, "deliveredQuantity": 0, "reservedQuantity": 0, "rate": 42 },
+    { "orderId": "orders-1", "product": "Cull birds", "category": "Culls", "unit": "bird", "quantity": 10, "deliveredQuantity": 0, "reservedQuantity": 0, "rate": 28 },
+    { "orderId": "orders-2", "product": "Broiler birds", "category": "Broiler", "unit": "bird", "quantity": 75, "deliveredQuantity": 0, "reservedQuantity": 0, "rate": 42 }
+  ] },
   "dispatch": { "records": [
     { "delivery": "DO-0842", "order": "SO-2083", "customer": "Harvest Basket Co.", "vehicle": "MH-12-AB-4521", "driver": "S. Jadhav", "scheduled": "Oct 04 · 11:30 AM", "status": "In transit" },
     { "delivery": "DO-0841", "order": "SO-2082", "customer": "Daily Fresh Market", "vehicle": "MH-11-CD-1078", "driver": "P. Kadam", "scheduled": "Oct 04 · 09:00 AM", "status": "Delivered" }
@@ -184,6 +192,10 @@
     { "vehicleId": "vehicles-2", "employeeId": "employees-4", "assignedDate": "2025-10-02", "returnedDate": "", "status": "Assigned", "location": "Pune" }
   ] },
   "trips": { "records": [] },
+  "trip-deliveries": { "records": [] },
+  "trip-mortality": { "records": [] },
+  "trip-payments": { "records": [] },
+  "trip-pickups": { "records": [] },
   "receivables": { "records": [
     { "invoice": "INV-1048", "customer": "Sunrise Foods", "issued": "Sep 14, 2025", "due": "Sep 28, 2025", "amount": "₹4,280", "balance": "₹4,280", "status": "Overdue" },
     { "invoice": "INV-1046", "customer": "Harvest Basket Co.", "issued": "Sep 26, 2025", "due": "Oct 10, 2025", "amount": "₹1,960", "balance": "₹980", "status": "Due soon" }
@@ -222,7 +234,10 @@
   "users-roles": { "records": [
     { "name": "Alex Morgan", "email": "alex.morgan@example.test", "role": "Organization Admin", "permissions": "All organization modules", "businessUnit": "Greenfield Poultry", "lastActive": "Now", "status": "Active" },
     { "name": "Meera Joshi", "email": "meera.joshi@example.test", "role": "Farm Manager", "permissions": "Assigned farms and flocks", "businessUnit": "Willow Creek", "lastActive": "Today, 10:12 AM", "status": "Active" },
-    { "name": "Ravi Patil", "email": "ravi.patil@example.test", "role": "Warehouse Manager", "permissions": "Inventory and transfers", "businessUnit": "Central store", "lastActive": "Today, 08:44 AM", "status": "Active" }
+    { "name": "Ravi Patil", "email": "ravi.patil@example.test", "role": "Warehouse Manager", "permissions": "Inventory and transfers", "businessUnit": "Central store", "lastActive": "Today, 08:44 AM", "status": "Active" },
+    { "name": "Nisha Kulkarni", "email": "nisha.kulkarni@example.test", "role": "Farm Supervisor", "permissions": "Assigned trip deliveries", "businessUnit": "Greenfield Poultry", "lastActive": "Never", "status": "Active" },
+    { "name": "Arjun Desai", "email": "arjun.desai@example.test", "role": "Sales Manager", "permissions": "Sales and trip planning", "businessUnit": "Greenfield Poultry", "lastActive": "Never", "status": "Active" },
+    { "name": "Rustum", "email": "rustum@example.test", "role": "Sales Manager", "permissions": "Inventory, Trading, People & logistics, Finance", "moduleAccess": "inventory,trading,people-logistics,finance", "businessUnit": "Organization", "lastActive": "Never", "status": "Active" }
   ] },
   "documents": { "records": [
     { "document": "FW-2412 placement record", "category": "Flock", "linkedTo": "Batch FW-2412", "uploadedBy": "M. Joshi", "updated": "Sep 06, 2025", "size": "248 KB", "status": "Available" },
@@ -237,6 +252,8 @@
   "administration": { "records": [
     { "name": "Alex Morgan", "email": "alex.morgan@example.test", "role": "Organization Admin", "businessUnit": "Greenfield Poultry", "lastActive": "Now", "access": "Full access", "status": "Active" },
     { "name": "Meera Joshi", "email": "meera.joshi@example.test", "role": "Farm Manager", "businessUnit": "Willow Creek", "lastActive": "Today, 10:12 AM", "access": "Farm operations", "status": "Active" },
-    { "name": "Ravi Patil", "email": "ravi.patil@example.test", "role": "Warehouse Manager", "businessUnit": "Central store", "lastActive": "Today, 08:44 AM", "access": "Inventory", "status": "Active" }
+    { "name": "Ravi Patil", "email": "ravi.patil@example.test", "role": "Warehouse Manager", "businessUnit": "Central store", "lastActive": "Today, 08:44 AM", "access": "Inventory", "status": "Active" },
+    { "name": "Nisha Kulkarni", "email": "nisha.kulkarni@example.test", "role": "Farm Supervisor", "businessUnit": "Greenfield Poultry", "lastActive": "Never", "access": "Assigned trips", "status": "Active" },
+    { "name": "Arjun Desai", "email": "arjun.desai@example.test", "role": "Sales Manager", "businessUnit": "Greenfield Poultry", "lastActive": "Never", "access": "Sales and trip planning", "status": "Active" }
   ] }
 }
