@@ -155,7 +155,11 @@ export const routes: Routes = [
   sectionRoute('people-logistics', peoplePages, [
     { path: '', pathMatch: 'full', redirectTo: 'employees' },
     { path: 'fleet', redirectTo: 'vehicles', pathMatch: 'full' },
-    { path: 'vehicle-assignments', canActivate: [requirePermissionGuard], data: { resource: 'vehicle-assignments' }, loadComponent: () => import('./features/people-logistics/vehicle-assignments/vehicle-assignments.component').then((module) => module.VehicleAssignmentsComponent) }
+    { path: 'vehicle-assignments', canActivate: [requirePermissionGuard], data: { resource: 'vehicle-assignments' }, loadComponent: () => import('./features/people-logistics/vehicle-assignments/vehicle-assignments.component').then((module) => module.VehicleAssignmentsComponent) },
+    { path: 'trips/new', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/create-trip.component').then((module) => module.CreateTripComponent) },
+    { path: 'trips/:tripId/edit', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/create-trip.component').then((module) => module.CreateTripComponent) },
+    { path: 'trips/:tripId', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/trip-details.component').then((module) => module.TripDetailsComponent) },
+    { path: 'trips', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/trips.component').then((module) => module.TripsComponent) }
   ]),
   sectionRoute('finance', financePages, [{ path: '', pathMatch: 'full', redirectTo: 'overview' }]),
   sectionRoute('insights-admin', insightPages, [{ path: '', pathMatch: 'full', redirectTo: 'reports' }]),
@@ -191,6 +195,7 @@ export const routes: Routes = [
   { path: 'vehicles', redirectTo: 'people-logistics/vehicles', pathMatch: 'full' },
   { path: 'drivers', redirectTo: 'people-logistics/employees', pathMatch: 'full' },
   { path: 'vehicle-assignments', redirectTo: 'people-logistics/vehicle-assignments', pathMatch: 'full' },
+  { path: 'trips', redirectTo: 'people-logistics/trips', pathMatch: 'full' },
   { path: 'receivables', redirectTo: 'finance/receivables', pathMatch: 'full' },
   { path: 'payables', redirectTo: 'finance/payables', pathMatch: 'full' },
   { path: 'payments', redirectTo: 'finance/payments', pathMatch: 'full' },

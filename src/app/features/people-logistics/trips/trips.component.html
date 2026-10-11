@@ -1,0 +1,62 @@
+<main class="trips-page">
+  <header class="page-heading">
+    <div>
+      <div class="eyebrow">PEOPLE & LOGISTICS <span>/</span> VEHICLE MANAGEMENT</div>
+      <h1>Trips</h1>
+      <p>Plan vehicle pickups and track trip quantities and value.</p>
+    </div>
+    @if (rolePermissions.can('trips', 'create')) {
+      <a class="button button-primary" routerLink="/people-logistics/trips/new">＋ Create trip</a>
+    }
+  </header>
+
+  @if (successMessage) { <p class="feedback success" role="status">{{ successMessage }}</p> }
+  @if (errorMessage) { <p class="feedback error" role="alert">{{ errorMessage }}</p> }
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div><span class="step">TRIP REGISTER</span><h2>Vehicle trips</h2><p>Each trip is linked to one vehicle, driver and one or more vendor pickups.</p></div>
+    </div>
+    @if (loading) {
+      <p class="state">Loading trips…</p>
+    } @else if (errorMessage) {
+      <p class="empty">Trip records could not be displayed.</p>
+    } @else if (!trips.length) {
+      <p class="empty">No trips yet. Create a trip to record a vehicle pickup.</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>TRIP</th><th>DATE</th><th>VEHICLE</th><th>DRIVER</th><th>ROUTE</th><th>VENDORS</th><th>BIRDS</th><th>FEED</th><th>GRAND TOTAL</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+          <tbody>
+            @for (trip of trips; track trip['_demoId']) {
+              <tr>
+                <td>
+                  <a class="trip-link" [routerLink]="['/people-logistics/trips', trip['_demoId']]">
+                    {{ trip['tripNumber'] || 'Trip details' }}
+                  </a>
+                </td>
+                <td>{{ trip['tripDate'] || '—' }}</td>
+                <td>{{ trip['vehicleName'] || '—' }}</td>
+                <td>{{ trip['driverName'] || '—' }}</td>
+                <td>{{ trip['route'] || '—' }}</td>
+                <td>{{ trip['vendorNames'] || trip['vendorName'] || '—' }}</td>
+                <td>{{ trip['totalBirds'] || 0 }}</td>
+                <td>{{ trip['totalFeed'] || 0 }} {{ trip['feedUnit'] || '' }}</td>
+                <td>{{ (trip['grandTotal'] || 0) | currency:'INR':'symbol':'1.2-2' }}</td>
+                <td><span class="status">{{ trip['status'] || '—' }}</span></td>
+                <td class="actions-cell">
+                  @if (rolePermissions.can('trips', 'update')) {
+                    <a class="edit-link" [routerLink]="['/people-logistics/trips', trip['_demoId'], 'edit']">Edit</a>
+                  } @else {
+                    <span>—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+  <p class="demo-note">Vendor pickup quantities are stored on the trip, separate from supplier orders and deliveries.</p>
+</main>

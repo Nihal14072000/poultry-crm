@@ -6,7 +6,7 @@ const allResources = [
   'dashboard', 'farms', 'sheds', 'batches', 'daily-operations', 'broiler', 'layer', 'breeder', 'hatchery',
   'feed-health', 'feed', 'health', 'medication', 'products', 'warehouses', 'inventory', 'transfers',
   'stock-ledger', 'suppliers', 'procurement', 'customers', 'quotations', 'orders', 'sales', 'dispatch',
-  'leads', 'opportunities', 'follow-ups', 'complaints', 'employees', 'fleet', 'vehicles', 'vehicle-assignments', 'finance', 'receivables',
+  'leads', 'opportunities', 'follow-ups', 'complaints', 'employees', 'fleet', 'vehicles', 'vehicle-assignments', 'trips', 'finance', 'receivables',
   'payables', 'payments', 'expenses', 'profitability', 'reports', 'analytics', 'notifications',
   'organization', 'users-roles', 'documents', 'audit', 'administration'
 ];
@@ -23,7 +23,7 @@ const roleResources: Record<string, string[]> = {
   Veterinarian: ['dashboard', 'farms', 'sheds', 'batches', 'daily-operations', 'health', 'medication', 'feed-health', 'documents', 'notifications', 'reports'],
   'Warehouse Manager': ['dashboard', 'products', 'warehouses', 'inventory', 'transfers', 'stock-ledger', 'suppliers', 'feed-health', 'documents', 'notifications', 'reports'],
   'Procurement Manager': ['dashboard', 'products', 'warehouses', 'inventory', 'transfers', 'stock-ledger', 'suppliers', 'procurement', 'expenses', 'documents', 'notifications', 'reports'],
-  'Sales Manager': ['dashboard', 'customers', 'quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints', 'products', 'receivables', 'documents', 'notifications', 'reports', 'analytics'],
+  'Sales Manager': ['dashboard', 'customers', 'quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints', 'products', 'receivables', 'suppliers', 'vehicles', 'employees', 'trips', 'documents', 'notifications', 'reports', 'analytics'],
   'Sales Executive': ['dashboard', 'customers', 'quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints', 'products', 'documents', 'notifications'],
   Accountant: ['dashboard', 'finance', 'receivables', 'payables', 'payments', 'expenses', 'profitability', 'sales', 'procurement', 'reports', 'analytics', 'documents', 'notifications', 'audit'],
   'HR Manager': ['dashboard', 'employees', 'administration', 'documents', 'notifications', 'reports'],
@@ -46,6 +46,9 @@ export class RolePermissionService {
   can(resource: string, action: PermissionAction = 'read'): boolean {
     const user = this.auth.currentUser;
     if (!user || user.status.toLowerCase() !== 'active') return false;
+    if (resource === 'trips') {
+      return action === 'read' || (user.role === 'Sales Manager' && ['create', 'update'].includes(action));
+    }
     const allowedResources = roleResources[user.role] ?? [];
     if (!allowedResources.includes(resource)) return false;
     const override = this.readOverrides()[user.role];
@@ -89,8 +92,8 @@ export class RolePermissionService {
         approve: ['procurement', 'expenses']
       },
       'Sales Manager': {
-        create: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints'],
-        update: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints'],
+        create: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'trips', 'leads', 'opportunities', 'follow-ups', 'complaints'],
+        update: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'trips', 'leads', 'opportunities', 'follow-ups', 'complaints'],
         transition: ['quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints'],
         approve: ['orders', 'sales']
       },
@@ -179,14 +182,23 @@ export class RolePermissionService {
 
   getRolePermissions(role: string): string[] {
     const override = this.readOverrides()[role];
-    if (override) return override;
+    if (override) return this.tripPermissions(role, override);
     const resources = roleResources[role] ?? [];
-    if (readOnlyRoles.has(role)) return resources.map((resource) => `${resource}.read`);
+    if (readOnlyRoles.has(role)) return this.tripPermissions(role, resources.map((resource) => `${resource}.read`));
     const actions: PermissionAction[] = ['read', 'create', 'update', 'delete', 'transition', 'approve'];
-    if (role === 'Organization Admin') return resources.map((resource) => `${resource}.*`);
-    return resources.flatMap((resource) => actions
+    if (role === 'Organization Admin') return this.tripPermissions(role, resources.map((resource) => `${resource}.*`));
+    return this.tripPermissions(role, resources.flatMap((resource) => actions
       .filter((action) => action === 'read' || this.canAsRole(role, resource, action))
-      .map((action) => `${resource}.${action}`));
+      .map((action) => `${resource}.${action}`)));
+  }
+
+  private tripPermissions(role: string, permissions: string[]): string[] {
+    const otherPermissions = permissions.filter((permission) => !permission.startsWith('trips.'));
+    return [
+      ...otherPermissions,
+      'trips.read',
+      ...(role === 'Sales Manager' ? ['trips.create', 'trips.update'] : [])
+    ];
   }
 
   get permissionActions(): PermissionAction[] {
@@ -233,7 +245,7 @@ export class RolePermissionService {
       Veterinarian: { create: ['health', 'medication'], update: ['health', 'medication'], transition: ['health', 'medication'] },
       'Warehouse Manager': { create: ['products', 'warehouses', 'transfers', 'stock-ledger'], update: ['products', 'warehouses', 'transfers'], delete: ['products', 'warehouses'], transition: ['transfers'] },
       'Procurement Manager': { create: ['procurement', 'suppliers', 'expenses'], update: ['procurement', 'suppliers', 'expenses'], transition: ['procurement', 'expenses'], approve: ['procurement', 'expenses'] },
-      'Sales Manager': { create: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints'], update: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints'], transition: ['quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints'], approve: ['orders', 'sales'] },
+      'Sales Manager': { create: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'trips', 'leads', 'opportunities', 'follow-ups', 'complaints'], update: ['customers', 'quotations', 'orders', 'sales', 'dispatch', 'trips', 'leads', 'opportunities', 'follow-ups', 'complaints'], transition: ['quotations', 'orders', 'sales', 'dispatch', 'leads', 'opportunities', 'follow-ups', 'complaints'], approve: ['orders', 'sales'] },
       'Sales Executive': { create: ['quotations', 'orders', 'leads', 'opportunities', 'follow-ups', 'complaints'], update: ['quotations', 'orders', 'leads', 'opportunities', 'follow-ups', 'complaints'], transition: ['quotations', 'orders', 'leads', 'opportunities', 'follow-ups', 'complaints'] },
       Accountant: { create: ['payments', 'expenses', 'receivables', 'payables'], update: ['payments', 'expenses', 'receivables', 'payables'], transition: ['payments', 'expenses', 'receivables', 'payables'], approve: ['payments', 'expenses'] },
       'HR Manager': { create: ['employees'], update: ['employees'], delete: ['employees'] },

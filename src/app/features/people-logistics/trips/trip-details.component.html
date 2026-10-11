@@ -1,0 +1,96 @@
+<main class="trip-details-page">
+  <header class="page-heading">
+    <div>
+      <div class="eyebrow">PEOPLE & LOGISTICS <span>/</span> VEHICLE MANAGEMENT <span>/</span> TRIPS</div>
+      <h1>{{ trip?.['tripNumber'] || 'Trip details' }}</h1>
+      <p>Vehicle trip and vendor pickup details.</p>
+    </div>
+    <a class="button button-secondary" routerLink="/people-logistics/trips">← Back to trips</a>
+  </header>
+
+  @if (loading) {
+    <section class="panel state">Loading trip details…</section>
+  } @else if (errorMessage) {
+    <p class="feedback error" role="alert">{{ errorMessage }}</p>
+    <a class="button button-secondary" routerLink="/people-logistics/trips">Return to trips</a>
+  } @else if (trip) {
+    <section class="panel">
+      <div class="section-heading">
+        <div><span class="step">TRIP ASSIGNMENT</span><h2>Assignment details</h2></div>
+        <span class="status">{{ trip['status'] || '—' }}</span>
+      </div>
+      <dl class="details-grid">
+        <div><dt>Trip number</dt><dd>{{ trip['tripNumber'] || '—' }}</dd></div>
+        <div><dt>Trip date</dt><dd>{{ trip['tripDate'] || '—' }}</dd></div>
+        <div><dt>Vehicle</dt><dd>{{ trip['vehicleName'] || '—' }}</dd></div>
+        <div><dt>Vehicle type</dt><dd>{{ trip['vehicleType'] || '—' }}</dd></div>
+        <div><dt>Driver</dt><dd>{{ trip['driverName'] || '—' }}</dd></div>
+        <div><dt>Route</dt><dd>{{ trip['route'] || '—' }}</dd></div>
+        <div><dt>Location</dt><dd>{{ trip['location'] || '—' }}</dd></div>
+        <div><dt>Vendors</dt><dd>{{ trip['vendorCount'] || vendorPickups.length }}</dd></div>
+      </dl>
+    </section>
+
+    <section class="panel pickups-panel">
+      <div class="section-heading">
+        <div><span class="step">VENDOR DETAILS</span><h2>Pickup breakdown</h2></div>
+      </div>
+      @if (!vendorPickups.length) {
+        <p class="empty">This trip has no saved vendor pickup breakdown.</p>
+      } @else {
+        @for (pickup of vendorPickups; track pickup.vendorId; let index = $index) {
+          <article class="vendor-card">
+            <header class="vendor-heading">
+              <span class="vendor-number">{{ (index + 1) | number:'2.0-0' }}</span>
+              <div><span class="step">VENDOR</span><h3>{{ pickup.vendorName }}</h3></div>
+              <strong class="vendor-total">{{ pickup.total | currency:'INR':'symbol':'1.2-2' }}</strong>
+            </header>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>ITEM</th><th>QUANTITY</th><th>RATE (₹ / UNIT)</th><th>LINE TOTAL (₹)</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Broiler</th>
+                    <td>{{ pickup.broiler.quantity | number }}</td>
+                    <td>{{ pickup.broiler.rate | currency:'INR':'symbol':'1.2-2' }}</td>
+                    <td>{{ pickup.broiler.total | currency:'INR':'symbol':'1.2-2' }}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Culls</th>
+                    <td>{{ pickup.culls.quantity | number }}</td>
+                    <td>{{ pickup.culls.rate | currency:'INR':'symbol':'1.2-2' }}</td>
+                    <td>{{ pickup.culls.total | currency:'INR':'symbol':'1.2-2' }}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Feed <small>{{ trip['feedUnit'] || '' }}</small></th>
+                    <td>{{ pickup.feed.quantity | number:'1.0-2' }}</td>
+                    <td>{{ pickup.feed.rate | currency:'INR':'symbol':'1.2-2' }}</td>
+                    <td>{{ pickup.feed.total | currency:'INR':'symbol':'1.2-2' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        }
+      }
+    </section>
+
+    <section class="summary-panel" aria-label="Trip totals">
+      <div class="section-heading"><div><span class="step">TRIP SUMMARY</span><h2>Overall totals</h2></div></div>
+      <div class="summary-grid">
+        <div><span>Total Vendors</span><strong>{{ trip['vendorCount'] || vendorPickups.length }}</strong></div>
+        <div><span>Total Broiler</span><strong>{{ (trip['totalBroiler'] || 0) | number }}</strong><small>birds</small></div>
+        <div><span>Total Culls</span><strong>{{ (trip['totalCulls'] || 0) | number }}</strong><small>birds</small></div>
+        <div><span>Total Birds</span><strong>{{ (trip['totalBirds'] || 0) | number }}</strong><small>broiler + culls</small></div>
+        <div><span>Total Feed</span><strong>{{ (trip['totalFeed'] || 0) | number:'1.0-2' }}</strong><small>{{ trip['feedUnit'] || '' }}</small></div>
+        <div class="grand-total"><span>Grand Total</span><strong>{{ (trip['grandTotal'] || 0) | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+      </div>
+    </section>
+
+    <section class="audit-note" aria-label="Trip record information">
+      <span>Created by {{ trip['createdBy'] || '—' }}</span>
+      <span>Created {{ trip['createdAt'] ? (trip['createdAt'] | date:'medium') : '—' }}</span>
+      <span>Updated {{ trip['updatedAt'] ? (trip['updatedAt'] | date:'medium') : '—' }}</span>
+    </section>
+  }
+</main>

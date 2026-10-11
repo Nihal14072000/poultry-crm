@@ -183,6 +183,7 @@
     { "vehicleId": "vehicles-1", "employeeId": "employees-3", "assignedDate": "2025-10-01", "returnedDate": "", "status": "Assigned", "location": "Nashik" },
     { "vehicleId": "vehicles-2", "employeeId": "employees-4", "assignedDate": "2025-10-02", "returnedDate": "", "status": "Assigned", "location": "Pune" }
   ] },
+  "trips": { "records": [] },
   "receivables": { "records": [
     { "invoice": "INV-1048", "customer": "Sunrise Foods", "issued": "Sep 14, 2025", "due": "Sep 28, 2025", "amount": "₹4,280", "balance": "₹4,280", "status": "Overdue" },
     { "invoice": "INV-1046", "customer": "Harvest Basket Co.", "issued": "Sep 26, 2025", "due": "Oct 10, 2025", "amount": "₹1,960", "balance": "₹980", "status": "Due soon" }

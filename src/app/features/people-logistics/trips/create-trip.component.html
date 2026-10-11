@@ -1,0 +1,151 @@
+<main class="create-trip-page">
+  <header class="page-heading">
+    <div>
+      <div class="eyebrow">PEOPLE & LOGISTICS <span>/</span> VEHICLE MANAGEMENT <span>/</span> TRIPS</div>
+      <h1>{{ editTripId ? 'Edit Trip' : 'Create Trip' }}</h1>
+      <p>{{ editTripId ? 'Update vehicle, driver, route and vendor pickup details.' : 'Add vehicle, driver, route and vendor pickup details for the trip.' }}</p>
+    </div>
+    <a class="back-link" routerLink="/people-logistics/trips">← Trips</a>
+  </header>
+
+  @if (errorMessage) { <p class="feedback error" role="alert">{{ errorMessage }}</p> }
+
+  @if (loading) {
+    <section class="panel state">Loading vehicles, drivers, vendors and feed units…</section>
+  } @else if (!canSave) {
+    <p class="feedback error" role="alert">Only Sales Managers can create or edit trips.</p>
+  } @else {
+    <form (ngSubmit)="submitTrip()" novalidate>
+      <section class="panel assignment-panel">
+        <div class="section-heading">
+          <span class="section-icon" aria-hidden="true">01</span>
+          <div><span class="step">TRIP ASSIGNMENT</span><h2>Vehicle, driver & route</h2></div>
+        </div>
+        <div class="assignment-grid">
+          <label>Vehicle <span class="required">*</span>
+            <select name="vehicle" required [(ngModel)]="selectedVehicleId">
+              <option value="">Select an active vehicle</option>
+              @for (vehicle of vehicles; track vehicle['_demoId']) {
+                <option [value]="vehicle['_demoId']">{{ vehicle['vehicle'] }} · {{ vehicle['type'] }}</option>
+              }
+            </select>
+            @if (submitted && !selectedVehicleId) { <small class="field-error">Select a vehicle.</small> }
+            @if (!vehicles.length) { <small class="field-hint">No active vehicles are available to you.</small> }
+          </label>
+          <label>Driver <span class="required">*</span>
+            <select name="driver" required [(ngModel)]="selectedDriverId">
+              <option value="">Select an active driver</option>
+              @for (driver of drivers; track driver['_demoId']) {
+                <option [value]="driver['_demoId']">{{ driver['employee'] }} · {{ driver['licenseNo'] || 'Licence not recorded' }}</option>
+              }
+            </select>
+            @if (submitted && !selectedDriverId) { <small class="field-error">Select an active driver.</small> }
+            @if (!drivers.length) { <small class="field-hint">No active driver employees are available to you.</small> }
+          </label>
+          <label>Route <span class="required">*</span>
+            <input name="route" type="text" list="saved-trip-routes" maxlength="120" autocomplete="off" placeholder="Select or enter route name" [(ngModel)]="route">
+            <datalist id="saved-trip-routes">
+              @for (savedRoute of savedRoutes; track savedRoute) { <option [value]="savedRoute"></option> }
+            </datalist>
+            <small class="field-hint">{{ savedRoutes.length ? 'Choose a saved route or enter a new route name.' : 'Routes are not configured as a master list yet. Enter a route name.' }}</small>
+            @if (submitted && !route.trim()) { <small class="field-error">Enter a route name.</small> }
+          </label>
+        </div>
+        @if (selectedVehicle; as vehicle) {
+          <div class="vehicle-details">
+            <span aria-hidden="true">▣</span>
+            <strong>{{ vehicle['vehicle'] }}</strong>
+            <span>{{ vehicle['type'] || 'Vehicle type not recorded' }}</span>
+            @if (selectedBirdCapacity !== null) {
+              <span>Capacity · {{ selectedBirdCapacity }} birds</span>
+            } @else if (vehicle['capacityKg']) {
+              <span>Payload · {{ vehicle['capacityKg'] }} kg</span>
+            }
+          </div>
+        }
+        @if (capacityError) { <p class="field-error capacity-error" role="alert">{{ capacityError }}</p> }
+        <label class="date-field">Trip date <span class="required">*</span>
+          <input name="tripDate" type="date" required [(ngModel)]="tripDate">
+          @if (submitted && !tripDate) { <small class="field-error">Select a trip date.</small> }
+        </label>
+      </section>
+
+      <section class="panel vendor-panel">
+        <div class="section-heading">
+          <span class="section-icon" aria-hidden="true">02</span>
+          <div><span class="step">VENDOR DETAILS</span><h2>Vendor pickups</h2></div>
+          <button class="button button-secondary add-vendor" type="button" (click)="addVendor()" [disabled]="vendorPickups.length >= vendors.length">
+            ＋ Add vendor
+          </button>
+        </div>
+        <p class="vendor-hint">Select a different vendor for each pickup. Each pickup’s items, quantities and rates are saved with that vendor.</p>
+        @for (vendorPickup of vendorPickups; track vendorPickup.key; let index = $index) {
+          <div class="vendor-card">
+            <div class="vendor-card-heading">
+              <span class="vendor-number">{{ (index + 1) | number:'2.0-0' }}</span>
+              <label>Vendor name <span class="required">*</span>
+                <select [name]="'vendor-' + vendorPickup.key" required [(ngModel)]="vendorPickup.vendorId">
+                  <option value="">Select an active vendor</option>
+                  @for (vendor of availableVendors(vendorPickup); track vendor['_demoId']) {
+                    <option [value]="vendor['_demoId']">{{ vendor['name'] }} · {{ vendor['category'] }}</option>
+                  }
+                </select>
+                @if (vendorError(vendorPickup)) { <small class="field-error">{{ vendorError(vendorPickup) }}</small> }
+                @if (!vendors.length) { <small class="field-hint">No active vendors are available to you.</small> }
+              </label>
+              @if (vendorPickups.length > 1) {
+                <button class="remove-vendor" type="button" (click)="removeVendor(vendorPickup.key)" [attr.aria-label]="'Remove vendor pickup ' + (index + 1)">Remove</button>
+              }
+            </div>
+            <div class="pickup-table-wrap">
+              <table class="pickup-table">
+                <thead><tr><th>ITEM</th><th>QUANTITY</th><th>RATE (₹ / UNIT)</th><th>TOTAL (₹)</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><span class="item-icon broiler" aria-hidden="true">B</span>Broiler <small>birds</small></th>
+                    <td><input [name]="'broiler-quantity-' + vendorPickup.key" type="number" min="0" step="1" inputmode="numeric" [attr.aria-label]="'Vendor ' + (index + 1) + ' broiler quantity'" [(ngModel)]="vendorPickup.broiler.quantity">@if (quantityError(vendorPickup, 'broiler')) { <small class="field-error">{{ quantityError(vendorPickup, 'broiler') }}</small> }</td>
+                    <td><input [name]="'broiler-rate-' + vendorPickup.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor ' + (index + 1) + ' broiler rate in rupees'" [(ngModel)]="vendorPickup.broiler.rate">@if (rateError(vendorPickup, 'broiler')) { <small class="field-error">{{ rateError(vendorPickup, 'broiler') }}</small> }</td>
+                    <td class="calculated">{{ lineTotal(vendorPickup, 'broiler') | currency:'INR':'symbol':'1.2-2' }}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><span class="item-icon culls" aria-hidden="true">C</span>Culls <small>birds</small></th>
+                    <td><input [name]="'culls-quantity-' + vendorPickup.key" type="number" min="0" step="1" inputmode="numeric" [attr.aria-label]="'Vendor ' + (index + 1) + ' culls quantity'" [(ngModel)]="vendorPickup.culls.quantity">@if (quantityError(vendorPickup, 'culls')) { <small class="field-error">{{ quantityError(vendorPickup, 'culls') }}</small> }</td>
+                    <td><input [name]="'culls-rate-' + vendorPickup.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor ' + (index + 1) + ' culls rate in rupees'" [(ngModel)]="vendorPickup.culls.rate">@if (rateError(vendorPickup, 'culls')) { <small class="field-error">{{ rateError(vendorPickup, 'culls') }}</small> }</td>
+                    <td class="calculated">{{ lineTotal(vendorPickup, 'culls') | currency:'INR':'symbol':'1.2-2' }}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><span class="item-icon feed" aria-hidden="true">F</span>Feed <small>{{ feedUnit || 'unit unavailable' }}</small></th>
+                    <td><input [name]="'feed-quantity-' + vendorPickup.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor ' + (index + 1) + ' feed quantity'" [(ngModel)]="vendorPickup.feed.quantity">@if (quantityError(vendorPickup, 'feed')) { <small class="field-error">{{ quantityError(vendorPickup, 'feed') }}</small> }</td>
+                    <td><input [name]="'feed-rate-' + vendorPickup.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor ' + (index + 1) + ' feed rate in rupees'" [(ngModel)]="vendorPickup.feed.rate">@if (rateError(vendorPickup, 'feed')) { <small class="field-error">{{ rateError(vendorPickup, 'feed') }}</small> }</td>
+                    <td class="calculated">{{ lineTotal(vendorPickup, 'feed') | currency:'INR':'symbol':'1.2-2' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+        @if (!vendorPickups.length) { <p class="field-error pickup-error" role="alert">Add at least one vendor pickup.</p> }
+      </section>
+
+      <section class="summary-panel" aria-label="Trip summary">
+        <div class="summary-heading"><span class="section-icon" aria-hidden="true">03</span><div><span class="step">TRIP SUMMARY</span><h2>Pickup totals</h2></div></div>
+        <div class="summary-grid">
+          <div><span>Total Vendors</span><strong>{{ summary.vendors }}</strong></div>
+          <div><span>Total Broiler</span><strong>{{ summary.broiler | number }}</strong><small>birds</small></div>
+          <div><span>Total Culls</span><strong>{{ summary.culls | number }}</strong><small>birds</small></div>
+          <div><span>Total Birds</span><strong>{{ summary.birds | number }}</strong><small>broiler + culls</small></div>
+          <div><span>Total Feed</span><strong>{{ summary.feed | number:'1.0-2' }}</strong><small>{{ feedUnit }}</small></div>
+          <div class="grand-total"><span>Grand Total</span><strong>{{ summary.grandTotal | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+        </div>
+        <p class="summary-note">Bird counts and feed weight are shown separately because they use different units.</p>
+      </section>
+
+      <footer class="form-actions">
+        <button class="button button-secondary" type="button" (click)="cancel()" [disabled]="saving">Cancel</button>
+        <button class="button button-primary" type="submit" [disabled]="saving || !canSave">
+          {{ saving ? 'Saving…' : editTripId ? 'Save changes' : 'Submit trip' }}
+        </button>
+      </footer>
+    </form>
+  }
+</main>

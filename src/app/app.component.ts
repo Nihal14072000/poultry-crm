@@ -80,7 +80,8 @@ export class AppComponent {
       links: [
         { label: 'Employees', path: '/people-logistics/employees', icon: 'employees' },
         { label: 'Vehicles', path: '/people-logistics/vehicles', icon: 'fleet' },
-        { label: 'Vehicle assignments', path: '/people-logistics/vehicle-assignments', icon: 'dispatch' }
+        { label: 'Vehicle assignments', path: '/people-logistics/vehicle-assignments', icon: 'dispatch' },
+        { label: 'Trips', path: '/people-logistics/trips', icon: 'dispatch' }
       ]
     },
     {

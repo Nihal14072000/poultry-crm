@@ -9,6 +9,7 @@
 .button-primary { background: #315f45; border: 1px solid #315f45; color: #fff; }
 .button:disabled,.row-button:disabled { cursor: not-allowed; opacity: .55; }
 .panel { background: #fff; border: 1px solid #e9ece7; border-radius: 9px; margin-bottom: 16px; overflow: hidden; }
+.assignment-panel { overflow: visible; }
 .panel-heading { align-items: flex-start; border-bottom: 1px solid #eef0ed; display: flex; justify-content: space-between; padding: 17px 19px; }
 .panel-heading h2 { color: #334239; font-family: Calibri,Arial,sans-serif; font-size: 14px; margin: 5px 0 3px; }
 .panel-heading p { color: #909a92; font-size: 9px; margin: 0; }
