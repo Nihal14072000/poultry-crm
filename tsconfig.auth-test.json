@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "include": [
+    "src/app/common/services/session-auth.service.spec.ts",
+    "src/app/common/services/role-permission.service.spec.ts",
+    "src/app/common/services/driver-directory.service.spec.ts",
+    "src/app/common/components/directory-page/workspace-page.component.spec.ts"
+  ]
+}

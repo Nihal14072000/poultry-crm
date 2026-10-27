@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -37,6 +38,7 @@ export class WorkspacePageComponent implements OnInit {
   mode: 'editable' | 'append-only' | 'read-only' = 'editable';
   actionError = '';
   successMessage = '';
+  createdEmployeeName: string | null = null;
   validationAttempted = false;
   editorOpen = false;
   editorMode: 'create' | 'edit' = 'create';
@@ -79,6 +81,7 @@ export class WorkspacePageComponent implements OnInit {
         this.mode = config.mode;
         this.fieldSuggestions = {};
         this.successMessage = '';
+        this.createdEmployeeName = null;
         this.actionError = '';
         this.currentPage = 1;
         this.query = '';
@@ -216,6 +219,7 @@ export class WorkspacePageComponent implements OnInit {
     this.editingId = '';
     this.actionError = '';
     this.successMessage = '';
+    this.createdEmployeeName = null;
     this.validationAttempted = false;
     this.editorOpen = true;
   }
@@ -230,6 +234,7 @@ export class WorkspacePageComponent implements OnInit {
     this.editingId = String(record['_demoId'] ?? '');
     this.actionError = '';
     this.successMessage = '';
+    this.createdEmployeeName = null;
     this.validationAttempted = false;
     this.editorOpen = true;
   }
@@ -292,6 +297,10 @@ export class WorkspacePageComponent implements OnInit {
       return this.isOptionalField(key) || (this.editorMode === 'edit' && original?.[key] === undefined)
         ? ''
         : 'This field is required.';
+    }
+    if (this.resource === 'employees' && key === 'name' && this.editorMode === 'create') {
+      if (value.includes(':')) return 'Employee name cannot contain a colon.';
+      if (value.length > 100) return 'Employee name must be 100 characters or fewer.';
     }
     if (/email/i.test(key) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Enter a valid email address.';
     if (/phone|mobile/i.test(key)) {
@@ -464,7 +473,8 @@ export class WorkspacePageComponent implements OnInit {
     );
   }
 
-  private maxFieldLength(key: string): number {
+  maxFieldLength(key: string): number {
+    if (this.resource === 'employees' && key === 'name' && this.editorMode === 'create') return 100;
     return /(notes?|description|comments?|remark|address)/i.test(key) ? 500 : 120;
   }
 
@@ -588,7 +598,12 @@ export class WorkspacePageComponent implements OnInit {
         else this.records = this.records.map((existing) => existing['_demoId'] === this.editingId ? saved : existing);
         const complete = () => {
           this.currentPage = this.pageCount;
-          this.successMessage = creating ? 'Record created successfully.' : 'Changes saved successfully.';
+          if (creating && this.resource === 'employees') {
+            this.createdEmployeeName = String(saved['name'] ?? record['name']);
+            this.successMessage = 'Employee and login account created successfully.';
+          } else {
+            this.successMessage = creating ? 'Record created successfully.' : 'Changes saved successfully.';
+          }
           this.editorOpen = false;
           this.saving = false;
         };
@@ -605,11 +620,23 @@ export class WorkspacePageComponent implements OnInit {
         }
         complete();
       },
-      error: () => {
-        this.actionError = 'The record could not be saved. Your existing data has not been changed.';
+      error: (error: unknown) => {
+        this.actionError = this.saveErrorMessage(error, creating);
         this.saving = false;
       }
     });
+  }
+
+  private saveErrorMessage(error: unknown, creating: boolean): string {
+    if (this.resource === 'employees' && creating) {
+      if (error instanceof HttpErrorResponse) {
+        if (error.status === 400) return 'The employee details are invalid. Check the name and required fields.';
+        if (error.status === 403) return 'Only an administrator can create employees.';
+        if (error.status === 409) return 'An account already uses this employee name.';
+      }
+      if (error instanceof Error && error.message.includes('Employee name')) return error.message;
+    }
+    return 'The record could not be saved. Your existing data has not been changed.';
   }
 
   requestDelete(record: Record<string, string | number>): void {

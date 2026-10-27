@@ -50,16 +50,16 @@ describe('DriverDirectoryService', () => {
     }]);
   });
 
-  it('writes shared employee fields and omits backend-generated values', () => {
+  it('creates drivers through the driver endpoint without sending backend-assigned type', () => {
     service.createRecord({
       name: 'Asha Patil', address: 'Nashik', number: 'DL-12', type: 'DRIVER', status: 'Active'
     }).subscribe();
-    const request = http.expectOne('http://localhost:8080/api/employees');
+    const request = http.expectOne('http://localhost:8080/api/drivers');
 
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({
-      name: 'Asha Patil', address: 'Nashik', number: 'DL-12', type: 'DRIVER',
-      status: 'Active', isActive: true, isDeleted: false
+      name: 'Asha Patil', address: 'Nashik', number: 'DL-12', status: 'ACTIVE',
+      isActive: true
     });
     expect(request.request.body['id']).toBeUndefined();
     expect(request.request.body['createDate']).toBeUndefined();
@@ -72,6 +72,38 @@ describe('DriverDirectoryService', () => {
     });
   });
 
+  it('uses the supervisor endpoint and keeps other employee types on the general endpoint', () => {
+    service.createRecord({
+      name: 'Meera Joshi', type: 'SUPERVISOR', status: 'Active'
+    }).subscribe();
+    const supervisor = http.expectOne('http://localhost:8080/api/supervisors');
+    expect(supervisor.request.body['type']).toBeUndefined();
+    supervisor.flush({
+      id: 21, name: 'Meera Joshi', address: '', number: '', type: 'SUPERVISOR', status: 'Active',
+      isActive: true, isDeleted: false, createDate: null, updatedDate: null, createdBy: null, updatedBy: null
+    });
+
+    service.createRecord({
+      name: 'Ravi Patil', type: 'ACCOUNTANT', status: 'Active'
+    }).subscribe();
+    const employee = http.expectOne('http://localhost:8080/api/employees');
+    expect(employee.request.body['type']).toBe('ACCOUNTANT');
+    employee.flush({
+      id: 22, name: 'Ravi Patil', address: '', number: '', type: 'ACCOUNTANT', status: 'Active',
+      isActive: true, isDeleted: false, createDate: null, updatedDate: null, createdBy: null, updatedBy: null
+    });
+  });
+
+  it('rejects employee names that cannot be used as initial Basic credentials', () => {
+    let error = '';
+    service.createRecord({
+      name: 'Bad:Name', type: 'DRIVER', status: 'Active'
+    }).subscribe({ error: (reason: Error) => error = reason.message });
+
+    expect(error).toContain('cannot contain a colon');
+    http.expectNone('http://localhost:8080/api/drivers');
+  });
+
   it('updates and deletes drivers by backend ID', () => {
     service.updateRecord('12', {
       name: 'Asha Patil', type: 'SUPERVISOR', status: 'Inactive'
@@ -80,7 +112,7 @@ describe('DriverDirectoryService', () => {
     expect(update.request.method).toBe('PUT');
     expect(update.request.body).toEqual({
       name: 'Asha Patil', address: '', number: '', type: 'SUPERVISOR',
-      status: 'Inactive', isActive: false, isDeleted: false, id: 12
+      status: 'INACTIVE', isActive: false, id: 12
     });
     update.flush({
       id: 12, name: 'Asha Patil', address: '', number: '', type: 'DRIVER', status: 'Inactive',

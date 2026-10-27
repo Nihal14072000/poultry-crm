@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { DirectoryResponse, Employee } from '../models/directory.model';
 
@@ -8,10 +8,9 @@ interface DriverWriteRequest {
   name: string;
   address: string;
   number: string;
-  type: string;
+  type?: string;
   status: string;
   isActive: boolean;
-  isDeleted: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -28,7 +27,17 @@ export class DriverDirectoryService {
   }
 
   createRecord(record: Record<string, string | number>): Observable<Record<string, string | number>> {
-    return this.http.post<Employee>(this.endpoint, this.toRequest(record)).pipe(map((employee) => this.toDirectoryRecord(employee)));
+    const request = this.toRequest(record);
+    if (request.name.length > 100 || request.name.includes(':')) {
+      return throwError(() => new Error('Employee name must be at most 100 characters and cannot contain a colon.'));
+    }
+    const endpoint = request.type === 'DRIVER'
+      ? `${environment.apiUrl}/drivers`
+      : request.type === 'SUPERVISOR'
+        ? `${environment.apiUrl}/supervisors`
+        : this.endpoint;
+    if (request.type === 'DRIVER' || request.type === 'SUPERVISOR') delete request.type;
+    return this.http.post<Employee>(endpoint, request).pipe(map((employee) => this.toDirectoryRecord(employee)));
   }
 
   updateRecord(id: string, record: Record<string, string | number>): Observable<Record<string, string | number>> {
@@ -58,7 +67,9 @@ export class DriverDirectoryService {
       address: employee.address,
       number: employee.number,
       type: employee.type,
-      status: employee.status,
+      status: employee.status.toLowerCase() === 'active'
+        ? 'Active'
+        : employee.status.toLowerCase() === 'inactive' ? 'Inactive' : employee.status,
       createDate: employee.createDate ?? '',
       updatedDate: employee.updatedDate ?? '',
       createdBy: employee.createdBy ?? '',
@@ -78,9 +89,8 @@ export class DriverDirectoryService {
       address: String(record['address'] ?? '').trim(),
       number: String(record['number'] ?? '').trim(),
       type,
-      status: status === 'active' ? 'Active' : 'Inactive',
-      isActive: status === 'active',
-      isDeleted: false
+      status: status === 'active' ? 'ACTIVE' : 'INACTIVE',
+      isActive: status === 'active'
     };
   }
 
@@ -89,4 +99,5 @@ export class DriverDirectoryService {
     if (!Number.isSafeInteger(parsed) || parsed < 1) throw new Error('The employee ID is invalid.');
     return parsed;
   }
+
 }

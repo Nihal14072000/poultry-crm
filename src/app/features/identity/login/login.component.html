@@ -5,22 +5,15 @@
     <h1>Welcome back</h1>
     <p class="intro">Sign in to continue to your organization.</p>
     <form (ngSubmit)="signIn()">
-      <label>Email address
-        <input type="email" name="email" [(ngModel)]="email" autocomplete="username" required placeholder="you@company.com">
+      <label>Username
+        <input type="text" name="username" [(ngModel)]="username" autocomplete="username" required placeholder="Enter username">
       </label>
       <label>Password
         <input type="password" name="password" [(ngModel)]="password" autocomplete="current-password" required placeholder="Enter password">
       </label>
       @if (error) { <p class="error" role="alert">{{ error }}</p> }
-      <button type="submit" [disabled]="loading || !email || !password">{{ loading ? 'Signing in…' : 'Sign in' }} <span>→</span></button>
+      <button type="submit" [disabled]="loading || !username || !password">{{ loading ? 'Signing in…' : 'Sign in' }} <span>→</span></button>
     </form>
-    <aside class="demo-access">
-      <strong>Demo access</strong>
-      <span>Organization Admin: alex.morgan&#64;example.test</span>
-      <span>Farm Manager: meera.joshi&#64;example.test</span>
-      <span>Warehouse Manager: ravi.patil&#64;example.test</span>
-      <span>Demo password: <code>{{ demoPassword }}</code></span>
-    </aside>
-    <p class="security-note">Demo session is stored in this browser tab only. Use backend authentication before production.</p>
+    <p class="security-note">Credentials remain in memory and are cleared when you reload or sign out. Use HTTPS outside local development.</p>
   </section>
 </main>

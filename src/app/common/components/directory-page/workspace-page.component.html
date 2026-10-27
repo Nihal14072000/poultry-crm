@@ -8,13 +8,20 @@
     <div class="heading-actions">
       <button class="button button-secondary" type="button" (click)="refresh()">↻ Refresh</button>
       @if (isReportResource && can('export')) { <button class="button button-secondary" type="button" (click)="exportCurrentRecords()">⇩ Export</button> }
-      @if (mode !== 'read-only' && can('create')) { <button class="button button-primary" type="button" (click)="openCreate()"><span>＋</span> {{ mode === 'append-only' ? 'Add movement' : 'Add record' }}</button> }
+      @if (mode !== 'read-only' && can('create')) { <button class="button button-primary" type="button" (click)="openCreate()"><span>＋</span> {{ resource === 'employees' ? 'Add employee' : mode === 'append-only' ? 'Add movement' : 'Add record' }}</button> }
     </div>
   </div>
   @if (isNotificationResource) {
     <div class="notification-summary">
       <div><span class="summary-label">Unread</span><strong>{{ unreadNotificationsCount }}</strong></div>
       <div><span class="summary-label">Status</span><strong>{{ unreadNotificationsCount ? 'Action required' : 'All caught up' }}</strong></div>
+    </div>
+  }
+  @if (createdEmployeeName) {
+    <div class="success-banner" role="status">
+      <span>✓</span>
+      <span>Initial employee login — Username: <strong>{{ createdEmployeeName }}</strong>; Password: <strong>{{ createdEmployeeName }}</strong>. Share these credentials securely; they are not saved here.</span>
+      <button type="button" aria-label="Dismiss initial employee login" (click)="createdEmployeeName = null">×</button>
     </div>
   }
   @if (successMessage) { <div class="success-banner" role="status"><span>✓</span>{{ successMessage }}<button type="button" aria-label="Dismiss success message" (click)="successMessage = ''">×</button></div> }
@@ -44,7 +51,7 @@
   @if (editorOpen) {
     <div class="dialog-backdrop" (click)="closeEditor()">
       <section class="record-dialog" [class.fleet-dialog]="resource === 'fleet'" role="dialog" aria-modal="true" [attr.aria-label]="(editorMode === 'create' ? 'Add ' : 'Edit ') + title" (click)="$event.stopPropagation()">
-        <div class="dialog-heading"><div><h2>{{ editorMode === 'create' ? 'Add record' : 'Edit record' }}</h2><p>{{ title }} · {{ ['employees', 'vehicles'].includes(resource) ? 'Changes are saved to the backend.' : 'Demo changes are saved in this browser.' }}</p></div><button type="button" class="dialog-close" aria-label="Close" (click)="closeEditor()">×</button></div>
+        <div class="dialog-heading"><div><h2>{{ editorMode === 'create' ? (resource === 'employees' ? 'Add employee' : 'Add record') : (resource === 'employees' ? 'Edit employee' : 'Edit record') }}</h2><p>{{ title }} · {{ ['employees', 'vehicles'].includes(resource) ? 'Changes are saved to the backend.' : 'Demo changes are saved in this browser.' }}</p></div><button type="button" class="dialog-close" aria-label="Close" (click)="closeEditor()">×</button></div>
         @if (editorMode === 'create' && hasSuggestions) {
           <p class="suggestion-note">Start typing in a field to see suggestions from existing records.</p>
         }
@@ -64,7 +71,7 @@
                   <ng-option value="ACCOUNTANT">ACCOUNTANT</ng-option>
                 </ng-select>
               } @else {
-                <input [type]="fieldInputType(column.key)" [attr.min]="minimumValue(column.key)" [attr.max]="percentageMax(column.key)" [attr.maxlength]="column.key.toLowerCase().includes('note') ? 500 : 120" [attr.required]="!['notes', 'note', 'comments', 'remark', 'email', 'assignedTo'].includes(column.key) ? true : null" [attr.list]="editorMode === 'create' && suggestionsFor(column.key).length ? suggestionsId(column.key) : null" [(ngModel)]="editorRecord[column.key]" [ngModelOptions]="{standalone: true}" [placeholder]="'Enter ' + column.label.toLowerCase()" [attr.aria-invalid]="showFieldError(column.key)" [attr.aria-describedby]="showFieldError(column.key) ? 'field-error-' + column.key : null">
+                <input [type]="fieldInputType(column.key)" [attr.min]="minimumValue(column.key)" [attr.max]="percentageMax(column.key)" [attr.maxlength]="maxFieldLength(column.key)" [attr.required]="!['notes', 'note', 'comments', 'remark', 'email', 'assignedTo'].includes(column.key) ? true : null" [attr.list]="editorMode === 'create' && suggestionsFor(column.key).length ? suggestionsId(column.key) : null" [(ngModel)]="editorRecord[column.key]" [ngModelOptions]="{standalone: true}" [placeholder]="'Enter ' + column.label.toLowerCase()" [attr.aria-invalid]="showFieldError(column.key)" [attr.aria-describedby]="showFieldError(column.key) ? 'field-error-' + column.key : null">
                 @if (editorMode === 'create' && suggestionsFor(column.key).length) {
                   <datalist [id]="suggestionsId(column.key)">
                     @for (suggestion of suggestionsFor(column.key); track suggestion) { <option [value]="suggestion"></option> }
@@ -77,7 +84,7 @@
         </div>
         @if (validationAttempted && recordValidationError) { <div class="dialog-error" role="alert">{{ recordValidationError }}</div> }
         @if (actionError) { <div class="dialog-error" role="alert">{{ actionError }}</div> }
-        <div class="dialog-footer"><button class="button button-secondary" type="button" (click)="closeEditor()">Cancel</button><button class="button button-primary" type="button" [disabled]="saving || !can(editorMode === 'create' ? 'create' : 'update')" (click)="saveRecord()">{{ saving ? 'Saving…' : (editorMode === 'create' ? 'Create record' : 'Save changes') }}</button></div>
+        <div class="dialog-footer"><button class="button button-secondary" type="button" (click)="closeEditor()">Cancel</button><button class="button button-primary" type="button" [disabled]="saving || !can(editorMode === 'create' ? 'create' : 'update')" (click)="saveRecord()">{{ saving ? 'Saving…' : resource === 'employees' && editorMode === 'create' ? 'Create employee' : (editorMode === 'create' ? 'Create record' : 'Save changes') }}</button></div>
       </section>
     </div>
   }

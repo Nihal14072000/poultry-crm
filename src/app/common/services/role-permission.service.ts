@@ -49,6 +49,9 @@ export class RolePermissionService {
     const moduleAccess = this.moduleResources(user.moduleAccess);
     if (moduleAccess && resource !== 'dashboard' && !moduleAccess.resources.has(resource)) return false;
     if (moduleAccess?.resources.has(resource) && action === 'read') return true;
+    if (user.role === 'Authenticated') {
+      return action === 'read' || (resource === 'employees' && action === 'create');
+    }
     if (resource === 'trips') {
       return action === 'read' ||
         (user.role === 'Sales Manager' && ['create', 'update', 'delete', 'transition'].includes(action)) ||

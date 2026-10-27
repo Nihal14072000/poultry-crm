@@ -67,4 +67,18 @@ describe('WorkspacePageComponent validation', () => {
     component.editorRecord = { quantity: '0' };
     expect(component.fieldError('quantity')).toBe('Movement quantity cannot be zero.');
   });
+
+  it('validates employee login names at creation time', () => {
+    component.resource = 'employees';
+    component.editorMode = 'create';
+    component.editorRecord = { name: 'Asha:Kumar' };
+    expect(component.fieldError('name')).toBe('Employee name cannot contain a colon.');
+
+    component.editorRecord = { name: 'A'.repeat(101) };
+    expect(component.fieldError('name')).toBe('Employee name must be 100 characters or fewer.');
+    expect(component.maxFieldLength('name')).toBe(100);
+
+    component.editorMode = 'edit';
+    expect(component.fieldError('name')).toBe('');
+  });
 });

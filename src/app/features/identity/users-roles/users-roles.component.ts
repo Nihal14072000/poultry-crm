@@ -177,7 +177,6 @@ export class UsersRolesComponent implements OnInit {
       next: (saved) => {
         const savedUser = this.toDemoUser(saved);
         this.users = this.users.map((item) => item['_demoId'] === id ? savedUser : item);
-        this.auth.updateCurrentUser(savedUser);
         this.success = `Access updated for ${savedUser.name}.`;
         this.savingId = '';
       },

@@ -36,4 +36,14 @@ describe('RolePermissionService trips permissions', () => {
     expect(service.getRolePermissions('Organization Admin')).toContain('trips.read');
     expect(service.getRolePermissions('Organization Admin')).not.toContain('trips.*');
   });
+
+  it('allows employee creation requests but leaves write authorization to the backend', () => {
+    currentUser.role = 'Authenticated';
+
+    expect(service.canAccessRoute('dashboard')).toBeTrue();
+    expect(service.canAccessRoute('employees')).toBeTrue();
+    expect(service.can('employees', 'create')).toBeTrue();
+    expect(service.can('employees', 'update')).toBeFalse();
+    expect(service.can('users-roles', 'update')).toBeFalse();
+  });
 });

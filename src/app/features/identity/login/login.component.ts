@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SessionAuthService, DEMO_PASSWORD } from '../../../common/services/session-auth.service';
+import { SessionAuthService } from '../../../common/services/session-auth.service';
 
 @Component({
   selector: 'app-login',
@@ -12,11 +13,10 @@ import { SessionAuthService, DEMO_PASSWORD } from '../../../common/services/sess
   styleUrl: './login.component.css'
 })
 export class LoginComponent {
-  email = 'alex.morgan@example.test';
+  username = '';
   password = '';
   loading = false;
   error = '';
-  readonly demoPassword = DEMO_PASSWORD;
 
   constructor(
     private readonly auth: SessionAuthService,
@@ -27,13 +27,17 @@ export class LoginComponent {
   signIn(): void {
     this.error = '';
     this.loading = true;
-    this.auth.signIn(this.email, this.password).subscribe({
+    this.auth.signIn(this.username, this.password).subscribe({
       next: () => {
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/workspace/overview';
         void this.router.navigateByUrl(returnUrl.startsWith('/') ? returnUrl : '/workspace/overview');
       },
       error: (error: unknown) => {
-        this.error = error instanceof Error ? error.message : 'Sign in could not be completed.';
+        this.error = error instanceof HttpErrorResponse && error.status === 401
+          ? 'Username or password is incorrect.'
+          : error instanceof HttpErrorResponse && error.status === 403
+            ? 'Your account cannot access the employee directory.'
+            : 'Sign in could not be completed. Check the API connection and try again.';
         this.loading = false;
       }
     });
