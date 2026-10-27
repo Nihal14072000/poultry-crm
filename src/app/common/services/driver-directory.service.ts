@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { DirectoryResponse, Employee } from '../models/directory.model';
 
 interface DriverWriteRequest {
@@ -15,7 +16,7 @@ interface DriverWriteRequest {
 
 @Injectable({ providedIn: 'root' })
 export class DriverDirectoryService {
-  private readonly endpoint = 'http://localhost:8080/api/employees';
+  private readonly endpoint = `${environment.apiUrl}/employees`;
 
   constructor(private readonly http: HttpClient) {}
 

@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { DirectoryResponse } from '../models/directory.model';
 
 interface VehicleApiRecord {
@@ -28,7 +29,7 @@ interface VehicleWriteRequest {
 
 @Injectable({ providedIn: 'root' })
 export class VehicleDirectoryService {
-  private readonly endpoint = 'http://localhost:8080/api/vehicles';
+  private readonly endpoint = `${environment.apiUrl}/vehicles`;
 
   constructor(private readonly http: HttpClient) {}
 

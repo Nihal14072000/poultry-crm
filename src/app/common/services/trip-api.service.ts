@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { Employee } from '../models/directory.model';
 import { CreateTripInput, TripRecord, TripVendorPickup } from '../models/trip.model';
 
@@ -121,7 +122,7 @@ export interface TripDetailsResponse {
 
 @Injectable({ providedIn: 'root' })
 export class TripApiService {
-  private readonly baseUrl = 'http://localhost:8080/api';
+  private readonly baseUrl = environment.apiUrl;
 
   constructor(private readonly http: HttpClient) {}
 
