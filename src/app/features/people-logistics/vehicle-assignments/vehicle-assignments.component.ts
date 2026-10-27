@@ -106,9 +106,8 @@ export class VehicleAssignmentsComponent implements OnInit {
         type: vehicle?.['type'] || '—',
         state: vehicle?.['state'] || '—',
         capacity: vehicle?.['capacityKg'] ? `${vehicle['capacityKg']} kg` : '—',
-        driver: driver?.['employee'] || 'Driver employee record unavailable',
-        licenseNo: driver?.['licenseNo'] || '—',
-        licenseDue: driver?.['licenseDueDate'] || '—',
+        driver: driver?.['name'] || 'Driver employee record unavailable',
+        number: driver?.['number'] || '—',
         assigned: assignment['assignedDate'] || '—',
         returned: assignment['returnedDate'] || '—',
         status: assignment['status'] ?? ''
@@ -123,8 +122,7 @@ export class VehicleAssignmentsComponent implements OnInit {
       { field: 'state', headerName: 'STATE' },
       { field: 'capacity', headerName: 'CAPACITY' },
       { field: 'driver', headerName: 'DRIVER' },
-      { field: 'licenseNo', headerName: 'LICENSE NO.' },
-      { field: 'licenseDue', headerName: 'LICENSE DUE' },
+      { field: 'number', headerName: 'LICENSE NO.' },
       { field: 'assigned', headerName: 'ASSIGNED' },
       { field: 'returned', headerName: 'RETURNED' },
       { field: 'status', headerName: 'STATUS' },
@@ -185,7 +183,7 @@ export class VehicleAssignmentsComponent implements OnInit {
       this.selectedVehicleId = '';
       this.selectedDriverId = '';
       this.assignedDate = localDateString();
-      this.successMessage = `${vehicle['vehicle']} assigned to ${employee['employee']}. Vehicle particulars are linked to the employee record.`;
+      this.successMessage = `${vehicle['vehicle']} assigned to ${employee['name']}. Vehicle particulars are linked to the employee record.`;
     } catch {
       this.errorMessage = 'The vehicle assignment could not be saved. Please try again.';
     } finally {

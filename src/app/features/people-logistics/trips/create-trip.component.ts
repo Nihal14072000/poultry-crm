@@ -5,8 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TripRecord, VendorDeliveryInput, VendorPickupInput } from '../../../common/models/trip.model';
 import { DirectoryService } from '../../../common/services/directory.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
-import { SessionAuthService } from '../../../common/services/session-auth.service';
-import { summarizeTrip, TripService } from '../../../common/services/trip.service';
+import { summarizeTrip } from '../../../common/services/trip.service';
+import { TripApiService, TripFormOptions } from '../../../common/services/trip-api.service';
 import { firstValueFrom } from 'rxjs';
 
 type PickupKind = 'broiler' | 'culls' | 'feed';
@@ -58,7 +58,8 @@ export class CreateTripComponent implements OnInit {
   supervisors: TripRecord[] = [];
   deliveryVendors: TripRecord[] = [];
   deliveryStops: VendorDeliveryForm[] = [emptyDeliveryStop(1)];
-  selectedSupervisorEmail = '';
+  selectedSupervisorId = '';
+  private formOptions?: TripFormOptions;
   savedRoutes: string[] = [];
   selectedVehicleId = '';
   selectedDriverId = '';
@@ -76,43 +77,32 @@ export class CreateTripComponent implements OnInit {
 
   constructor(
     private readonly directories: DirectoryService,
-    private readonly tripService: TripService,
+    private readonly tripApi: TripApiService,
     private readonly activatedRoute: ActivatedRoute,
     private readonly router: Router,
-    private readonly auth: SessionAuthService,
     readonly rolePermissions: RolePermissionService
   ) {}
 
   async ngOnInit(): Promise<void> {
     this.editTripId = this.activatedRoute.snapshot.paramMap.get('tripId') ?? '';
     try {
-      const [vehicles, employees, suppliers, products, trips, users, deliveryVendors] = await Promise.all([
-        firstValueFrom(this.directories.getDirectory('vehicles')),
-        firstValueFrom(this.directories.getDirectory('employees')),
-        firstValueFrom(this.directories.getDirectory('suppliers')),
-        firstValueFrom(this.directories.getDirectory('products')),
-        firstValueFrom(this.directories.getDirectory('trips')),
-        firstValueFrom(this.directories.getDirectory('users-roles')),
-        firstValueFrom(this.directories.getDirectory('vendor-destinations'))
+      const [options, products] = await Promise.all([
+        this.tripApi.getFormOptions(),
+        firstValueFrom(this.directories.getDirectory('products'))
       ]);
-      this.vehicles = vehicles.records.filter((record) =>
-        String(record['status'] ?? '').toLowerCase() === 'active' &&
+      this.formOptions = options;
+      this.vehicles = options.vehicles.filter((record) =>
         this.rolePermissions.canAccessRecord('vehicles', record)
       );
-      this.drivers = employees.records.filter((record) =>
-        String(record['status'] ?? '').toLowerCase() === 'active' &&
-        (String(record['department'] ?? '').trim().toLowerCase() === 'driver' ||
-          String(record['designation'] ?? '').trim().toLowerCase() === 'driver') &&
+      this.drivers = options.drivers.filter((record) =>
         this.rolePermissions.canAccessRecord('employees', record)
       );
-      this.vendors = suppliers.records.filter((record) =>
-        String(record['status'] ?? '').toLowerCase() === 'active' &&
+      this.vendors = options.suppliers.filter((record) =>
         this.rolePermissions.canAccessRecord('suppliers', record)
       );
-      this.supervisors = users.records.filter((record) => String(record['status'] ?? '').toLowerCase() === 'active' &&
-        ['farm supervisor', 'supervisor'].includes(String(record['role'] ?? '').toLowerCase()));
-      this.deliveryVendors = deliveryVendors.records.filter((record) => String(record['status'] ?? '').toLowerCase() === 'active');
-      this.savedRoutes = [...new Set(trips.records
+      this.supervisors = options.supervisors;
+      this.deliveryVendors = options.deliveryVendors;
+      this.savedRoutes = [...new Set(options.trips
         .filter((record) => this.rolePermissions.canAccessRecord('trips', record))
         .map((record) => String(record['route'] ?? '').trim())
         .filter(Boolean))];
@@ -127,12 +117,12 @@ export class CreateTripComponent implements OnInit {
         this.errorMessage = 'Configure active feed products with one consistent unit before creating a trip.';
       }
       if (this.editTripId) {
-        const details = await this.tripService.getTripDetails(this.editTripId);
+        const details = await this.tripApi.getTripDetails(this.editTripId);
         const trip = details.trip;
         this.selectedVehicleId = String(trip['vehicleId'] ?? '');
         this.selectedDriverId = String(trip['driverId'] ?? '');
         this.route = String(trip['route'] ?? '');
-        this.selectedSupervisorEmail = String(trip['supervisorEmail'] ?? '');
+        this.selectedSupervisorId = String(trip['supervisorId'] ?? '');
         try {
           const savedStops: unknown = JSON.parse(String(trip['vendorDeliveries'] ?? '[]'));
           this.deliveryStops = Array.isArray(savedStops) && savedStops.length
@@ -191,7 +181,7 @@ export class CreateTripComponent implements OnInit {
     if (!this.deliveryStops.length) return 'Add at least one vendor destination.';
     const ids = this.deliveryStops.map((item) => item.vendorDestinationId);
     if (ids.some((id) => !id) || new Set(ids).size !== ids.length) return 'Select a different vendor destination for each stop.';
-    if (this.deliveryStops.some((item) => [item.broilerQuantity, item.cullsQuantity].some((quantity) => quantity !== null && (!Number.isSafeInteger(quantity) || quantity < 0)) || [item.broilerWeight, item.cullsWeight, item.feedWeight].some((weight) => weight !== null && (!Number.isFinite(weight) || weight < 0 || Math.abs(weight * 100 - Math.round(weight * 100)) > 1e-8)) || [item.broilerRate, item.cullsRate, item.feedRate].some((rate) => rate !== null && (!Number.isFinite(rate) || rate < 0 || Math.abs(rate * 100 - Math.round(rate * 100)) > 1e-8)) || (item.feedQuantity !== null && (!Number.isFinite(item.feedQuantity) || item.feedQuantity < 0 || (this.feedUnit.toLowerCase() === 'kg' && Math.abs(item.feedQuantity * 100 - Math.round(item.feedQuantity * 100)) > 1e-8))) || (Number(item.broilerQuantity ?? 0) > 0 && Number(item.broilerWeight ?? 0) <= 0) || (Number(item.cullsQuantity ?? 0) > 0 && Number(item.cullsWeight ?? 0) <= 0) || (Number(item.feedQuantity ?? 0) > 0 && Number(item.feedWeight ?? 0) <= 0) || (Number(item.feedQuantity ?? 0) === 0 && Number(item.feedWeight ?? 0) > 0) || Number(item.broilerQuantity ?? 0) + Number(item.cullsQuantity ?? 0) <= 0)) return 'Each vendor stop needs positive whole-bird quantities, valid weights and rates, and a weight for any feed quantity.';
+    if (this.deliveryStops.some((item) => [item.broilerQuantity, item.cullsQuantity, item.feedQuantity].some((quantity) => quantity !== null && (!Number.isSafeInteger(quantity) || quantity < 0)) || [item.broilerWeight, item.cullsWeight, item.feedWeight].some((weight) => weight !== null && (!Number.isFinite(weight) || weight < 0 || Math.abs(weight * 100 - Math.round(weight * 100)) > 1e-8)) || [item.broilerRate, item.cullsRate, item.feedRate].some((rate) => rate !== null && (!Number.isFinite(rate) || rate < 0 || Math.abs(rate * 100 - Math.round(rate * 100)) > 1e-8)) || (Number(item.broilerQuantity ?? 0) > 0 && Number(item.broilerWeight ?? 0) <= 0) || (Number(item.cullsQuantity ?? 0) > 0 && Number(item.cullsWeight ?? 0) <= 0) || (Number(item.feedQuantity ?? 0) > 0 && Number(item.feedWeight ?? 0) <= 0) || (Number(item.feedQuantity ?? 0) === 0 && Number(item.feedWeight ?? 0) > 0) || Number(item.broilerQuantity ?? 0) + Number(item.cullsQuantity ?? 0) <= 0)) return 'Each vendor stop needs positive whole-number quantities, valid weights and rates, and a weight for any feed quantity.';
     return '';
   }
 
@@ -282,14 +272,8 @@ export class CreateTripComponent implements OnInit {
     const quantity = pickup[kind].quantity;
     if (quantity === null) return '';
     if (!Number.isFinite(quantity) || quantity < 0) return 'Enter a non-negative quantity.';
-    if (kind !== 'feed' && (!Number.isSafeInteger(quantity) || !Number.isInteger(quantity))) {
-      return 'Bird quantities must be safe whole numbers.';
-    }
-    if (kind === 'feed' && this.feedUnit.toLowerCase() === 'kg') {
-      const cents = quantity * 100;
-      if (!Number.isFinite(cents) || Math.abs(cents - Math.round(cents)) > 1e-8) {
-        return 'Feed in kilograms must use no more than two decimal places.';
-      }
+    if (!Number.isSafeInteger(quantity)) {
+      return 'Order quantities must be safe whole numbers for the backend.';
     }
     return '';
   }
@@ -345,10 +329,14 @@ export class CreateTripComponent implements OnInit {
     this.submitted = true;
     this.errorMessage = '';
     if (!this.canSave || this.saving) return;
+    if (!this.formOptions) {
+      this.errorMessage = 'Trip reference data is unavailable. Reload the page before saving.';
+      return;
+    }
     if (!this.selectedVehicleId || !this.selectedDriverId || !this.route.trim() ||
     !this.tripDate ||
       !this.vendorPickups.length || this.hasPickupError || this.capacityError || !this.feedUnit ||
-      !this.selectedSupervisorEmail || this.deliveryStopError) {
+      !this.selectedSupervisorId || this.deliveryStopError) {
       this.errorMessage = 'Review the trip assignment, assigned supervisor, vendor destinations, and pickup details.';
       return;
     }
@@ -361,13 +349,13 @@ export class CreateTripComponent implements OnInit {
         driverId: this.selectedDriverId,
         route: this.route,
         vendorPickups: this.vendorPickups,
-        supervisorEmail: this.selectedSupervisorEmail,
+        supervisorId: this.selectedSupervisorId,
         vendorDeliveries: this.deliveryStops.map(({ key: _key, ...stop }) => stop)
       };
       if (this.editTripId) {
-        await this.tripService.updateTrip(this.editTripId, input, this.auth.currentUser?.name ?? '');
+        await this.tripApi.updateTrip(this.editTripId, input, this.formOptions);
       } else {
-        await this.tripService.createTrip(input, this.auth.currentUser?.name ?? '');
+        await this.tripApi.insertTrip(input, this.formOptions);
       }
       await this.router.navigateByUrl('/people-logistics/trips', {
         state: { successMessage: this.editTripId ? 'Trip updated successfully.' : 'Trip created successfully.' }

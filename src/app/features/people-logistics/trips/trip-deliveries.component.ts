@@ -6,13 +6,6 @@ import { TripRecord, TripVendorPickup } from '../../../common/models/trip.model'
 import { TripService } from '../../../common/services/trip.service';
 import { SessionAuthService } from '../../../common/services/session-auth.service';
 
-interface VendorPaymentForm {
-  vendorDestinationId: string;
-  vendorName: string;
-  amountReceived: number | null;
-  paymentMethod: string;
-}
-
 interface SupplierReceiptForm {
   vendorId: string; vendorName: string;
   broiler: number | null; broilerWeight: number | null;
@@ -31,12 +24,10 @@ export class TripDeliveriesComponent implements OnInit {
   deliveries: TripRecord[] = [];
   supplierPickups: TripVendorPickup[] = [];
   supplierReceipts: TripRecord[] = [];
-  payments: TripRecord[] = [];
-  paymentForms: VendorPaymentForm[] = [];
   supplierReceiptForms: SupplierReceiptForm[] = [];
+  private pendingSupplierPickupIds: Record<string, string> = {};
+  private pendingVendorDeliveryIds: string[] = [];
   activePickupVendorId = '';
-  activePaymentVendorId = '';
-  editingPaymentId = '';
   loadedBroiler = 0;
   loadedCulls = 0;
   mortality?: TripRecord;
@@ -49,24 +40,15 @@ export class TripDeliveriesComponent implements OnInit {
   routeFilter = '';
   statusFilter = '';
   activeOrderId = '';
-  editingDestinationId = '';
-  destinationDraft = { vendorName: '', address: '', contact: '', phone: '' };
   broiler = 0;
   broilerWeight = 0;
   culls = 0;
   cullsWeight = 0;
   feed = 0;
   feedWeight = 0;
-  deliveredAt = new Date().toISOString().slice(0, 16);
   remarks = '';
   reason = '';
-  confirmed = false;
-  failedDelivery = false;
-  approveExcess = false;
-  approveReconciliation = false;
-  reconciliationReason = '';
   mortalityQuantity = 0;
-  mortalityAt = new Date().toISOString().slice(0, 16);
   mortalityRemarks = '';
 
   constructor(private readonly service: TripService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService) {}
@@ -82,10 +64,11 @@ export class TripDeliveriesComponent implements OnInit {
     try {
       const tripId = this.route.snapshot.paramMap.get('tripId');
       if (tripId) {
-        const data = await this.service.getDeliveryData(tripId);
+        this.readPendingSupplierPickups(tripId);
+        this.readPendingVendorDeliveries(tripId);
+        const data = await this.service.getDeliveryData(tripId, this.pendingPickupIds(), this.pendingDeliveryIds());
         this.trip = data.trip; this.destinations = data.destinations; this.deliveries = data.deliveries; this.mortality = data.mortality;
         this.supplierPickups = data.supplierPickups; this.supplierReceipts = data.supplierReceipts;
-        this.payments = data.payments;
         this.supplierReceiptForms = data.supplierPickups.map((pickup) => {
           const receipt = data.supplierReceipts.find((record) => String(record['vendorId'] ?? '') === pickup.vendorId);
           return {
@@ -99,17 +82,9 @@ export class TripDeliveriesComponent implements OnInit {
             reason: String(receipt?.['reason'] ?? '')
           };
         });
-        this.paymentForms = this.destinations.map((destination) => {
-          return {
-            vendorDestinationId: this.id(destination),
-            vendorName: String(destination['vendorName'] ?? ''),
-            amountReceived: null,
-            paymentMethod: ''
-          };
-        });
         this.loadedBroiler = data.loadedBroiler; this.loadedCulls = data.loadedCulls;
-        if (this.mortality) { this.mortalityQuantity = Number(this.mortality['quantity'] ?? 0); this.mortalityAt = String(this.mortality['recordedAt'] ?? this.mortalityAt); this.mortalityRemarks = String(this.mortality['remarks'] ?? ''); }
-      } else this.trips = await this.service.getAssignedTrips();
+        if (this.mortality) { this.mortalityQuantity = Number(this.mortality['quantity'] ?? 0); this.mortalityRemarks = String(this.mortality['remarks'] ?? ''); }
+      } else this.trips = await this.service.getDeliveryTrips();
     } catch (e) { this.error = e instanceof Error ? e.message : 'Trip delivery data could not be loaded.'; }
     finally { this.loading = false; }
   }
@@ -121,90 +96,73 @@ export class TripDeliveriesComponent implements OnInit {
       (!this.statusFilter || String(trip['status'] ?? '') === this.statusFilter));
   }
   id(record: TripRecord): string { return String(record['_demoId'] ?? ''); }
+  private pendingPickupIds(): string[] { return Object.values(this.pendingSupplierPickupIds); }
+  private pendingDeliveryIds(): string[] { return this.pendingVendorDeliveryIds; }
+  private pendingPickupStorageKey(tripId: string): string { return `trip-delivery-pickups:${tripId}`; }
+  private pendingDeliveryStorageKey(tripId: string): string { return `trip-delivery-vendor-deliveries:${tripId}`; }
+  private readPendingSupplierPickups(tripId: string): void {
+    this.pendingSupplierPickupIds = {};
+    if (typeof window === 'undefined') return;
+    const stored = window.sessionStorage.getItem(this.pendingPickupStorageKey(tripId));
+    if (!stored) return;
+    let parsed: unknown;
+    try { parsed = JSON.parse(stored); }
+    catch { throw new Error("Saved supplier pickup IDs could not be read. Clear this trip's pending pickup data and try again."); }
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      throw new Error("Saved supplier pickup IDs are invalid. Clear this trip's pending pickup data and try again.");
+    }
+    for (const [vendorId, pickupId] of Object.entries(parsed)) {
+      if (!vendorId || typeof pickupId !== 'string' || !/^\d+$/.test(pickupId)) {
+        throw new Error("Saved supplier pickup IDs are invalid. Clear this trip's pending pickup data and try again.");
+      }
+      this.pendingSupplierPickupIds[vendorId] = pickupId;
+    }
+  }
+  private persistPendingSupplierPickups(tripId: string): void {
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(this.pendingPickupStorageKey(tripId), JSON.stringify(this.pendingSupplierPickupIds));
+    }
+  }
+  private clearPendingSupplierPickups(tripId: string): void {
+    this.pendingSupplierPickupIds = {};
+    if (typeof window !== 'undefined') window.sessionStorage.removeItem(this.pendingPickupStorageKey(tripId));
+  }
+  private readPendingVendorDeliveries(tripId: string): void {
+    this.pendingVendorDeliveryIds = [];
+    if (typeof window === 'undefined') return;
+    const stored = window.sessionStorage.getItem(this.pendingDeliveryStorageKey(tripId));
+    if (!stored) return;
+    let parsed: unknown;
+    try { parsed = JSON.parse(stored); }
+    catch { throw new Error("Saved vendor delivery IDs could not be read. Clear this trip's pending delivery data and try again."); }
+    if (!Array.isArray(parsed) || !parsed.every((id): id is string => typeof id === 'string' && /^\d+$/.test(id))) {
+      throw new Error("Saved vendor delivery IDs are invalid. Clear this trip's pending delivery data and try again.");
+    }
+    this.pendingVendorDeliveryIds = [...new Set(parsed)];
+  }
+  private persistPendingVendorDeliveries(tripId: string): void {
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(this.pendingDeliveryStorageKey(tripId), JSON.stringify(this.pendingVendorDeliveryIds));
+    }
+  }
+  private clearPendingVendorDeliveries(tripId: string): void {
+    this.pendingVendorDeliveryIds = [];
+    if (typeof window !== 'undefined') window.sessionStorage.removeItem(this.pendingDeliveryStorageKey(tripId));
+  }
   number(value: unknown): number { const parsed = Number(value ?? 0); return Number.isFinite(parsed) ? parsed : 0; }
   get currentDestination(): TripRecord | undefined { return this.destinations.find((destination) => this.id(destination) === this.activeOrderId); }
   get canEnterDelivery(): boolean { return ['In transit', 'Delivery in progress'].includes(String(this.trip?.['status'] ?? '')); }
   get canStartTrip(): boolean { return String(this.trip?.['status'] ?? '') === 'Assigned'; }
-  get canApproveExcess(): boolean { return this.auth.currentUser?.role === 'Organization Admin'; }
-  get canApproveReconciliation(): boolean { return this.auth.currentUser?.role === 'Organization Admin'; }
-  canEditDestinationDetails(destination: TripRecord): boolean {
-    const role = (this.auth.currentUser?.role ?? '').toLowerCase();
-    const entries = this.entries(this.id(destination));
-    return ['farm supervisor', 'supervisor'].includes(role) &&
-      this.auth.currentUser?.email.toLowerCase() === String(this.trip?.['supervisorEmail'] ?? '').toLowerCase() &&
-      this.number(destination['orderedBroiler']) + this.number(destination['orderedCulls']) ===
-        this.delivered(this.id(destination), 'broiler') + this.delivered(this.id(destination), 'culls') &&
-      entries.length > 0 && entries[entries.length - 1]['failedDelivery'] !== 'true';
-  }
-  editableDestinations(): TripRecord[] { return this.destinations.filter((destination) => this.canEditDestinationDetails(destination)); }
-  editDestination(destination: TripRecord): void {
-    if (!this.canEditDestinationDetails(destination)) return;
-    this.editingDestinationId = this.id(destination);
-    this.destinationDraft = {
-      vendorName: String(destination['vendorName'] ?? ''), address: String(destination['address'] ?? ''),
-      contact: String(destination['contact'] ?? ''), phone: String(destination['phone'] ?? '')
-    };
-  }
-  cancelDestinationEdit(): void { this.editingDestinationId = ''; }
-  async saveDestinationEdit(): Promise<void> {
-    if (!this.trip || !this.editingDestinationId || this.saving) return;
-    this.saving = true; this.error = ''; this.success = '';
-    try {
-      await this.service.updateDeliveredDestination(this.id(this.trip), this.editingDestinationId, this.destinationDraft);
-      this.success = 'Vendor destination details updated for this trip.';
-      this.editingDestinationId = '';
-      await this.load();
-    } catch (e) { this.error = e instanceof Error ? e.message : 'Vendor destination details could not be updated.'; }
-    finally { this.saving = false; }
-  }
-  canReceivePayment(form: VendorPaymentForm): boolean {
-    const destination = this.destinations.find((item) => this.id(item) === form.vendorDestinationId);
-    return !!destination && this.destinationStatus(destination) === 'Delivered';
-  }
-  paymentsFor(form: VendorPaymentForm): TripRecord[] {
-    return this.payments.filter((payment) => String(payment['vendorDestinationId']) === form.vendorDestinationId);
-  }
-  paymentTotal(form: VendorPaymentForm): number {
-    return this.paymentsFor(form).reduce((sum, payment) => sum + this.number(payment['amountReceived']), 0);
-  }
   entrySales(): number {
     return this.number(this.broilerWeight) * this.number(this.currentDestination?.['broilerRate']) +
       this.number(this.cullsWeight) * this.number(this.currentDestination?.['cullsRate']) +
       this.number(this.feedWeight) * this.number(this.currentDestination?.['feedRate']);
   }
-  togglePaymentForm(form: VendorPaymentForm): void {
-    if (this.activePaymentVendorId === form.vendorDestinationId) {
-      this.activePaymentVendorId = '';
-      this.editingPaymentId = '';
-      form.amountReceived = null;
-      form.paymentMethod = '';
-      return;
-    }
-    this.activePaymentVendorId = form.vendorDestinationId;
-    this.editingPaymentId = '';
-    form.amountReceived = null;
-    form.paymentMethod = '';
-  }
-  editPayment(form: VendorPaymentForm, payment: TripRecord): void {
-    this.activePaymentVendorId = form.vendorDestinationId;
-    this.editingPaymentId = this.id(payment);
-    form.amountReceived = this.number(payment['amountReceived']);
-    form.paymentMethod = String(payment['paymentMethod'] ?? '');
-  }
   get reconciliationHasExceptions(): boolean {
     return this.unreconciled() !== 0 || this.destinations.some((destination) => {
       const destinationEntries = this.entries(this.id(destination));
-      return !destinationEntries.length || destinationEntries[destinationEntries.length - 1]['failedDelivery'] === 'true';
+      return !destinationEntries.length;
     });
-  }
-  get needsExcessApproval(): boolean {
-    const destination = this.currentDestination;
-    const plannedBirds = destination
-      ? this.number(destination['orderedBroiler']) + this.number(destination['orderedCulls'])
-      : 0;
-    const projectedBirds = this.delivered(this.activeOrderId, 'broiler') + this.delivered(this.activeOrderId, 'culls') +
-      this.number(this.broiler) + this.number(this.culls);
-    return !!destination && projectedBirds > plannedBirds;
   }
   entries(destinationId: string): TripRecord[] { return this.deliveries.filter((item) => String(item['vendorDestinationId']) === destinationId); }
   delivered(destinationId: string, kind: 'broiler' | 'culls' | 'feed'): number { return this.entries(destinationId).reduce((sum, item) => sum + Number(item[kind] ?? 0), 0); }
@@ -251,14 +209,13 @@ export class TripDeliveriesComponent implements OnInit {
   destinationStatus(destination: TripRecord): string {
     const id = this.id(destination); const destinationEntries = this.entries(id); const count = destinationEntries.length;
     if (!count) return 'Pending';
-    if (destinationEntries[destinationEntries.length - 1]['failedDelivery'] === 'true') return 'Exception';
     const deliveredBirds = this.delivered(id, 'broiler') + this.delivered(id, 'culls');
     const plannedBirds = Number(destination['orderedBroiler'] ?? 0) + Number(destination['orderedCulls'] ?? 0);
     if (deliveredBirds >= plannedBirds) return 'Delivered';
     return count > 1 ? 'Partially Delivered' : 'In Progress';
   }
   open(order: TripRecord): void {
-    this.activeOrderId = this.id(order); this.broiler = 0; this.broilerWeight = 0; this.culls = 0; this.cullsWeight = 0; this.feed = 0; this.feedWeight = 0; this.deliveredAt = new Date().toISOString().slice(0, 16); this.remarks = ''; this.reason = ''; this.confirmed = false; this.failedDelivery = false; this.approveExcess = false; this.error = '';
+    this.activeOrderId = this.id(order); this.broiler = 0; this.broilerWeight = 0; this.culls = 0; this.cullsWeight = 0; this.feed = 0; this.feedWeight = 0; this.remarks = ''; this.reason = ''; this.error = '';
   }
   cancelEntry(): void { this.activeOrderId = ''; }
   async startTrip(): Promise<void> {
@@ -271,18 +228,34 @@ export class TripDeliveriesComponent implements OnInit {
   async saveEntry(): Promise<void> {
     if (!this.trip || !this.activeOrderId || this.saving) return;
     this.saving = true; this.error = ''; this.success = '';
+    let deliverySaved = false;
     try {
-      await this.service.saveDelivery(this.id(this.trip), this.activeOrderId, { broiler: Number(this.broiler), broilerWeight: Number(this.broilerWeight), culls: Number(this.culls), cullsWeight: Number(this.cullsWeight), feed: Number(this.feed), feedWeight: Number(this.feedWeight), deliveredAt: this.deliveredAt, remarks: this.remarks, reason: this.reason, confirmed: this.confirmed, failed: this.failedDelivery, approveExcess: this.approveExcess });
+      const tripId = this.id(this.trip);
+      const deliveryId = await this.service.saveDelivery(tripId, this.activeOrderId, { broiler: Number(this.broiler), broilerWeight: Number(this.broilerWeight), culls: Number(this.culls), cullsWeight: Number(this.cullsWeight), feed: Number(this.feed), feedWeight: Number(this.feedWeight), remarks: this.remarks, reason: this.reason }, this.pendingPickupIds(), this.pendingDeliveryIds());
+      deliverySaved = true;
+      if (!this.pendingVendorDeliveryIds.includes(deliveryId)) this.pendingVendorDeliveryIds.push(deliveryId);
+      this.persistPendingVendorDeliveries(tripId);
       this.activeOrderId = '';
+      const tripCompleted = await this.service.completeTripWhenDeliveriesSubmitted(tripId, this.pendingPickupIds(), this.pendingDeliveryIds());
+      if (tripCompleted) {
+        this.clearPendingSupplierPickups(tripId);
+        this.clearPendingVendorDeliveries(tripId);
+      }
       await this.load();
-      this.success = 'Delivery saved. Review reconciliation and complete the trip below.';
-    } catch (e) { this.error = e instanceof Error ? e.message : 'Delivery could not be saved.'; }
+      this.success = tripCompleted ? 'All vendor deliveries submitted. Trip marked completed.' : 'Delivery saved. Review reconciliation and complete the trip below.';
+    } catch (e) {
+      if (deliverySaved && this.trip) {
+        this.activeOrderId = '';
+        await this.load();
+        this.error = `Delivery saved, but the trip could not be marked completed: ${e instanceof Error ? e.message : 'Unknown error.'}`;
+      } else this.error = e instanceof Error ? e.message : 'Delivery could not be saved.';
+    }
     finally { this.saving = false; }
   }
   async saveMortality(): Promise<void> {
     if (!this.trip || this.saving) return;
     this.saving = true; this.error = ''; this.success = '';
-    try { await this.service.saveTripMortality(this.id(this.trip), Number(this.mortalityQuantity), this.mortalityAt, this.mortalityRemarks); this.success = 'Trip mortality saved.'; await this.load(); }
+    try { await this.service.saveTripMortality(this.id(this.trip), Number(this.mortalityQuantity), this.mortalityRemarks, this.pendingPickupIds(), this.pendingDeliveryIds()); this.success = 'Trip mortality saved.'; await this.load(); }
     catch (e) { this.error = e instanceof Error ? e.message : 'Mortality could not be saved.'; }
     finally { this.saving = false; }
   }
@@ -290,33 +263,18 @@ export class TripDeliveriesComponent implements OnInit {
     if (!this.trip || this.saving) return;
     this.saving = true; this.error = ''; this.success = '';
     try {
-      await this.service.saveSupplierPickup(this.id(this.trip), form.vendorId, {
+      const tripId = this.id(this.trip);
+      const pickupId = await this.service.saveSupplierPickup(tripId, form.vendorId, {
         broiler: Number(form.broiler ?? 0), broilerWeight: Number(form.broilerWeight ?? 0),
         culls: Number(form.culls ?? 0), cullsWeight: Number(form.cullsWeight ?? 0),
         feed: Number(form.feed ?? 0), feedWeight: Number(form.feedWeight ?? 0), reason: form.reason
-      });
+      }, this.pendingPickupIds());
+      this.pendingSupplierPickupIds[form.vendorId] = pickupId;
+      this.persistPendingSupplierPickups(tripId);
       this.success = `Actual supplier pickup from ${form.vendorName} saved.`;
       this.activePickupVendorId = '';
       await this.load();
     } catch (e) { this.error = e instanceof Error ? e.message : 'Supplier pickup could not be saved.'; }
-    finally { this.saving = false; }
-  }
-  async savePayment(form: VendorPaymentForm): Promise<void> {
-    if (!this.trip || this.saving) return;
-    this.saving = true; this.error = ''; this.success = '';
-    try {
-      if (this.editingPaymentId) {
-        await this.service.updateVendorPayment(this.id(this.trip), form.vendorDestinationId, this.editingPaymentId,
-          Number(form.amountReceived), form.paymentMethod);
-      } else {
-        await this.service.saveVendorPayment(this.id(this.trip), form.vendorDestinationId,
-          Number(form.amountReceived), form.paymentMethod);
-      }
-      this.success = `Payment from ${form.vendorName} ${this.editingPaymentId ? 'updated' : 'saved'}.`;
-      this.activePaymentVendorId = '';
-      this.editingPaymentId = '';
-      await this.load();
-    } catch (e) { this.error = e instanceof Error ? e.message : 'Payment could not be saved.'; }
     finally { this.saving = false; }
   }
   unreconciled(): number { return this.totalLoaded() - this.totalDelivered() - this.number(this.mortality?.['quantity']); }
@@ -324,10 +282,10 @@ export class TripDeliveriesComponent implements OnInit {
     if (!this.trip || this.saving) return;
     this.saving = true; this.error = ''; this.success = '';
     try {
-      const result = await this.service.submitForReconciliation(this.id(this.trip), {
-        approveDiscrepancy: this.approveReconciliation, reason: this.reconciliationReason
-      });
-      this.approveReconciliation = false; this.reconciliationReason = '';
+      const tripId = this.id(this.trip);
+      const result = await this.service.submitForReconciliation(tripId, this.pendingPickupIds(), this.pendingDeliveryIds());
+      this.clearPendingSupplierPickups(tripId);
+      this.clearPendingVendorDeliveries(tripId);
       if (result === 'completed') {
         await this.router.navigate(['/people-logistics/trips/deliveries'], {
           state: { successMessage: 'Trip completed successfully.' }

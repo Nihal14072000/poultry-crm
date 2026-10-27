@@ -5,6 +5,8 @@ import { DirectoryService } from '../../services/directory.service';
 import { ModuleWorkflowService } from '../../services/module-workflow.service';
 import { FarmOperationsService } from '../../services/farm-operations.service';
 import { RolePermissionService } from '../../services/role-permission.service';
+import { DriverDirectoryService } from '../../services/driver-directory.service';
+import { VehicleDirectoryService } from '../../services/vehicle-directory.service';
 import { WorkspacePageComponent } from './workspace-page.component';
 
 describe('WorkspacePageComponent validation', () => {
@@ -17,6 +19,8 @@ describe('WorkspacePageComponent validation', () => {
         { provide: ActivatedRoute, useValue: { data: EMPTY } },
         { provide: DirectoryService, useValue: {} },
         { provide: FarmOperationsService, useValue: {} },
+        { provide: DriverDirectoryService, useValue: {} },
+        { provide: VehicleDirectoryService, useValue: {} },
         { provide: RolePermissionService, useValue: { can: () => true, canAccessRecord: () => true, canManageRoles: () => false } }
       ]
     });

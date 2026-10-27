@@ -36,7 +36,7 @@
             <select name="driver" required [(ngModel)]="selectedDriverId">
               <option value="">Select an active driver</option>
               @for (driver of drivers; track driver['_demoId']) {
-                <option [value]="driver['_demoId']">{{ driver['employee'] }} · {{ driver['licenseNo'] || 'Licence not recorded' }}</option>
+                <option [value]="driver['_demoId']">{{ driver['name'] }} · {{ driver['number'] || 'Licence not recorded' }}</option>
               }
             </select>
             @if (submitted && !selectedDriverId) { <small class="field-error">Select an active driver.</small> }
@@ -87,7 +87,7 @@
                 <select [name]="'vendor-' + vendorPickup.key" required [(ngModel)]="vendorPickup.vendorId">
                 <option value="">Select an active supplier</option>
                   @for (vendor of availableVendors(vendorPickup); track vendor['_demoId']) {
-                    <option [value]="vendor['_demoId']">{{ vendor['name'] }} · {{ vendor['category'] }}</option>
+                    <option [value]="vendor['_demoId']">{{ vendor['name'] }} · {{ vendor['location'] }}</option>
                   }
                 </select>
                 @if (vendorError(vendorPickup)) { <small class="field-error">{{ vendorError(vendorPickup) }}</small> }
@@ -134,11 +134,11 @@
         <div class="section-heading"><span class="section-icon" aria-hidden="true">03</span><div><span class="step">VENDOR SALES</span><h2>Supervisor & vendor destinations</h2></div><button class="button button-secondary add-vendor" type="button" (click)="addDeliveryStop()" [disabled]="deliveryStops.length >= deliveryVendors.length">＋ Add destination</button></div>
         <div class="assignment-grid">
           <label>Assigned supervisor
-            <select name="supervisor" [(ngModel)]="selectedSupervisorEmail">
+            <select name="supervisor" required [(ngModel)]="selectedSupervisorId">
               <option value="">Select a supervisor</option>
-              @for (supervisor of supervisors; track supervisor['email']) { <option [value]="supervisor['email']">{{ supervisor['name'] }} · {{ supervisor['email'] }}</option> }
+              @for (supervisor of supervisors; track supervisor['_demoId']) { <option [value]="supervisor['_demoId']">{{ supervisor['name'] }}</option> }
             </select>
-            <small class="field-hint">Only this account can enter deliveries for the trip.</small>
+            <small class="field-hint">The backend supervisor assigned to this trip.</small>
           </label>
         </div>
         <p class="delivery-plan-hint">Plan bird and feed quantities, weights, and rates for each vendor destination. Sales totals use weight × rate; actual handoffs are entered by the assigned Supervisor.</p>

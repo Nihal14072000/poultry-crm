@@ -133,12 +133,7 @@ const workflows: Record<string, ModuleWorkflow> = {
       { from: 'In transit', action: 'Complete trip', to: 'Available' }
     ]
   },
-  vehicles: {
-    uniqueFields: ['vehicle'],
-    transitions: [
-      { from: 'Active', action: 'Record vehicle sale', to: 'Sold' }
-    ]
-  },
+  vehicles: { uniqueFields: ['vehicle'], transitions: [] },
   expenses: {
     uniqueFields: ['reference'],
     transitions: [

@@ -10,6 +10,7 @@ export interface CreateTripInput {
   driverId: string;
   route: string;
   vendorPickups: VendorPickupInput[];
+  supervisorId?: string;
   supervisorEmail?: string;
   vendorDeliveries?: VendorDeliveryInput[];
 }

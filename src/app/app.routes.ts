@@ -53,27 +53,14 @@ const crmPages: DirectoryPage[] = [
 ];
 
 const peoplePages: DirectoryPage[] = [
-  { path: 'employees', title: 'Employees', description: 'Manage employees across all departments, including driver licence details for transport staff.', resource: 'employees', columns: [{ key: 'employee', label: 'EMPLOYEE' }, { key: 'department', label: 'DEPARTMENT' }, { key: 'designation', label: 'DESIGNATION' }, { key: 'farm', label: 'ASSIGNED LOCATION' }, { key: 'phone', label: 'PHONE' }, { key: 'licenseNo', label: 'LICENSE NO.' }, { key: 'licenseDueDate', label: 'LICENSE DUE DATE' }, { key: 'joined', label: 'JOINED' }, { key: 'status', label: 'STATUS' }] },
-  { path: 'vehicles', title: 'Company vehicles', description: 'Maintain each company vehicle as a separate asset, including purchase, sale, permit, certificate and tax details.', resource: 'vehicles', columns: [
+  { path: 'employees', title: 'Employees', description: 'Manage employee details and roles.', resource: 'employees', columns: [{ key: 'name', label: 'NAME' }, { key: 'address', label: 'ADDRESS' }, { key: 'number', label: 'NUMBER' }, { key: 'type', label: 'TYPE' }, { key: 'status', label: 'STATUS' }] },
+  { path: 'vehicles', title: 'Company vehicles', description: 'Maintain vehicle identity, registration, insurance, and active status.', resource: 'vehicles', columns: [
     { key: 'vehicle', label: 'VEHICLE NUMBER' },
-    { key: 'state', label: 'STATE' },
-    { key: 'type', label: 'TYPE' },
-    { key: 'capacityKg', label: 'CAPACITY (KG)' },
-    { key: 'purchaseDate', label: 'PURCHASE DATE' },
-    { key: 'purchasePrice', label: 'PURCHASE PRICE (₹)' },
-    { key: 'purchasedFrom', label: 'PURCHASED FROM' },
-    { key: 'rePassingDueDate', label: 'RE PASSING DUE DATE' },
-    { key: 'roadTaxDueDate', label: 'ROAD TAX DUE DATE' },
-    { key: 'goodsPermitDueDate', label: 'GOODS PERMIT DUE DATE' },
-    { key: 'statePermitDueDate', label: 'STATE PERMIT DUE DATE' },
-    { key: 'pucDueDate', label: 'PUC DUE DATE' },
-    { key: 'insuranceDueDate', label: 'INSURANCE DUE DATE' },
-    { key: 'drCertificateDueDate', label: 'DR CERTIFICATE DUE DATE' },
-    { key: 'foodCertificateDueDate', label: 'FOOD CERTIFICATE DUE DATE' },
-    { key: 'location', label: 'LOCATION' },
-    { key: 'saleDate', label: 'SALE DATE' },
-    { key: 'salePrice', label: 'SALE PRICE (₹)' },
-    { key: 'soldTo', label: 'SOLD TO' },
+    { key: 'type', label: 'VEHICLE NAME' },
+    { key: 'registrationNo', label: 'REGISTRATION NO.' },
+    { key: 'registrationDueDate', label: 'REGISTRATION VALID UNTIL' },
+    { key: 'insuranceNo', label: 'INSURANCE NO.' },
+    { key: 'insuranceDueDate', label: 'INSURANCE VALID UNTIL' },
     { key: 'status', label: 'STATUS' }
   ] },
 ];
@@ -138,7 +125,8 @@ export const routes: Routes = [
     canActivate: [requireSessionGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'overview' },
-      { path: 'overview', canActivate: [requirePermissionGuard], data: { resource: 'dashboard' }, loadComponent: () => import('./features/workspace/dashboard/dashboard.component').then((module) => module.DashboardComponent) }
+      { path: 'overview', canActivate: [requirePermissionGuard], data: { resource: 'dashboard' }, loadComponent: () => import('./features/workspace/dashboard/dashboard.component').then((module) => module.DashboardComponent) },
+      { path: 'people-logistics', canActivate: [requirePermissionGuard], data: { resource: 'dashboard' }, loadComponent: () => import('./features/workspace/people-logistics-overview/people-logistics-overview.component').then((module) => module.PeopleLogisticsOverviewComponent) }
     ]
   },
   sectionRoute('farm-operations', farmOperations, [

@@ -1,0 +1,130 @@
+<div class="overview-page">
+  @if (loading) {
+    <div class="state" role="status">Loading people and logistics data…</div>
+  } @else if (errorMessage) {
+    <div class="state error" role="alert">{{ errorMessage }}</div>
+  } @else {
+    <header class="page-heading">
+      <div>
+        <div class="eyebrow">WORKSPACE <span>/</span> PEOPLE & LOGISTICS</div>
+        <h1>People & logistics overview</h1>
+        <p>A live summary of your team, fleet, and trips.</p>
+      </div>
+      <nav aria-label="People and logistics pages">
+        @if (canSeeEmployees) { <a routerLink="/people-logistics/employees">Employees <span>→</span></a> }
+        @if (canSeeVehicles) { <a routerLink="/people-logistics/vehicles">Vehicles <span>→</span></a> }
+        @if (canSeeTrips) { <a routerLink="/people-logistics/trips">Trips <span>→</span></a> }
+      </nav>
+    </header>
+
+    <section class="metric-grid" aria-label="People and logistics summary">
+      @if (canSeeEmployees) {
+        <article class="metric-card">
+          <span class="metric-label">TEAM MEMBERS</span>
+          <strong>{{ employees.length }}</strong>
+          <small>{{ activeEmployees }} active</small>
+        </article>
+      }
+      @if (canSeeVehicles) {
+        <article class="metric-card">
+          <span class="metric-label">FLEET VEHICLES</span>
+          <strong>{{ vehicles.length }}</strong>
+          <small>{{ activeVehicles }} active</small>
+        </article>
+      }
+      @if (canSeeTrips) {
+        <article class="metric-card">
+          <span class="metric-label">TRIPS</span>
+          <strong>{{ trips.length }}</strong>
+          <small>{{ activeTrips }} active</small>
+        </article>
+      }
+    </section>
+
+    <section class="data-grid">
+      @if (canSeeEmployees) {
+        <article class="panel">
+          <header class="panel-heading">
+            <div><h2>Team</h2><p>{{ employees.length }} employees</p></div>
+            <a routerLink="/people-logistics/employees">View all <span>→</span></a>
+          </header>
+          @if (employees.length) {
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>NAME</th><th>TYPE</th><th>PHONE</th><th>STATUS</th></tr></thead>
+                <tbody>
+                  @for (employee of employees; track employee['_demoId']) {
+                    <tr>
+                      <td><strong>{{ employee['name'] || '—' }}</strong></td>
+                      <td>{{ employee['type'] || '—' }}</td>
+                      <td>{{ employee['number'] || '—' }}</td>
+                      <td><span class="status">{{ employee['status'] || '—' }}</span></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="empty">No team members found.</p> }
+        </article>
+      }
+
+      @if (canSeeVehicles) {
+        <article class="panel">
+          <header class="panel-heading">
+            <div><h2>Fleet</h2><p>{{ vehicles.length }} vehicles</p></div>
+            <a routerLink="/people-logistics/vehicles">View all <span>→</span></a>
+          </header>
+          @if (vehicles.length) {
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>VEHICLE</th><th>TYPE</th><th>REGISTRATION</th><th>STATUS</th></tr></thead>
+                <tbody>
+                  @for (vehicle of vehicles; track vehicle['_demoId']) {
+                    <tr>
+                      <td><strong>{{ vehicle['vehicle'] || '—' }}</strong></td>
+                      <td>{{ vehicle['type'] || '—' }}</td>
+                      <td>{{ vehicle['registrationNo'] || '—' }}</td>
+                      <td><span class="status">{{ vehicle['status'] || '—' }}</span></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="empty">No vehicles found.</p> }
+        </article>
+      }
+
+      @if (canSeeTrips) {
+        <article class="panel trip-panel">
+          <header class="panel-heading">
+            <div><h2>Recent trips</h2><p>{{ trips.length }} trips in total</p></div>
+            <a routerLink="/people-logistics/trips">View all <span>→</span></a>
+          </header>
+          @if (trips.length) {
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>TRIP</th><th>DATE</th><th>ROUTE</th><th>DRIVER</th><th>VEHICLE</th><th>STATUS</th></tr></thead>
+                <tbody>
+                  @for (trip of trips.slice(0, 8); track trip['_demoId']) {
+                    <tr>
+                      <td><strong>{{ trip['tripNumber'] || 'Trip' }}</strong></td>
+                      <td>{{ trip['tripDate'] || '—' }}</td>
+                      <td>{{ trip['route'] || '—' }}</td>
+                      <td>{{ trip['driverName'] || '—' }}</td>
+                      <td>{{ trip['vehicleName'] || '—' }}</td>
+                      <td><span class="status">{{ trip['status'] || '—' }}</span></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="empty">No trips found.</p> }
+        </article>
+      }
+
+      @if (!canSeeEmployees && !canSeeVehicles && !canSeeTrips) {
+        <p class="empty">You don't have access to people or logistics records.</p>
+      }
+    </section>
+  }
+</div>

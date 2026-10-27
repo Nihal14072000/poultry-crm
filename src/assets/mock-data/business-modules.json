@@ -174,10 +174,10 @@
     { "case": "CC-0071", "customer": "Harvest Basket Co.", "subject": "Invoice correction", "reported": "Oct 02, 2025", "owner": "A. Morgan", "priority": "Normal", "status": "Resolved" }
   ] },
   "employees": { "records": [
-    { "employee": "Meera Joshi", "department": "Farm operations", "designation": "Farm Manager", "farm": "Willow Creek", "phone": "+91 98220 10442", "joined": "Mar 12, 2022", "status": "Active" },
-    { "employee": "Ravi Patil", "department": "Warehouse", "designation": "Warehouse Manager", "farm": "Central store", "phone": "+91 97654 21008", "joined": "Jun 04, 2021", "status": "Active" },
-    { "employee": "S. Jadhav", "department": "Driver", "designation": "Driver", "farm": "Nashik", "phone": "+91 98900 56213", "licenseNo": "MH1520110012345", "licenseDueDate": "2027-08-31", "joined": "Aug 18, 2023", "status": "Active" },
-    { "employee": "P. Kadam", "department": "Driver", "designation": "Driver", "farm": "Pune", "phone": "+91 98220 33107", "licenseNo": "MH1220090087654", "licenseDueDate": "2027-05-31", "joined": "Sep 02, 2023", "status": "Active" }
+    { "name": "Meera Joshi", "department": "Farm operations", "designation": "Farm Manager", "farm": "Willow Creek", "phone": "+91 98220 10442", "joined": "Mar 12, 2022", "status": "Active" },
+    { "name": "Ravi Patil", "department": "Warehouse", "designation": "Warehouse Manager", "farm": "Central store", "phone": "+91 97654 21008", "joined": "Jun 04, 2021", "status": "Active" },
+    { "name": "S. Jadhav", "department": "Driver", "designation": "Driver", "farm": "Nashik", "phone": "+91 98900 56213", "number": "MH1520110012345", "licenseDueDate": "2027-08-31", "joined": "Aug 18, 2023", "status": "Active" },
+    { "name": "P. Kadam", "department": "Driver", "designation": "Driver", "farm": "Pune", "phone": "+91 98220 33107", "number": "MH1220090087654", "licenseDueDate": "2027-05-31", "joined": "Sep 02, 2023", "status": "Active" }
   ] },
   "fleet": { "records": [
     { "vehicle": "MH-12-AB-4521", "type": "Light truck", "driver": "S. Jadhav", "capacity": "2,000 kg", "lastInspection": "Sep 28, 2025", "location": "Nashik", "status": "Available" },

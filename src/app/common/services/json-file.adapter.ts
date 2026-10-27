@@ -180,11 +180,11 @@ export class JsonFileAdapter extends DataAdapter {
     const drivers = names.map((name, index) => {
       const source = fleet.find((record) => String(record['driver'] ?? '').trim() === name) ?? {};
       return {
-        employee: name,
+        name,
         department: 'Driver',
         designation: 'Driver',
         phone: source['driverPhone'] ?? '',
-        licenseNo: source['licenseNo'] ?? '',
+        number: source['licenseNo'] ?? '',
         licenseDueDate: source['licenseDueDate'] ?? '',
         location: source['location'] ?? '',
         status: 'Active',
@@ -232,10 +232,18 @@ export class JsonFileAdapter extends DataAdapter {
 
   private mergeLegacyDrivers(employees: Record<string, string | number>[]): Record<string, string | number>[] {
     const migrationKey = 'flockwise.demo.drivers-merged';
-    if (localStorage.getItem(migrationKey) === 'true') return employees;
+    const nextEmployees = employees.map((employee) => {
+      const current = { ...employee };
+      if (current['name'] === undefined && current['employee'] !== undefined) current['name'] = current['employee'];
+      if (current['number'] === undefined && current['licenseNo'] !== undefined) current['number'] = current['licenseNo'];
+      delete current['employee'];
+      delete current['licenseNo'];
+      return current;
+    });
+    if (localStorage.getItem(migrationKey) === 'true') return nextEmployees;
     const storedDrivers = localStorage.getItem(this.storageKey('drivers'));
     const storedFleet = localStorage.getItem(this.storageKey('fleet'));
-    if (storedDrivers === null && storedFleet === null) return employees;
+    if (storedDrivers === null && storedFleet === null) return nextEmployees;
 
     let legacyDrivers: Record<string, string | number>[];
     if (storedDrivers !== null) {
@@ -250,9 +258,9 @@ export class JsonFileAdapter extends DataAdapter {
       legacyDrivers = names.map((name, index) => {
         const source = fleet.find((record) => String(record['driver'] ?? '').trim() === name) ?? {};
         return {
-          employee: name,
+          name,
           phone: source['driverPhone'] ?? '',
-          licenseNo: source['licenseNo'] ?? '',
+          number: source['licenseNo'] ?? '',
           licenseDueDate: source['licenseDueDate'] ?? '',
           location: source['location'] ?? '',
           status: 'Active',
@@ -261,27 +269,29 @@ export class JsonFileAdapter extends DataAdapter {
       });
     }
 
-    const nextEmployees = [...employees];
     const employeeIdsByLegacyId: Record<string, string> = {};
     legacyDrivers.forEach((legacyDriver, index) => {
-      const name = String(legacyDriver['employee'] ?? legacyDriver['driver'] ?? '').trim();
+      const name = String(legacyDriver['name'] ?? legacyDriver['employee'] ?? legacyDriver['driver'] ?? '').trim();
       if (!name) return;
       const phone = String(legacyDriver['phone'] ?? legacyDriver['driverPhone'] ?? '').trim();
-      const licenseNo = String(legacyDriver['licenseNo'] ?? '').trim();
+      const number = String(legacyDriver['number'] ?? legacyDriver['licenseNo'] ?? '').trim();
       let existingIndex = nextEmployees.findIndex((employee) =>
         (phone && String(employee['phone'] ?? '').trim() === phone) ||
-        (licenseNo && String(employee['licenseNo'] ?? '').trim() === licenseNo) ||
-        String(employee['employee'] ?? '').trim().toLocaleLowerCase() === name.toLocaleLowerCase()
+        (number && String(employee['number'] ?? '').trim() === number) ||
+        String(employee['name'] ?? '').trim().toLocaleLowerCase() === name.toLocaleLowerCase()
       );
       const legacyId = String(legacyDriver['_demoId'] ?? `drivers-legacy-${index + 1}`);
       if (existingIndex < 0) {
+        const current = { ...legacyDriver };
+        delete current['employee'];
+        delete current['licenseNo'];
         nextEmployees.push({
-          ...legacyDriver,
-          employee: name,
+          ...current,
+          name,
           department: 'Driver',
           designation: 'Driver',
           phone,
-          licenseNo,
+          number,
           licenseDueDate: legacyDriver['licenseDueDate'] ?? '',
           _demoId: legacyId
         });
@@ -291,7 +301,7 @@ export class JsonFileAdapter extends DataAdapter {
           ...nextEmployees[existingIndex],
           department: 'Driver',
           designation: 'Driver',
-          licenseNo: nextEmployees[existingIndex]['licenseNo'] || licenseNo,
+          number: nextEmployees[existingIndex]['number'] || number,
           licenseDueDate: nextEmployees[existingIndex]['licenseDueDate'] || legacyDriver['licenseDueDate'] || ''
         };
       }

@@ -2,6 +2,21 @@ export interface DirectoryResponse {
   records: Record<string, string | number>[];
 }
 
+export interface Employee extends Record<string, unknown> {
+  id: number;
+  name: string;
+  address: string;
+  number: string;
+  type: string;
+  status: string;
+  isActive: boolean;
+  isDeleted: boolean;
+  createDate: string | null;
+  updatedDate: string | null;
+  createdBy: string | null;
+  updatedBy: string | null;
+}
+
 export interface DirectoryColumn {
   key: string;
   label: string;

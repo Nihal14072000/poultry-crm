@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TripRecord, TripVendorPickup } from '../../../common/models/trip.model';
-import { TripService } from '../../../common/services/trip.service';
+import { TripApiService } from '../../../common/services/trip-api.service';
 
 @Component({
   selector: 'app-trip-details',
@@ -22,7 +22,7 @@ export class TripDetailsComponent implements OnInit {
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly tripService: TripService
+    private readonly tripService: TripApiService
   ) {}
 
   async ngOnInit(): Promise<void> {

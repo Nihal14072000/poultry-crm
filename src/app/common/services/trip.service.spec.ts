@@ -1,15 +1,21 @@
 import { of } from 'rxjs';
-import { CreateTripInput } from '../models/trip.model';
+import { CreateTripInput, TripRecord } from '../models/trip.model';
+import { UserSession } from '../models/auth.model';
 import { DirectoryService } from './directory.service';
 import { RolePermissionService } from './role-permission.service';
+import { SessionAuthService } from './session-auth.service';
+import { TripApiService, TripDeliveryData } from './trip-api.service';
 import { summarizeTrip, TripService } from './trip.service';
 
 describe('TripService', () => {
   let service: TripService;
   let directories: jasmine.SpyObj<DirectoryService>;
+  let auth: jasmine.SpyObj<SessionAuthService>;
+  let tripApi: jasmine.SpyObj<TripApiService>;
+  let currentUser: UserSession | null;
   const records: Record<string, Record<string, string | number>[]> = {
     vehicles: [{ _demoId: 'vehicles-1', vehicle: 'MH-12-AB-4521', type: 'Truck', status: 'Active', birdCapacity: 100 }],
-    employees: [{ _demoId: 'employees-1', employee: 'S. Jadhav', department: 'Driver', status: 'Active' }],
+    employees: [{ _demoId: 'employees-1', name: 'S. Jadhav', department: 'Driver', status: 'Active' }],
     suppliers: [
       { _demoId: 'suppliers-1', name: 'Farm Vendor', status: 'Active' },
       { _demoId: 'suppliers-2', name: 'Second Farm Vendor', status: 'Active' }
@@ -36,10 +42,62 @@ describe('TripService', () => {
     directories.getDirectory.and.callFake((resource: string) => of({ records: records[resource] ?? [] }));
     directories.createRecord.and.callFake((_resource, record) => of({ ...record, _demoId: 'trips-1' }));
     directories.updateRecord.and.callFake((_resource, id, record) => of({ ...record, _demoId: id }));
+    auth = jasmine.createSpyObj<SessionAuthService>('SessionAuthService', []);
+    currentUser = {
+      name: 'Supervisor',
+      email: 'supervisor@example.com',
+      role: 'Supervisor',
+      permissions: '',
+      status: 'Active',
+      authenticatedAt: '2026-10-11T00:00:00.000Z'
+    };
+    Object.defineProperty(auth, 'currentUser', { configurable: true, get: () => currentUser });
+    tripApi = jasmine.createSpyObj<TripApiService>('TripApiService', [
+      'getTrips', 'getDeliveryData', 'linkSupplierPickups', 'linkVendorDeliveries', 'updateTripStatus'
+    ]);
+    tripApi.getTrips.and.resolveTo([]);
     const permissions = jasmine.createSpyObj<RolePermissionService>('RolePermissionService', ['can', 'canAccessRecord']);
     permissions.can.and.returnValue(true);
     permissions.canAccessRecord.and.returnValue(true);
-    service = new TripService(directories, permissions);
+    service = new TripService(directories, permissions, auth, tripApi);
+  });
+
+  it('lists all non-deleted trips the current delivery user can access', async () => {
+    const availableTrip: TripRecord = {
+      _demoId: 'trip-not-assigned-to-user',
+      tripNumber: 'TR-0002',
+      status: 'Assigned',
+      supervisorEmail: 'another.supervisor@example.com'
+    };
+    tripApi.getTrips.and.resolveTo([availableTrip, { _demoId: 'deleted-trip', status: 'Deleted' }]);
+
+    expect(await service.getDeliveryTrips()).toEqual([availableTrip]);
+    expect(tripApi.getTrips).toHaveBeenCalled();
+  });
+
+  it('completes a trip and links its pending records after every destination has a delivery', async () => {
+    const deliveryData: TripDeliveryData = {
+      trip: { _demoId: 'trip-1', status: 'Delivery in progress' },
+      supplierPickups: [],
+      supplierReceipts: [],
+      destinations: [{ vendorDestinationId: 'destination-1' }, { vendorDestinationId: 'destination-2' }],
+      deliveries: [{ vendorDestinationId: 'destination-1' }, { vendorDestinationId: 'destination-2' }],
+      mortality: undefined,
+      loadedBroiler: 0,
+      loadedCulls: 0,
+      loadedBirds: 0
+    };
+    tripApi.getDeliveryData.and.resolveTo(deliveryData);
+    tripApi.linkSupplierPickups.and.resolveTo();
+    tripApi.linkVendorDeliveries.and.resolveTo();
+    tripApi.updateTripStatus.and.resolveTo();
+
+    await expectAsync(service.completeTripWhenDeliveriesSubmitted('trip-1', ['pickup-1'], ['delivery-1', 'delivery-2']))
+      .toBeResolvedTo(true);
+
+    expect(tripApi.linkSupplierPickups).toHaveBeenCalledWith('trip-1', ['pickup-1']);
+    expect(tripApi.linkVendorDeliveries).toHaveBeenCalledWith('trip-1', ['delivery-1', 'delivery-2']);
+    expect(tripApi.updateTripStatus).toHaveBeenCalledWith('trip-1', 'Completed');
   });
 
   it('recalculates and persists pickup totals for multiple vendors', async () => {

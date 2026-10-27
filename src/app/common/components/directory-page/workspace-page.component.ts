@@ -14,6 +14,8 @@ import { WorkflowAction } from '../../models/workflow.model';
 import { FarmOperationsData, FarmOperationsService } from '../../services/farm-operations.service';
 import { PermissionAction } from '../../models/auth.model';
 import { RolePermissionService } from '../../services/role-permission.service';
+import { DriverDirectoryService } from '../../services/driver-directory.service';
+import { VehicleDirectoryService } from '../../services/vehicle-directory.service';
 
 @Component({
   selector: 'app-workspace-page',
@@ -54,7 +56,9 @@ export class WorkspacePageComponent implements OnInit {
     private readonly directories: DirectoryService,
     private readonly workflows: ModuleWorkflowService,
     private readonly farmOperations: FarmOperationsService,
-    private readonly rolePermissions: RolePermissionService
+    private readonly rolePermissions: RolePermissionService,
+    private readonly drivers: DriverDirectoryService,
+    private readonly vehicles: VehicleDirectoryService
   ) {}
 
   ngOnInit(): void {
@@ -264,6 +268,8 @@ export class WorkspacePageComponent implements OnInit {
   }
 
   statusOptions(): string[] {
+    if (this.resource === 'employees') return ['Active', 'Inactive'];
+    if (this.resource === 'vehicles') return ['Active', 'Inactive'];
     if (this.editorMode === 'create') {
       const initialStatuses = this.workflows.getInitialStatuses(this.resource);
       if (initialStatuses.length) return initialStatuses;
@@ -368,34 +374,6 @@ export class WorkspacePageComponent implements OnInit {
     this.saving = true;
     this.actionError = '';
     this.successMessage = '';
-    if (this.resource === 'vehicles' && action.nextStatus === 'Sold') {
-      const requiredSaleDetails = ['saleDate', 'salePrice', 'soldTo'];
-      if (requiredSaleDetails.some((key) => !String(record[key] ?? '').trim())) {
-        this.actionError = 'Add the sale date, sale price, and buyer to the vehicle record before recording its sale.';
-        this.saving = false;
-        return;
-      }
-      this.directories.getDirectory('vehicle-assignments').subscribe({
-        next: (response) => {
-          if (response.records.some((assignment) =>
-            assignment['vehicleId'] === id && assignment['status'] === 'Assigned'
-          )) {
-            this.actionError = 'Return this vehicle from its current driver before recording the sale.';
-            this.saving = false;
-            return;
-          }
-          this.directories.updateRecord(this.resource, id, { ...record, status: action.nextStatus }).subscribe({
-            next: (updated) => this.finishWorkflowAction(record, updated, action),
-            error: () => this.failWorkflowAction(action)
-          });
-        },
-        error: () => {
-          this.actionError = 'Could not verify vehicle assignments. The vehicle sale was not recorded.';
-          this.saving = false;
-        }
-      });
-      return;
-    }
     if (this.resource !== 'batches') {
       this.directories.updateRecord(this.resource, id, { ...record, status: action.nextStatus }).subscribe({
         next: (updated) => this.finishWorkflowAction(record, updated, action),
@@ -466,11 +444,8 @@ export class WorkspacePageComponent implements OnInit {
   }
 
   private isOptionalField(key: string): boolean {
-    if (this.resource === 'employees' && ['licenseNo', 'licenseDueDate'].includes(key)) {
-      const isDriver = String(this.editorRecord['department'] ?? '').trim().toLowerCase() === 'driver' ||
-        String(this.editorRecord['designation'] ?? '').trim().toLowerCase() === 'driver';
-      return !isDriver;
-    }
+    if (this.resource === 'employees') return ['address', 'number'].includes(key);
+    if (this.resource === 'vehicles') return ['registrationNo', 'registrationDueDate', 'insuranceNo', 'insuranceDueDate'].includes(key);
     return /(notes?|comments?|remark|email|assignedTo|breed|saleDate|salePrice|soldTo)/i.test(key);
   }
 
@@ -498,10 +473,6 @@ export class WorkspacePageComponent implements OnInit {
     const destination = String(this.editorRecord['to'] ?? '').trim();
     if (this.resource === 'transfers' && source && destination && source.toLocaleLowerCase() === destination.toLocaleLowerCase()) {
       return 'Choose different source and destination locations.';
-    }
-    if (this.resource === 'vehicles' && String(this.editorRecord['status'] ?? '').toLowerCase() === 'sold' &&
-      ['saleDate', 'salePrice', 'soldTo'].some((key) => !String(this.editorRecord[key] ?? '').trim())) {
-      return 'Enter the sale date, sale price, and buyer for a sold vehicle.';
     }
     if (this.resource === 'batches') {
       const initial = Number(this.editorRecord['initialBirds'] ?? this.editorRecord['placementQuantity']);
@@ -604,9 +575,13 @@ export class WorkspacePageComponent implements OnInit {
       this.saving = false;
       return;
     }
-    const mutation = creating
-      ? this.directories.createRecord(this.resource, record)
-      : this.directories.updateRecord(this.resource, this.editingId, record);
+    const mutation = this.resource === 'employees'
+      ? creating ? this.drivers.createRecord(record) : this.drivers.updateRecord(this.editingId, record)
+      : this.resource === 'vehicles'
+        ? creating ? this.vehicles.createRecord(record) : this.vehicles.updateRecord(this.editingId, record)
+        : creating
+          ? this.directories.createRecord(this.resource, record)
+          : this.directories.updateRecord(this.resource, this.editingId, record);
     mutation.subscribe({
       next: (saved) => {
         if (creating) this.records = [...this.records, saved];
@@ -653,29 +628,6 @@ export class WorkspacePageComponent implements OnInit {
     const candidate = this.deleteCandidate;
     const id = String(candidate?.['_demoId'] ?? '');
     if (!candidate || !id || !this.can('delete')) return;
-    if (['vehicles', 'employees'].includes(this.resource)) {
-      this.saving = true;
-      this.directories.getDirectory('vehicle-assignments').subscribe({
-        next: (response) => {
-          const isReferenced = response.records.some((assignment) =>
-            this.resource === 'vehicles'
-              ? assignment['vehicleId'] === id
-              : (assignment['employeeId'] ?? assignment['driverId']) === id
-          );
-          if (isReferenced) {
-            this.actionError = 'This record has assignment history and cannot be deleted. Keep it to preserve the fleet history.';
-            this.saving = false;
-            return;
-          }
-          this.removeRecord(id);
-        },
-        error: () => {
-          this.actionError = 'Could not verify vehicle assignment history. Nothing was deleted.';
-          this.saving = false;
-        }
-      });
-      return;
-    }
     if (['farms', 'sheds', 'batches'].includes(this.resource)) {
       this.saving = true;
       this.farmOperations.loadData().subscribe({
@@ -726,7 +678,12 @@ export class WorkspacePageComponent implements OnInit {
 
   private removeRecord(id: string): void {
     this.saving = true;
-    this.directories.deleteRecord(this.resource, id).subscribe({
+    const deletion = this.resource === 'employees'
+      ? this.drivers.deleteRecord(id)
+      : this.resource === 'vehicles'
+        ? this.vehicles.deleteRecord(id)
+        : this.directories.deleteRecord(this.resource, id);
+    deletion.subscribe({
       next: () => {
         this.records = this.records.filter((record) => record['_demoId'] !== id);
         this.currentPage = Math.min(this.currentPage, this.pageCount);
@@ -800,7 +757,12 @@ export class WorkspacePageComponent implements OnInit {
   }
 
   private loadDirectory(resource: string) {
-    return this.directories.getDirectory(resource).pipe(
+    const directory = resource === 'employees'
+      ? this.drivers.getDirectory()
+      : resource === 'vehicles'
+        ? this.vehicles.getDirectory()
+        : this.directories.getDirectory(resource);
+    return directory.pipe(
       tap((response) => {
         this.records = this.visibleRecords(response.records);
         this.loading = false;

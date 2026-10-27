@@ -12,6 +12,8 @@ import { SessionAuthService } from './common/services/session-auth.service';
   styleUrl: './app.component.css'
 })
 export class AppComponent {
+  mobileNavigationOpen = false;
+
   constructor(
     readonly auth: SessionAuthService,
     private readonly rolePermissions: RolePermissionService
@@ -25,7 +27,10 @@ export class AppComponent {
   readonly navigation = [
     {
       label: 'Workspace',
-      links: [{ label: 'Overview', path: '/workspace/overview', icon: 'overview' }]
+      links: [
+        { label: 'Overview', path: '/workspace/overview', icon: 'overview' },
+        { label: 'People & logistics', path: '/workspace/people-logistics', icon: 'dispatch' }
+      ]
     },
     {
       label: 'Farm operations',
@@ -112,6 +117,7 @@ export class AppComponent {
 
   get visibleNavigation(): typeof this.navigation {
     return this.navigation
+      .filter((group) => !['Farm operations', 'Trading', 'Customer relations'].includes(group.label))
       .map((group) => ({
         ...group,
         links: group.links.filter((link) => this.rolePermissions.canAccessRoute(this.resourceForPath(link.path)))
@@ -153,7 +159,7 @@ export class AppComponent {
       'audit': 'audit'
     };
     if (path === '/finance/overview') return 'finance';
-    if (path === '/workspace/overview') return 'dashboard';
+    if (path.startsWith('/workspace/')) return 'dashboard';
     return routeResources[segment] ?? segment;
   }
 
@@ -161,10 +167,16 @@ export class AppComponent {
     this.expandedGroups[label] = !this.expandedGroups[label];
   }
 
-  closeNavigationGroups(): void {
-    for (const group of Object.keys(this.expandedGroups)) {
-      this.expandedGroups[group] = false;
-    }
+  closeNavigation(): void {
+    this.closeMobileNavigation();
+  }
+
+  toggleMobileNavigation(): void {
+    this.mobileNavigationOpen = !this.mobileNavigationOpen;
+  }
+
+  closeMobileNavigation(): void {
+    this.mobileNavigationOpen = false;
   }
 
 }

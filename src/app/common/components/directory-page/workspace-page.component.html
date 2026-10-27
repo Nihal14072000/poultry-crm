@@ -39,12 +39,12 @@
       <app-data-grid [columnDefs]="gridColumns" [rowData]="gridRows" />
     }
   </div>
-  <p class="demo-note"><span>●</span> Demo workspace · This view is powered by local JSON sample data.</p>
+  <p class="demo-note"><span>●</span> {{ resource === 'employees' ? 'Backend-connected · Employee records are managed by the employees API.' : resource === 'vehicles' ? 'Backend-connected · Vehicle records are managed by the vehicles API.' : 'Demo workspace · This view is powered by local JSON sample data.' }}</p>
 
   @if (editorOpen) {
     <div class="dialog-backdrop" (click)="closeEditor()">
       <section class="record-dialog" [class.fleet-dialog]="resource === 'fleet'" role="dialog" aria-modal="true" [attr.aria-label]="(editorMode === 'create' ? 'Add ' : 'Edit ') + title" (click)="$event.stopPropagation()">
-        <div class="dialog-heading"><div><h2>{{ editorMode === 'create' ? 'Add record' : 'Edit record' }}</h2><p>{{ title }} · Demo changes are saved in this browser.</p></div><button type="button" class="dialog-close" aria-label="Close" (click)="closeEditor()">×</button></div>
+        <div class="dialog-heading"><div><h2>{{ editorMode === 'create' ? 'Add record' : 'Edit record' }}</h2><p>{{ title }} · {{ ['employees', 'vehicles'].includes(resource) ? 'Changes are saved to the backend.' : 'Demo changes are saved in this browser.' }}</p></div><button type="button" class="dialog-close" aria-label="Close" (click)="closeEditor()">×</button></div>
         @if (editorMode === 'create' && hasSuggestions) {
           <p class="suggestion-note">Start typing in a field to see suggestions from existing records.</p>
         }
@@ -55,6 +55,13 @@
                 <ng-select class="app-select" labelForId="editor-status" [(ngModel)]="editorRecord[column.key]" [ngModelOptions]="{standalone: true}" [disabled]="hasModuleWorkflow && editorMode === 'edit'" [attr.aria-invalid]="showFieldError(column.key)" [attr.aria-describedby]="showFieldError(column.key) ? 'field-error-' + column.key : null" [clearable]="false">
                   <ng-option value="">Select status</ng-option>
                   @for (status of statusOptions(); track status) { <ng-option [value]="status">{{ status }}</ng-option> }
+                </ng-select>
+              } @else if (resource === 'employees' && column.key === 'type') {
+                <ng-select class="app-select" labelForId="editor-employee-type" [(ngModel)]="editorRecord[column.key]" [ngModelOptions]="{standalone: true}" [attr.aria-invalid]="showFieldError(column.key)" [attr.aria-describedby]="showFieldError(column.key) ? 'field-error-' + column.key : null" [clearable]="false">
+                  <ng-option value="">Select employee type</ng-option>
+                  <ng-option value="DRIVER">DRIVER</ng-option>
+                  <ng-option value="SUPERVISOR">SUPERVISOR</ng-option>
+                  <ng-option value="ACCOUNTANT">ACCOUNTANT</ng-option>
                 </ng-select>
               } @else {
                 <input [type]="fieldInputType(column.key)" [attr.min]="minimumValue(column.key)" [attr.max]="percentageMax(column.key)" [attr.maxlength]="column.key.toLowerCase().includes('note') ? 500 : 120" [attr.required]="!['notes', 'note', 'comments', 'remark', 'email', 'assignedTo'].includes(column.key) ? true : null" [attr.list]="editorMode === 'create' && suggestionsFor(column.key).length ? suggestionsId(column.key) : null" [(ngModel)]="editorRecord[column.key]" [ngModelOptions]="{standalone: true}" [placeholder]="'Enter ' + column.label.toLowerCase()" [attr.aria-invalid]="showFieldError(column.key)" [attr.aria-describedby]="showFieldError(column.key) ? 'field-error-' + column.key : null">
@@ -78,7 +85,7 @@
   @if (deleteCandidate) {
     <div class="dialog-backdrop" (click)="cancelDelete()">
       <section class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-title" (click)="$event.stopPropagation()">
-        <span class="confirm-icon">!</span><h2 id="delete-title">Remove this demo record?</h2><p>This removes the record from this browser’s local demo data. It cannot be undone.</p>
+        <span class="confirm-icon">!</span><h2 id="delete-title">Remove this {{ resource === 'employees' ? 'driver' : resource === 'vehicles' ? 'vehicle' : 'demo record' }}?</h2><p>{{ ['employees', 'vehicles'].includes(resource) ? 'This removes the record from the backend.' : 'This removes the record from this browser’s local demo data. It cannot be undone.' }}</p>
         @if (actionError) { <div class="dialog-error" role="alert">{{ actionError }}</div> }
         <div class="dialog-footer"><button class="button button-secondary" type="button" (click)="cancelDelete()">Keep record</button><button class="button danger-button" type="button" (click)="deleteRecord()">Remove record</button></div>
       </section>

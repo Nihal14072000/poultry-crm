@@ -3,7 +3,7 @@
     <div>
       <div class="eyebrow">PEOPLE & LOGISTICS <span>/</span> VEHICLE MANAGEMENT</div>
       <h1>Trips</h1>
-      <p>Plan vehicle pickups and track trip quantities and value.</p>
+      <p>Plan vehicle trips, supplier orders, and vendor deliveries.</p>
     </div>
     @if (rolePermissions.can('trips', 'create')) {
       <a class="button button-primary" routerLink="/people-logistics/trips/new">＋ Create trip</a>
@@ -18,7 +18,7 @@
 
   <section class="panel">
     <div class="panel-heading">
-      <div><span class="step">TRIP REGISTER</span><h2>Vehicle trips</h2><p>Each trip records supplier pickups and planned deliveries to one or more vendor destinations.</p></div>
+      <div><span class="step">TRIP REGISTER</span><h2>Vehicle trips</h2><p>Trip assignments and proposed supplier and vendor orders are saved together.</p></div>
     </div>
     @if (loading) {
       <p class="state">Loading trips…</p>
@@ -54,5 +54,5 @@
       </div>
     }
   </section>
-  <p class="demo-note">Supplier receipt quantities and vendor destination plans are stored separately for each trip.</p>
+  <p class="demo-note">Trips and their nested buying and selling orders are managed by the backend.</p>
 </main>

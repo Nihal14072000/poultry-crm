@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { TripRecord } from '../../../common/models/trip.model';
-import { TripService } from '../../../common/services/trip.service';
+import { TripApiService } from '../../../common/services/trip-api.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { SessionAuthService } from '../../../common/services/session-auth.service';
 
@@ -20,7 +20,7 @@ export class TripsComponent implements OnInit {
   successMessage: string;
 
   constructor(
-    private readonly tripService: TripService,
+    private readonly tripService: TripApiService,
     private readonly router: Router,
     readonly rolePermissions: RolePermissionService,
     readonly auth: SessionAuthService

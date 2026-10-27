@@ -31,6 +31,11 @@ describe('AppComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.brand-name')?.textContent).toContain('flockwise');
     expect(compiled.querySelectorAll('.nav-link').length).toBeGreaterThan(5);
+    const groupLabels = Array.from(compiled.querySelectorAll('.nav-group-toggle')).map((button) => button.textContent);
+    expect(groupLabels).not.toContain('Farm operations');
+    expect(groupLabels).not.toContain('Trading');
+    expect(groupLabels).not.toContain('Customer relations');
+    expect(groupLabels).toContain('Inventory');
   });
 
   it('should collapse and expand navigation groups', () => {
@@ -38,19 +43,56 @@ describe('AppComponent', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const farmGroup = Array.from(compiled.querySelectorAll<HTMLButtonElement>('.nav-group-toggle'))
-      .find((button) => button.textContent?.includes('Farm operations'));
+      .find((button) => button.textContent?.includes('Inventory'));
 
     expect(farmGroup).toBeTruthy();
     expect(farmGroup?.getAttribute('aria-expanded')).toBe('false');
-    expect(compiled.querySelector('.nav-link[href="/farm-operations/farms"]')).toBeNull();
+    expect(compiled.querySelector('.nav-link[href="/inventory/products"]')).toBeNull();
     farmGroup?.click();
     fixture.detectChanges();
     expect(farmGroup?.getAttribute('aria-expanded')).toBe('true');
-    expect(compiled.querySelector('.nav-link[href="/farm-operations/farms"]')).toBeTruthy();
+    expect(compiled.querySelector('.nav-link[href="/inventory/products"]')).toBeTruthy();
 
     farmGroup?.click();
     fixture.detectChanges();
     expect(farmGroup?.getAttribute('aria-expanded')).toBe('false');
-    expect(compiled.querySelector('.nav-link[href="/farm-operations/farms"]')).toBeNull();
+    expect(compiled.querySelector('.nav-link[href="/inventory/products"]')).toBeNull();
+  });
+
+  it('should keep navigation groups expanded after selecting a link', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const farmGroup = Array.from(compiled.querySelectorAll<HTMLButtonElement>('.nav-group-toggle'))
+      .find((button) => button.textContent?.includes('Inventory'));
+
+    farmGroup?.click();
+    fixture.detectChanges();
+    compiled.querySelector<HTMLAnchorElement>('.nav-link[href="/inventory/products"]')?.click();
+    fixture.detectChanges();
+
+    expect(farmGroup?.getAttribute('aria-expanded')).toBe('true');
+    expect(compiled.querySelector('.nav-link[href="/inventory/products"]')).toBeTruthy();
+  });
+
+  it('should open and close the mobile navigation drawer', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const menuButton = compiled.querySelector<HTMLButtonElement>('.mobile-menu-toggle');
+    const sidebar = compiled.querySelector<HTMLElement>('.sidebar');
+
+    expect(menuButton?.getAttribute('aria-expanded')).toBe('false');
+    expect(sidebar?.classList.contains('mobile-open')).toBe(false);
+
+    menuButton?.click();
+    fixture.detectChanges();
+    expect(menuButton?.getAttribute('aria-expanded')).toBe('true');
+    expect(sidebar?.classList.contains('mobile-open')).toBe(true);
+
+    compiled.querySelector<HTMLAnchorElement>('.nav-link[href="/workspace/overview"]')?.click();
+    fixture.detectChanges();
+    expect(menuButton?.getAttribute('aria-expanded')).toBe('false');
+    expect(sidebar?.classList.contains('mobile-open')).toBe(false);
   });
 });

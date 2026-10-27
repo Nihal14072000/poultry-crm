@@ -83,7 +83,7 @@ describe('JsonFileAdapter demo data restoration', () => {
     expect(vehicle?.['vehicle']).toBe('MH-12-AB-4521');
     expect(vehicle?.['capacityKg']).toBe(2000);
     expect(vehicle?.['driver']).toBeUndefined();
-    expect(driverEmployee?.['employee']).toBe('S. Jadhav');
+    expect(driverEmployee?.['name']).toBe('S. Jadhav');
     expect(driverEmployee?.['designation']).toBe('Driver');
     expect(assignment?.['vehicleId']).toBe(vehicle?.['_demoId']);
     expect(assignment?.['employeeId']).toBe(driverEmployee?.['_demoId']);
@@ -100,7 +100,7 @@ describe('JsonFileAdapter demo data restoration', () => {
     let driverEmployee: Record<string, string | number> | undefined;
     let assignment: Record<string, string | number> | undefined;
     adapter.get<{ records: Record<string, string | number>[] }>('employees').subscribe((response) => {
-      driverEmployee = response.records.find((record) => record['employee'] === 'Alex Driver');
+      driverEmployee = response.records.find((record) => record['name'] === 'Alex Driver');
     });
     adapter.get<{ records: Record<string, string | number>[] }>('vehicle-assignments').subscribe((response) => {
       assignment = response.records[0];
@@ -108,7 +108,7 @@ describe('JsonFileAdapter demo data restoration', () => {
 
     expect(driverEmployee?.['department']).toBe('Driver');
     expect(driverEmployee?.['designation']).toBe('Driver');
-    expect(driverEmployee?.['licenseNo']).toBe('MH1520990011223');
+    expect(driverEmployee?.['number']).toBe('MH1520990011223');
     expect(assignment?.['employeeId']).toBe(driverEmployee?.['_demoId']);
     expect(assignment?.['driverId']).toBeUndefined();
   });

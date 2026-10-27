@@ -32,7 +32,7 @@
             <ng-select class="app-select" labelForId="driver-select" name="driver" required [(ngModel)]="selectedDriverId" [clearable]="false">
               <ng-option value="">Select available driver employee</ng-option>
               @for (driver of availableDrivers; track driver['_demoId']) {
-                <ng-option [value]="driver['_demoId']">{{ driver['employee'] }} · {{ driver['licenseNo'] }}</ng-option>
+                <ng-option [value]="driver['_demoId']">{{ driver['name'] }} · {{ driver['number'] }}</ng-option>
               }
             </ng-select>
           </label>
@@ -65,8 +65,8 @@
       @if (selectedDriver; as driver) {
         <section class="driver-preview" aria-label="Selected driver details">
           <span class="step">SELECTED DRIVER</span>
-          <strong>{{ driver['employee'] }}</strong>
-          <span>Licence {{ driver['licenseNo'] || 'not recorded' }} · Due {{ driver['licenseDueDate'] || 'date not recorded' }} · {{ driver['phone'] || 'phone not recorded' }}</span>
+          <strong>{{ driver['name'] }}</strong>
+          <span>Licence {{ driver['number'] || 'not recorded' }}</span>
         </section>
       }
     </section>
