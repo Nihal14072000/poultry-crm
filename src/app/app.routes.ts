@@ -91,6 +91,8 @@ function pageRoute(page: DirectoryPage): Route {
     canActivate: [requirePermissionGuard],
     loadComponent: page.resource === 'users-roles'
       ? () => import('./features/identity/users-roles/users-roles.component').then((module) => module.UsersRolesComponent)
+      : ['finance', 'receivables', 'payables', 'payments'].includes(page.resource)
+      ? () => import('./features/finance/payment-center/payment-center.component').then((module) => module.PaymentCenterComponent)
       : ['quotations', 'orders', 'sales', 'dispatch'].includes(page.resource)
       ? () => import('./features/trading/trading-desk/trading-desk.component').then((module) => module.TradingDeskComponent)
       : page.production
@@ -152,7 +154,12 @@ export const routes: Routes = [
     { path: 'trips/:tripId', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/trip-details.component').then((module) => module.TripDetailsComponent) },
     { path: 'trips', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/trips.component').then((module) => module.TripsComponent) }
   ]),
-  sectionRoute('finance', financePages, [{ path: '', pathMatch: 'full', redirectTo: 'overview' }]),
+  sectionRoute('finance', financePages, [
+    { path: '', pathMatch: 'full', redirectTo: 'overview' },
+    { path: 'record', canActivate: [requirePermissionGuard], data: { resource: 'payments' }, loadComponent: () => import('./features/finance/payment-center/payment-center.component').then((module) => module.PaymentCenterComponent) },
+    { path: 'allocate', canActivate: [requirePermissionGuard], data: { resource: 'payments' }, loadComponent: () => import('./features/finance/payment-center/payment-center.component').then((module) => module.PaymentCenterComponent) },
+    { path: 'trip-summary', canActivate: [requirePermissionGuard], data: { resource: 'finance' }, loadComponent: () => import('./features/finance/payment-center/payment-center.component').then((module) => module.PaymentCenterComponent) }
+  ]),
   sectionRoute('insights-admin', insightPages, [{ path: '', pathMatch: 'full', redirectTo: 'reports' }]),
   { path: 'farms', redirectTo: 'farm-operations/farms', pathMatch: 'full' },
   { path: 'sheds', redirectTo: 'farm-operations/sheds', pathMatch: 'full' },

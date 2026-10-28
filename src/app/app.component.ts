@@ -96,6 +96,7 @@ export class AppComponent {
         { label: 'Receivables', path: '/finance/receivables', icon: 'receivables' },
         { label: 'Payables', path: '/finance/payables', icon: 'payables' },
         { label: 'Payments', path: '/finance/payments', icon: 'payments' },
+        { label: 'Trip payment summary', path: '/finance/trip-summary', icon: 'finance' },
         { label: 'Expenses', path: '/finance/expenses', icon: 'expenses' },
         { label: 'Profitability', path: '/finance/profitability', icon: 'profitability' }
       ]

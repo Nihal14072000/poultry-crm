@@ -33,13 +33,13 @@ export class SessionAuthService {
 
   signIn(username: string, password: string): Observable<UserSession> {
     const header = `Basic ${this.encodeCredentials(username, password)}`;
-    return this.http.get<unknown[]>(`${environment.apiUrl}/employees`, {
+    return this.http.get<{ name: string; role: string }>(`${environment.apiUrl}/auth/me`, {
       headers: { Authorization: header }
-    }).pipe(map(() => {
+    }).pipe(map(account => {
       const session: UserSession = {
-        name: username,
-        email: username,
-        role: 'Authenticated',
+        name: account.name,
+        email: account.name,
+        role: account.role === 'ADMIN' ? 'Organization Admin' : 'Authenticated',
         permissions: '',
         moduleAccess: '',
         businessUnit: '',

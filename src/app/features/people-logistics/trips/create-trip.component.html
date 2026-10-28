@@ -181,8 +181,36 @@
         @if (submitted && deliveryStopError) { <p class="field-error pickup-error" role="alert">{{ deliveryStopError }}</p> }
       </section>
 
+      <section class="panel assignment-panel">
+        <div class="section-heading"><span class="section-icon" aria-hidden="true">04</span><div><span class="step">INITIAL FINANCE</span><h2>Payments & expenses</h2></div></div>
+        <p class="field-hint">Optional entries are saved with this trip. Payments can be allocated to order settlements later.</p>
+        @for (payment of payments; track payment; let index = $index) {
+          <div class="assignment-grid">
+            <label>Payment type<select [name]="'payment-type-' + index" [(ngModel)]="payment.paymentType" (ngModelChange)="changePaymentType(payment)"><option value="BUYER_RECEIPT">Buyer receipt</option><option value="SELLER_PAYOUT">Seller payout</option></select></label>
+            <label>Party<select [name]="'payment-party-' + index" [(ngModel)]="payment.partyId"><option value="">Select party</option>@for (party of paymentParties(payment); track party['_demoId']) { <option [value]="party['_demoId']">{{ party['name'] }}</option> }</select></label>
+            <label>Amount<input [name]="'payment-amount-' + index" type="number" min="0.01" step="0.01" [(ngModel)]="payment.amount"></label>
+            <label>Date<input [name]="'payment-date-' + index" type="date" [(ngModel)]="payment.paymentDate"></label>
+            <label>Method<select [name]="'payment-method-' + index" [(ngModel)]="payment.paymentMethod"><option value="UPI">UPI</option><option value="BANK_TRANSFER">Bank transfer</option><option value="CASH">Cash</option><option value="CHEQUE">Cheque</option><option value="CARD">Card</option><option value="OTHER">Other</option></select></label>
+            <label>Reference<input [name]="'payment-reference-' + index" maxlength="100" [(ngModel)]="payment.reference"></label>
+            <button class="remove-vendor" type="button" (click)="removePayment(index)">Remove payment</button>
+          </div>
+        }
+        <button class="button button-secondary" type="button" (click)="addPayment()">＋ Add payment</button>
+        @for (expense of expenses; track expense; let index = $index) {
+          <div class="assignment-grid">
+            <label>Expense category<input [name]="'expense-category-' + index" maxlength="60" placeholder="Fuel, loading, toll…" [(ngModel)]="expense.category"></label>
+            <label>Amount<input [name]="'expense-amount-' + index" type="number" min="0.01" step="0.01" [(ngModel)]="expense.amount"></label>
+            <label>Date<input [name]="'expense-date-' + index" type="date" [(ngModel)]="expense.expenseDate"></label>
+            <label>Note<input [name]="'expense-note-' + index" maxlength="500" [(ngModel)]="expense.note"></label>
+            <button class="remove-vendor" type="button" (click)="removeExpense(index)">Remove expense</button>
+          </div>
+        }
+        <button class="button button-secondary" type="button" (click)="addExpense()">＋ Add expense</button>
+        @if (submitted && financeError) { <p class="field-error" role="alert">{{ financeError }}</p> }
+      </section>
+
       <section class="summary-panel" aria-label="Trip summary">
-        <div class="summary-heading"><span class="section-icon" aria-hidden="true">04</span><div><span class="step">TRIP SUMMARY</span><h2>Supplier receipt totals</h2></div></div>
+        <div class="summary-heading"><span class="section-icon" aria-hidden="true">05</span><div><span class="step">TRIP SUMMARY</span><h2>Supplier receipt totals</h2></div></div>
         <div class="summary-grid">
           <div><span>Total Vendors</span><strong>{{ summary.vendors }}</strong></div>
           <div><span>Total Broiler</span><strong>{{ summary.broiler | number }}</strong><small>birds</small></div>

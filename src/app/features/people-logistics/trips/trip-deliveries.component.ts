@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TripRecord, TripVendorPickup } from '../../../common/models/trip.model';
 import { TripService } from '../../../common/services/trip.service';
 import { SessionAuthService } from '../../../common/services/session-auth.service';
+import { FinanceApiService, PaymentMethod, PaymentType } from '../../../common/services/finance-api.service';
 
 interface SupplierReceiptForm {
   vendorId: string; vendorName: string;
@@ -50,8 +51,14 @@ export class TripDeliveriesComponent implements OnInit {
   reason = '';
   mortalityQuantity = 0;
   mortalityRemarks = '';
+  paymentType: PaymentType = 'BUYER_RECEIPT';
+  paymentPartyId = '';
+  paymentAmount: number | null = null;
+  paymentDate = new Date().toISOString().slice(0, 10);
+  paymentMethod: PaymentMethod = 'UPI';
+  paymentReference = '';
 
-  constructor(private readonly service: TripService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService) {}
+  constructor(private readonly service: TripService, private readonly finance: FinanceApiService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService) {}
 
   async ngOnInit(): Promise<void> {
     const state = this.router.getCurrentNavigation()?.extras.state as { successMessage?: string } | undefined;
@@ -153,6 +160,12 @@ export class TripDeliveriesComponent implements OnInit {
   get currentDestination(): TripRecord | undefined { return this.destinations.find((destination) => this.id(destination) === this.activeOrderId); }
   get canEnterDelivery(): boolean { return ['In transit', 'Delivery in progress'].includes(String(this.trip?.['status'] ?? '')); }
   get canStartTrip(): boolean { return String(this.trip?.['status'] ?? '') === 'Assigned'; }
+  get paymentParties(): { id: string; name: string }[] {
+    return this.paymentType === 'BUYER_RECEIPT'
+      ? this.supplierPickups.map(party => ({ id: party.vendorId, name: party.vendorName }))
+      : this.destinations.map(party => ({ id: String(party['vendorDestinationId'] ?? ''), name: String(party['vendorName'] ?? '') }));
+  }
+  changePaymentType(): void { this.paymentPartyId = ''; }
   entrySales(): number {
     return this.number(this.broilerWeight) * this.number(this.currentDestination?.['broilerRate']) +
       this.number(this.cullsWeight) * this.number(this.currentDestination?.['cullsRate']) +
@@ -257,6 +270,23 @@ export class TripDeliveriesComponent implements OnInit {
     this.saving = true; this.error = ''; this.success = '';
     try { await this.service.saveTripMortality(this.id(this.trip), Number(this.mortalityQuantity), this.mortalityRemarks, this.pendingPickupIds(), this.pendingDeliveryIds()); this.success = 'Trip mortality saved.'; await this.load(); }
     catch (e) { this.error = e instanceof Error ? e.message : 'Mortality could not be saved.'; }
+    finally { this.saving = false; }
+  }
+  async savePayment(): Promise<void> {
+    if (!this.trip || this.saving || !this.paymentPartyId || !this.paymentAmount || this.paymentAmount <= 0) {
+      this.error = 'Select a party and enter a positive payment amount.';
+      return;
+    }
+    this.saving = true; this.error = ''; this.success = '';
+    try {
+      await this.finance.createPayment({
+        paymentType: this.paymentType, partyId: Number(this.paymentPartyId), amount: this.paymentAmount,
+        paymentDate: this.paymentDate, paymentMethod: this.paymentMethod, reference: this.paymentReference,
+        status: 'COMPLETED', tripId: Number(this.id(this.trip))
+      });
+      this.paymentPartyId = ''; this.paymentAmount = null; this.paymentReference = '';
+      this.success = 'Payment recorded.';
+    } catch (e) { this.error = e instanceof Error ? e.message : 'Payment could not be recorded.'; }
     finally { this.saving = false; }
   }
   async saveSupplierReceipt(form: SupplierReceiptForm): Promise<void> {

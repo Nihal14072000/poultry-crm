@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TripRecord, VendorDeliveryInput, VendorPickupInput } from '../../../common/models/trip.model';
+import { TripExpenseInput, TripPaymentInput, TripRecord, VendorDeliveryInput, VendorPickupInput } from '../../../common/models/trip.model';
 import { DirectoryService } from '../../../common/services/directory.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { summarizeTrip } from '../../../common/services/trip.service';
@@ -68,6 +68,8 @@ export class CreateTripComponent implements OnInit {
   feedUnit = '';
   editTripId = '';
   vendorPickups: VendorPickupForm[] = [emptyPickup(1)];
+  payments: TripPaymentInput[] = [];
+  expenses: TripExpenseInput[] = [];
   loading = true;
   saving = false;
   submitted = false;
@@ -243,6 +245,19 @@ export class CreateTripComponent implements OnInit {
     }
   }
 
+  addPayment(): void { this.payments = [...this.payments, { paymentType: 'BUYER_RECEIPT', partyId: '', amount: null, paymentDate: this.tripDate, paymentMethod: 'UPI' }]; }
+  removePayment(index: number): void { this.payments = this.payments.filter((_, itemIndex) => itemIndex !== index); }
+  changePaymentType(payment: TripPaymentInput): void { payment.partyId = ''; }
+  paymentParties(payment: TripPaymentInput): TripRecord[] { return payment.paymentType === 'BUYER_RECEIPT' ? this.vendors : this.deliveryVendors; }
+  addExpense(): void { this.expenses = [...this.expenses, { category: '', amount: null, expenseDate: this.tripDate }]; }
+  removeExpense(index: number): void { this.expenses = this.expenses.filter((_, itemIndex) => itemIndex !== index); }
+
+  get financeError(): string {
+    const paymentsValid = this.payments.every(payment => payment.partyId && Number(payment.amount) > 0 && /^\d{4}-\d{2}-\d{2}$/.test(payment.paymentDate));
+    const expensesValid = this.expenses.every(expense => expense.category.trim() && Number(expense.amount) > 0 && /^\d{4}-\d{2}-\d{2}$/.test(expense.expenseDate));
+    return paymentsValid && expensesValid ? '' : 'Each payment needs a party, positive amount and date; each expense needs a category, positive amount and date.';
+  }
+
   lineTotal(pickup: VendorPickupForm, kind: PickupKind): number {
     const line = pickup[kind];
     const total = (line.weight ?? 0) * (line.rate ?? 0);
@@ -335,7 +350,7 @@ export class CreateTripComponent implements OnInit {
     }
     if (!this.selectedVehicleId || !this.selectedDriverId || !this.route.trim() ||
     !this.tripDate ||
-      !this.vendorPickups.length || this.hasPickupError || this.capacityError || !this.feedUnit ||
+      !this.vendorPickups.length || this.hasPickupError || this.capacityError || this.financeError || !this.feedUnit ||
       !this.selectedSupervisorId || this.deliveryStopError) {
       this.errorMessage = 'Review the trip assignment, assigned supervisor, vendor destinations, and pickup details.';
       return;
@@ -350,7 +365,9 @@ export class CreateTripComponent implements OnInit {
         route: this.route,
         vendorPickups: this.vendorPickups,
         supervisorId: this.selectedSupervisorId,
-        vendorDeliveries: this.deliveryStops.map(({ key: _key, ...stop }) => stop)
+        vendorDeliveries: this.deliveryStops.map(({ key: _key, ...stop }) => stop),
+        payments: this.payments,
+        expenses: this.expenses
       };
       if (this.editTripId) {
         await this.tripApi.updateTrip(this.editTripId, input, this.formOptions);

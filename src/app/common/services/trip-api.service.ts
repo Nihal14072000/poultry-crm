@@ -424,6 +424,13 @@ export class TripApiService {
       supervisor: this.supervisorPayload(supervisor),
       buyingParties,
       sellingParties,
+      payments: (input.payments ?? []).map(({ partyId, reference, ...payment }) => ({
+        ...payment,
+        status: 'COMPLETED',
+        ...(payment.paymentType === 'BUYER_RECEIPT' ? { buyingPartyId: this.parseId(partyId) } : { sellingPartyId: this.parseId(partyId) }),
+        externalReference: reference
+      })),
+      expenses: input.expenses ?? [],
       route: input.route.trim(),
       date: input.tripDate,
       status: 'Assigned'

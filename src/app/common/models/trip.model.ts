@@ -13,6 +13,25 @@ export interface CreateTripInput {
   supervisorId?: string;
   supervisorEmail?: string;
   vendorDeliveries?: VendorDeliveryInput[];
+  payments?: TripPaymentInput[];
+  expenses?: TripExpenseInput[];
+}
+
+export interface TripPaymentInput {
+  paymentType: 'BUYER_RECEIPT' | 'SELLER_PAYOUT';
+  partyId: string;
+  amount: number | null;
+  paymentDate: string;
+  paymentMethod: 'BANK_TRANSFER' | 'CASH' | 'CHEQUE' | 'UPI' | 'CARD' | 'OTHER';
+  reference?: string;
+  note?: string;
+}
+
+export interface TripExpenseInput {
+  category: string;
+  amount: number | null;
+  expenseDate: string;
+  note?: string;
 }
 
 export interface VendorPickupInput {
