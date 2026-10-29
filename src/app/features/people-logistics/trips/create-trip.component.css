@@ -23,7 +23,8 @@ select:focus,input:focus { border-color: #a3c793; box-shadow: 0 0 0 2px rgba(163
 .capacity-error { margin: 8px 0 0; }
 .date-field { margin-top: 15px; max-width: 220px; }
 .vendor-panel { padding-bottom: 20px; }
-.add-vendor { margin-left: auto; min-width: 105px; }
+.onboard-link-btn { margin-left: auto; min-width: 95px; font-size: 9px; height: 32px; }
+.add-vendor { min-width: 105px; height: 32px; }
 .add-vendor:disabled { cursor: not-allowed; opacity: .55; }
 .vendor-hint { color: #8c978e; font-size: 9px; margin: -6px 0 12px 43px; }
 .delivery-plan-hint { color: #8c978e; font-size: 9px; line-height: 1.5; margin: 14px 0 12px; }

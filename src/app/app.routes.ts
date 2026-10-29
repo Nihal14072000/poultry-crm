@@ -140,6 +140,7 @@ export const routes: Routes = [
   sectionRoute('inventory', inventoryPages, [{ path: '', pathMatch: 'full', redirectTo: 'stock' }]),
   sectionRoute('trading', tradingPages, [
     { path: '', pathMatch: 'full', redirectTo: 'customers' },
+    { path: 'onboarding', canActivate: [requirePermissionGuard], data: { resource: 'suppliers' }, loadComponent: () => import('./features/trading/vendor-onboarding/vendor-onboarding.component').then((module) => module.VendorOnboardingComponent) },
     { path: 'order-desk', canActivate: [requirePermissionGuard], data: { resource: 'orders' }, loadComponent: () => import('./features/trading/trading-desk/trading-desk.component').then((module) => module.TradingDeskComponent) }
   ]),
   sectionRoute('customer-relations', crmPages, [{ path: '', pathMatch: 'full', redirectTo: 'leads' }]),
@@ -147,6 +148,7 @@ export const routes: Routes = [
     { path: '', pathMatch: 'full', redirectTo: 'employees' },
     { path: 'fleet', redirectTo: 'vehicles', pathMatch: 'full' },
     { path: 'vehicle-assignments', canActivate: [requirePermissionGuard], data: { resource: 'vehicle-assignments' }, loadComponent: () => import('./features/people-logistics/vehicle-assignments/vehicle-assignments.component').then((module) => module.VehicleAssignmentsComponent) },
+    { path: 'vendors/onboard', canActivate: [requirePermissionGuard], data: { resource: 'suppliers' }, loadComponent: () => import('./features/trading/vendor-onboarding/vendor-onboarding.component').then((module) => module.VendorOnboardingComponent) },
     { path: 'trips/new', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/create-trip.component').then((module) => module.CreateTripComponent) },
     { path: 'trips/deliveries/:tripId', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/trip-deliveries.component').then((module) => module.TripDeliveriesComponent) },
     { path: 'trips/deliveries', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/trip-deliveries.component').then((module) => module.TripDeliveriesComponent) },
@@ -179,6 +181,9 @@ export const routes: Routes = [
   { path: 'stock-ledger', redirectTo: 'inventory/stock-ledger', pathMatch: 'full' },
   { path: 'customers', redirectTo: 'trading/customers', pathMatch: 'full' },
   { path: 'suppliers', redirectTo: 'trading/suppliers', pathMatch: 'full' },
+  { path: 'vendor-destinations', redirectTo: 'trading/vendor-destinations', pathMatch: 'full' },
+  { path: 'vendor-onboarding', redirectTo: 'trading/onboarding', pathMatch: 'full' },
+  { path: 'onboarding', redirectTo: 'trading/onboarding', pathMatch: 'full' },
   { path: 'sales', redirectTo: 'trading/sales', pathMatch: 'full' },
   { path: 'quotations', redirectTo: 'trading/quotations', pathMatch: 'full' },
   { path: 'orders', redirectTo: 'trading/orders', pathMatch: 'full' },

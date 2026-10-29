@@ -162,8 +162,8 @@ export class TripDeliveriesComponent implements OnInit {
   get canStartTrip(): boolean { return String(this.trip?.['status'] ?? '') === 'Assigned'; }
   get paymentParties(): { id: string; name: string }[] {
     return this.paymentType === 'BUYER_RECEIPT'
-      ? this.supplierPickups.map(party => ({ id: party.vendorId, name: party.vendorName }))
-      : this.destinations.map(party => ({ id: String(party['vendorDestinationId'] ?? ''), name: String(party['vendorName'] ?? '') }));
+      ? this.destinations.map(party => ({ id: String(party['vendorDestinationId'] ?? ''), name: String(party['vendorName'] ?? '') }))
+      : this.supplierPickups.map(party => ({ id: party.vendorId, name: party.vendorName }));
   }
   changePaymentType(): void { this.paymentPartyId = ''; }
   entrySales(): number {
@@ -249,19 +249,14 @@ export class TripDeliveriesComponent implements OnInit {
       if (!this.pendingVendorDeliveryIds.includes(deliveryId)) this.pendingVendorDeliveryIds.push(deliveryId);
       this.persistPendingVendorDeliveries(tripId);
       this.activeOrderId = '';
-      const tripCompleted = await this.service.completeTripWhenDeliveriesSubmitted(tripId, this.pendingPickupIds(), this.pendingDeliveryIds());
-      if (tripCompleted) {
-        this.clearPendingSupplierPickups(tripId);
-        this.clearPendingVendorDeliveries(tripId);
-      }
       await this.load();
-      this.success = tripCompleted ? 'All vendor deliveries submitted. Trip marked completed.' : 'Delivery saved. Review reconciliation and complete the trip below.';
+      this.success = 'Delivery saved. Record mortality if applicable, review reconciliation, and complete the trip below.';
     } catch (e) {
       if (deliverySaved && this.trip) {
         this.activeOrderId = '';
         await this.load();
-        this.error = `Delivery saved, but the trip could not be marked completed: ${e instanceof Error ? e.message : 'Unknown error.'}`;
-      } else this.error = e instanceof Error ? e.message : 'Delivery could not be saved.';
+      }
+      this.error = e instanceof Error ? e.message : 'Delivery could not be saved.';
     }
     finally { this.saving = false; }
   }

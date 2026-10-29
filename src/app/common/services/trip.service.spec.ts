@@ -21,6 +21,7 @@ describe('TripService', () => {
       { _demoId: 'suppliers-2', name: 'Second Farm Vendor', status: 'Active' }
     ],
     products: [{ _demoId: 'products-1', product: 'Feed', category: 'Feed', unit: 'kg', status: 'Active' }],
+    'vendor-destinations': [{ _demoId: 'dest-1', name: 'Vendor Destination', status: 'Active' }],
     trips: []
   };
   const input: CreateTripInput = {
@@ -33,16 +34,23 @@ describe('TripService', () => {
       broiler: { quantity: 12, rate: 100 },
       culls: { quantity: 2, rate: 30 },
       feed: { quantity: 10, rate: 20 }
+    }],
+    vendorDeliveries: [{
+      vendorDestinationId: 'dest-1',
+      broilerQuantity: 12,
+      broilerRate: 120,
+      cullsQuantity: 2,
+      cullsRate: 40
     }]
   };
 
   beforeEach(() => {
-    records.trips = [];
+    records['trips'] = [];
     directories = jasmine.createSpyObj<DirectoryService>('DirectoryService', ['getDirectory', 'createRecord', 'updateRecord']);
     directories.getDirectory.and.callFake((resource: string) => of({ records: records[resource] ?? [] }));
     directories.createRecord.and.callFake((_resource, record) => of({ ...record, _demoId: 'trips-1' }));
     directories.updateRecord.and.callFake((_resource, id, record) => of({ ...record, _demoId: id }));
-    auth = jasmine.createSpyObj<SessionAuthService>('SessionAuthService', []);
+    auth = jasmine.createSpyObj<SessionAuthService>('SessionAuthService', ['signIn', 'signOut']);
     currentUser = {
       name: 'Supervisor',
       email: 'supervisor@example.com',
@@ -136,7 +144,7 @@ describe('TripService', () => {
   });
 
   it('updates an existing trip without changing its trip number, status, or creation metadata', async () => {
-    records.trips = [{
+    records['trips'] = [{
       _demoId: 'trips-existing',
       tripNumber: 'TR-0007',
       status: 'Assigned',
@@ -175,7 +183,7 @@ describe('TripService', () => {
       feed: { quantity: 10, rate: 20, total: 200 },
       total: 1460
     };
-    records.trips = [{
+    records['trips'] = [{
       _demoId: 'demo-trip-1',
       tripNumber: 'TR-0001',
       vendorPickups: JSON.stringify([storedPickup])
@@ -185,7 +193,7 @@ describe('TripService', () => {
 
     expect(details.trip['tripNumber']).toBe('TR-0001');
     expect(details.vendorPickups).toEqual([storedPickup]);
-    records.trips = [];
+    records['trips'] = [];
   });
 
   it('rejects bird capacity overflow and fractional bird counts', async () => {
@@ -218,5 +226,95 @@ describe('TripService', () => {
     });
 
     expect(Object.values(summary).every((value) => Number.isFinite(value) && value >= 0)).toBeTrue();
+  });
+
+  it('submits a discrepant trip for reconciliation when current user is not Organization Admin', async () => {
+    const mockData: TripDeliveryData = {
+      trip: { status: 'In transit', _demoId: 'trip-1' },
+      destinations: [{ vendorDestinationId: 'dest-1' }],
+      deliveries: [{ vendorDestinationId: 'dest-1', broiler: 10, culls: 0 }],
+      supplierPickups: [{ vendorId: 'sup-1', vendorName: 'Supplier 1', broiler: { quantity: 15, rate: 10, total: 150 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 150 }],
+      supplierReceipts: [{ vendorId: 'sup-1', broilerQuantity: 15, broilerWeight: 30 }],
+      mortality: { quantity: 2, _demoId: 'mort-1' },
+      loadedBroiler: 15,
+      loadedCulls: 0,
+      loadedBirds: 15
+    };
+    tripApi.getDeliveryData.and.resolveTo(mockData);
+
+    const result = await service.submitForReconciliation('trip-1');
+
+    expect(result).toBe('submitted');
+    expect(tripApi.updateTripStatus).toHaveBeenCalledWith('trip-1', 'Pending reconciliation');
+  });
+
+  it('allows Organization Admin to approve and complete a discrepant trip', async () => {
+    currentUser = {
+      name: 'Admin',
+      email: 'admin@example.com',
+      role: 'Organization Admin',
+      permissions: '',
+      status: 'Active',
+      authenticatedAt: '2026-10-11T00:00:00.000Z'
+    };
+    const mockData: TripDeliveryData = {
+      trip: { status: 'Pending reconciliation', _demoId: 'trip-1' },
+      destinations: [{ vendorDestinationId: 'dest-1' }],
+      deliveries: [{ vendorDestinationId: 'dest-1', broiler: 10, culls: 0 }],
+      supplierPickups: [{ vendorId: 'sup-1', vendorName: 'Supplier 1', broiler: { quantity: 15, rate: 10, total: 150 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 150 }],
+      supplierReceipts: [{ vendorId: 'sup-1', broilerQuantity: 15, broilerWeight: 30 }],
+      mortality: { quantity: 2, _demoId: 'mort-1' },
+      loadedBroiler: 15,
+      loadedCulls: 0,
+      loadedBirds: 15
+    };
+    tripApi.getDeliveryData.and.resolveTo(mockData);
+
+    const result = await service.submitForReconciliation('trip-1');
+
+    expect(result).toBe('completed');
+    expect(tripApi.updateTripStatus).toHaveBeenCalledWith('trip-1', 'Completed');
+  });
+
+  it('rejects trip creation if the driver is already assigned to an active trip', async () => {
+    records['trips'] = [{
+      _demoId: 'trip-active',
+      tripNumber: 'TR-0002',
+      driverId: 'employees-1',
+      status: 'In transit'
+    }];
+
+    await expectAsync(service.createTrip(input, 'Sales Manager'))
+      .toBeRejectedWithError('The selected driver is already assigned to an active trip.');
+  });
+
+  it('allows trip creation if the driver was assigned to a completed trip', async () => {
+    records['trips'] = [{
+      _demoId: 'trip-old',
+      tripNumber: 'TR-0001',
+      driverId: 'employees-1',
+      status: 'Completed'
+    }];
+
+    const created = await service.createTrip(input, 'Sales Manager');
+    expect(created['tripNumber']).toBe('TR-0002');
+  });
+
+  it('rejects trip creation if the supervisor is already assigned to an active trip', async () => {
+    records['trips'] = [{
+      _demoId: 'trip-active',
+      tripNumber: 'TR-0002',
+      driverId: 'other-driver',
+      supervisorId: 'sup-1',
+      status: 'Assigned'
+    }];
+
+    const inputWithSupervisor: CreateTripInput = {
+      ...input,
+      supervisorId: 'sup-1'
+    };
+
+    await expectAsync(service.createTrip(inputWithSupervisor, 'Sales Manager'))
+      .toBeRejectedWithError('The selected supervisor is already assigned to an active trip.');
   });
 });

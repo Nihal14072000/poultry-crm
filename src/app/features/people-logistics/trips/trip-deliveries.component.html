@@ -58,9 +58,15 @@
         <p>Supplier pickups: {{ loadedBroiler }} broiler + {{ loadedCulls }} culls = {{ totalLoaded() }} birds loaded.</p>
         <p>Vendor handoffs: {{ deliveredBroilerTotal() }} broiler + {{ deliveredCullsTotal() }} culls = {{ totalDelivered() }} birds delivered.</p>
         <p>Unreconciled = {{ totalLoaded() }} loaded − {{ totalDelivered() }} delivered − {{ number(mortality?.['quantity']) }} mortality.</p>
-        @if (reconciliationHasExceptions) { <p class="readonly">The backend stores trip status but has no reconciliation approval or approval-reason fields. Discrepant trips can be submitted for review, but cannot be completed here.</p> }
+        @if (reconciliationHasExceptions) {
+          @if (auth.currentUser?.role === 'Organization Admin') {
+            <p class="feedback warning">Review discrepancy above. As Organization Admin, you can approve and finalize this trip.</p>
+          } @else {
+            <p class="readonly">Discrepant trips must be submitted for Organization Admin review and approval.</p>
+          }
+        }
       </div>
-      <button class="button button-primary" (click)="complete()" [disabled]="saving || !allSupplierReceiptsSaved() || trip['status'] === 'Completed' || (reconciliationHasExceptions && (trip['status'] === 'Pending reconciliation' || auth.currentUser?.role === 'Organization Admin'))">{{ trip['status'] === 'Completed' ? 'Trip completed' : (trip['status'] === 'Pending reconciliation' ? 'Approval unavailable' : (reconciliationHasExceptions ? (auth.currentUser?.role === 'Organization Admin' ? 'Approval unavailable' : 'Submit for reconciliation') : 'Complete trip')) }}</button>
+      <button class="button button-primary" (click)="complete()" [disabled]="saving || !allSupplierReceiptsSaved() || trip['status'] === 'Completed' || (reconciliationHasExceptions && trip['status'] === 'Pending reconciliation' && auth.currentUser?.role !== 'Organization Admin')">{{ trip['status'] === 'Completed' ? 'Trip completed' : (trip['status'] === 'Pending reconciliation' ? (auth.currentUser?.role === 'Organization Admin' ? 'Approve & complete trip' : 'Awaiting admin approval') : (reconciliationHasExceptions ? (auth.currentUser?.role === 'Organization Admin' ? 'Approve & complete trip' : 'Submit for reconciliation') : 'Complete trip')) }}</button>
     </section>
   }
 </main>

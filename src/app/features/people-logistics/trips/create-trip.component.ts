@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TripExpenseInput, TripPaymentInput, TripRecord, VendorDeliveryInput, VendorPickupInput } from '../../../common/models/trip.model';
 import { DirectoryService } from '../../../common/services/directory.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
@@ -47,7 +47,7 @@ function today(): string {
 @Component({
   selector: 'app-create-trip',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './create-trip.component.html',
   styleUrl: './create-trip.component.css'
 })
@@ -161,6 +161,46 @@ export class CreateTripComponent implements OnInit {
   }
 
   recordId(record: TripRecord): string { return String(record['_demoId'] ?? ''); }
+
+  get availableDrivers(): TripRecord[] {
+    const activeTrips = (this.formOptions?.trips ?? []).filter((trip) => {
+      const isCurrentTrip = !!this.editTripId && (
+        String(trip['_demoId'] ?? '') === this.editTripId ||
+        String(trip['tripId'] ?? '') === this.editTripId ||
+        String(trip['tripNumber'] ?? '') === this.editTripId
+      );
+      if (isCurrentTrip) return false;
+      const status = String(trip['status'] ?? '').toLowerCase();
+      return status !== 'completed' && status !== 'deleted';
+    });
+    const assignedDriverIds = new Set(
+      activeTrips.map((trip) => String(trip['driverId'] ?? '')).filter(Boolean)
+    );
+    return this.drivers.filter((driver) => {
+      const id = String(driver['_demoId'] ?? driver['id'] ?? '');
+      return id === this.selectedDriverId || !assignedDriverIds.has(id);
+    });
+  }
+
+  get availableSupervisors(): TripRecord[] {
+    const activeTrips = (this.formOptions?.trips ?? []).filter((trip) => {
+      const isCurrentTrip = !!this.editTripId && (
+        String(trip['_demoId'] ?? '') === this.editTripId ||
+        String(trip['tripId'] ?? '') === this.editTripId ||
+        String(trip['tripNumber'] ?? '') === this.editTripId
+      );
+      if (isCurrentTrip) return false;
+      const status = String(trip['status'] ?? '').toLowerCase();
+      return status !== 'completed' && status !== 'deleted';
+    });
+    const assignedSupervisorIds = new Set(
+      activeTrips.map((trip) => String(trip['supervisorId'] ?? '')).filter(Boolean)
+    );
+    return this.supervisors.filter((supervisor) => {
+      const id = String(supervisor['_demoId'] ?? supervisor['id'] ?? '');
+      return id === this.selectedSupervisorId || !assignedSupervisorIds.has(id);
+    });
+  }
 
   availableDeliveryVendors(stop: VendorDeliveryForm): TripRecord[] {
     const used = new Set(this.deliveryStops.filter((item) => item.key !== stop.key).map((item) => item.vendorDestinationId));
@@ -353,6 +393,14 @@ export class CreateTripComponent implements OnInit {
       !this.vendorPickups.length || this.hasPickupError || this.capacityError || this.financeError || !this.feedUnit ||
       !this.selectedSupervisorId || this.deliveryStopError) {
       this.errorMessage = 'Review the trip assignment, assigned supervisor, vendor destinations, and pickup details.';
+      return;
+    }
+    if (!this.availableDrivers.some((d) => String(d['_demoId'] ?? d['id'] ?? '') === this.selectedDriverId)) {
+      this.errorMessage = 'The selected driver is already assigned to an active trip.';
+      return;
+    }
+    if (!this.availableSupervisors.some((s) => String(s['_demoId'] ?? s['id'] ?? '') === this.selectedSupervisorId)) {
+      this.errorMessage = 'The selected supervisor is already assigned to an active trip.';
       return;
     }
 

@@ -380,18 +380,34 @@ export class TripApiService {
     }
     const response = await firstValueFrom(this.http.put<ApiTrip>(
       `${this.baseUrl}/trips/${tripId}/update`,
-      { ...this.toRequest(input, options), tripId }
+      { ...this.toRequest(input, options, String(tripId)), tripId }
     ));
     return this.tripRecord(response, new Map(), new Map());
   }
 
-  private toRequest(input: CreateTripInput, options: TripFormOptions): Record<string, unknown> {
+  private toRequest(input: CreateTripInput, options: TripFormOptions, currentTripId?: string): Record<string, unknown> {
     if (!input.route.trim() || input.route.trim().length > 120 || !this.isValidDate(input.tripDate)) {
       throw new Error('Enter a valid trip date and route.');
     }
     const vehicle = this.selected(options.vehicles, input.vehicleId, 'vehicle');
     const driver = this.selected(options.drivers, input.driverId, 'driver');
     const supervisor = this.selected(options.supervisors, String(input.supervisorId ?? ''), 'supervisor');
+    const activeTrips = (options.trips ?? []).filter((t) => {
+      const isCurrent = !!currentTripId && (
+        String(t['_demoId'] ?? '') === String(currentTripId) ||
+        String(t['tripId'] ?? '') === String(currentTripId) ||
+        String(t['tripNumber'] ?? '') === String(currentTripId)
+      );
+      if (isCurrent) return false;
+      const status = String(t['status'] ?? '').toLowerCase();
+      return status !== 'completed' && status !== 'deleted';
+    });
+    if (activeTrips.some((t) => String(t['driverId'] ?? '') === input.driverId)) {
+      throw new Error('The selected driver is already assigned to an active trip.');
+    }
+    if (input.supervisorId && activeTrips.some((t) => String(t['supervisorId'] ?? '') === String(input.supervisorId))) {
+      throw new Error('The selected supervisor is already assigned to an active trip.');
+    }
     if (!Array.isArray(input.vendorPickups) || !input.vendorPickups.length) {
       throw new Error('Add at least one supplier pickup.');
     }
@@ -424,13 +440,15 @@ export class TripApiService {
       supervisor: this.supervisorPayload(supervisor),
       buyingParties,
       sellingParties,
-      payments: (input.payments ?? []).map(({ partyId, reference, ...payment }) => ({
-        ...payment,
-        status: 'COMPLETED',
-        ...(payment.paymentType === 'BUYER_RECEIPT' ? { buyingPartyId: this.parseId(partyId) } : { sellingPartyId: this.parseId(partyId) }),
-        externalReference: reference
-      })),
-      expenses: input.expenses ?? [],
+      ...(input.payments?.length ? {
+        payments: input.payments.map(({ partyId, reference, ...payment }) => ({
+          ...payment,
+          status: 'COMPLETED',
+          ...(payment.paymentType === 'BUYER_RECEIPT' ? { buyingPartyId: this.parseId(partyId) } : { sellingPartyId: this.parseId(partyId) }),
+          externalReference: reference
+        }))
+      } : {}),
+      ...(input.expenses?.length ? { expenses: input.expenses } : {}),
       route: input.route.trim(),
       date: input.tripDate,
       status: 'Assigned'

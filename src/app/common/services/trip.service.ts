@@ -120,6 +120,19 @@ export class TripService {
       throw new Error('Choose an active driver employee you are allowed to use.');
     }
 
+    const activeTrips = trips.records.filter((t) => {
+      const isCurrent = tripId && String(t['_demoId'] ?? '') === tripId;
+      if (isCurrent) return false;
+      const status = String(t['status'] ?? '').toLowerCase();
+      return status !== 'completed' && status !== 'deleted';
+    });
+    if (activeTrips.some((t) => String(t['driverId'] ?? '') === input.driverId)) {
+      throw new Error('The selected driver is already assigned to an active trip.');
+    }
+    if (input.supervisorId && activeTrips.some((t) => String(t['supervisorId'] ?? '') === input.supervisorId)) {
+      throw new Error('The selected supervisor is already assigned to an active trip.');
+    }
+
     const feedUnits = [...new Set(products.records.filter((record) =>
       String(record['category'] ?? '').toLowerCase() === 'feed' &&
       String(record['status'] ?? '').toLowerCase() === 'active' &&
@@ -173,6 +186,9 @@ export class TripService {
       if (!supervisor || String(supervisor['status'] ?? '').toLowerCase() !== 'active' ||
         !['farm supervisor', 'supervisor'].includes(String(supervisor['role'] ?? '').toLowerCase())) {
         throw new Error('Choose an active Supervisor user.');
+      }
+      if (activeTrips.some((t) => String(t['supervisorEmail'] ?? '').trim().toLowerCase() === supervisorEmail)) {
+        throw new Error('The selected supervisor is already assigned to an active trip.');
       }
     }
 
@@ -354,7 +370,6 @@ export class TripService {
       await this.tripApi.updateTripStatus(tripId, 'Pending reconciliation');
       return 'submitted';
     }
-    if (hasDiscrepancy) throw new Error('The backend API does not support recording reconciliation approval for a bird discrepancy.');
     if (pendingSupplierPickupIds.length) await this.tripApi.linkSupplierPickups(tripId, pendingSupplierPickupIds);
     if (pendingVendorDeliveryIds.length) await this.tripApi.linkVendorDeliveries(tripId, pendingVendorDeliveryIds);
     await this.tripApi.updateTripStatus(tripId, 'Completed');

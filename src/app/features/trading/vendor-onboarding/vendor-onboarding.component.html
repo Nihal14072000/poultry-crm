@@ -1,0 +1,521 @@
+<main class="onboarding-page">
+  <header class="page-heading">
+    <div>
+      <div class="eyebrow">TRADING <span>/</span> VENDORS & SUPPLIERS <span>/</span> ONBOARDING</div>
+      <h1>Vendor & Seller Onboarding</h1>
+      <p>Register and onboard new farm pickup suppliers and buyer delivery destinations into Flockwise.</p>
+    </div>
+    <div class="heading-actions">
+      <a class="back-link" [routerLink]="form.vendorType === 'SUPPLIER' ? '/trading/suppliers' : '/trading/vendor-destinations'">
+        ← Back to {{ form.vendorType === 'SUPPLIER' ? 'Suppliers' : 'Delivery vendors' }}
+      </a>
+    </div>
+  </header>
+
+  <!-- Entity Type Selector (Unified Hub) -->
+  <section class="panel type-selector-panel">
+    <div class="type-selector-header">
+      <span class="step-label">SELECT ONBOARDING CATEGORY</span>
+      <div class="collapse-controls">
+        <button type="button" class="text-link" (click)="expandAll()">Expand all</button>
+        <span>·</span>
+        <button type="button" class="text-link" (click)="collapseAll()">Collapse all</button>
+      </div>
+    </div>
+    <div class="type-cards">
+      <button
+        type="button"
+        class="type-card"
+        [class.selected]="form.vendorType === 'SUPPLIER'"
+        (click)="selectType('SUPPLIER')">
+        <div class="type-icon supplier">🌾</div>
+        <div class="type-content">
+          <div class="type-title-row">
+            <strong>Supplier / Farm Vendor</strong>
+            <span class="type-badge" [class.active]="form.vendorType === 'SUPPLIER'">Farm Pickups</span>
+          </div>
+          <p>Onboard broiler farms, layer sheds, hatcheries, and feed suppliers where live birds and feed are loaded onto trips.</p>
+        </div>
+      </button>
+
+      <button
+        type="button"
+        class="type-card"
+        [class.selected]="form.vendorType === 'DELIVERY_VENDOR'"
+        (click)="selectType('DELIVERY_VENDOR')">
+        <div class="type-icon buyer">🏪</div>
+        <div class="type-content">
+          <div class="type-title-row">
+            <strong>Delivery Vendor / Seller-Buyer</strong>
+            <span class="type-badge" [class.active]="form.vendorType === 'DELIVERY_VENDOR'">Delivery Drops</span>
+          </div>
+          <p>Onboard wholesale poultry traders, retail outlets, and live bird market destinations that receive bird handoffs.</p>
+        </div>
+      </button>
+    </div>
+  </section>
+
+  @if (errorMessage) {
+    <div class="feedback error" role="alert">
+      <strong>Please check: </strong> {{ errorMessage }}
+    </div>
+  }
+
+  @if (successMessage) {
+    <div class="feedback success" role="alert">
+      <div class="success-heading">
+        <span class="check-icon">✓</span>
+        <strong>{{ successMessage }}</strong>
+      </div>
+      <div class="success-actions">
+        <a class="button button-secondary" [routerLink]="lastOnboardedType === 'SUPPLIER' ? '/trading/suppliers' : '/trading/vendor-destinations'">
+          View in {{ lastOnboardedType === 'SUPPLIER' ? 'Suppliers directory' : 'Delivery vendors directory' }}
+        </a>
+        <a class="button button-primary" routerLink="/people-logistics/trips/new">
+          Plan a Trip with this vendor →
+        </a>
+        <button type="button" class="button button-secondary" (click)="submitOnboarding(true)">
+          Onboard another vendor
+        </button>
+      </div>
+    </div>
+  }
+
+  <form (ngSubmit)="submitOnboarding(false)" novalidate>
+
+    <!-- SECTION 01: Business Identity & Contact Details -->
+    <section class="panel form-panel">
+      <div class="section-heading" (click)="toggleSection('identity')">
+        <span class="section-icon" aria-hidden="true">01</span>
+        <div>
+          <span class="step">BUSINESS IDENTITY</span>
+          <h2>{{ form.vendorType === 'SUPPLIER' ? 'Supplier details & farm contact' : 'Trading outlet & buyer identity' }}</h2>
+        </div>
+        <button type="button" class="collapse-toggle" [attr.aria-expanded]="sections.identity">
+          {{ sections.identity ? '−' : '+' }}
+        </button>
+      </div>
+
+      @if (sections.identity) {
+        <div class="form-grid">
+          <label>
+            {{ form.vendorType === 'SUPPLIER' ? 'Supplier / Farm name' : 'Outlet / Vendor trading name' }} <span class="required">*</span>
+            <input
+              name="name"
+              type="text"
+              required
+              maxlength="150"
+              placeholder="e.g. {{ form.vendorType === 'SUPPLIER' ? 'Greenfield Broiler Farm' : 'City Central Poultry Mart' }}"
+              [(ngModel)]="form.name">
+            @if (submitted && !form.name.trim()) { <small class="field-error">Business name is required.</small> }
+          </label>
+
+          <label>
+            Vendor code <span class="required">*</span>
+            <input
+              name="code"
+              type="text"
+              required
+              maxlength="20"
+              placeholder="e.g. {{ form.vendorType === 'SUPPLIER' ? 'SU-043' : 'VD-003' }}"
+              [(ngModel)]="form.code">
+            <small class="field-hint">Unique identifier used across trip plans and finance settlements.</small>
+          </label>
+
+          <label>
+            Category / Classification <span class="required">*</span>
+            <select name="category" [(ngModel)]="form.category">
+              @if (form.vendorType === 'SUPPLIER') {
+                @for (cat of supplierCategories; track cat) {
+                  <option [value]="cat">{{ cat }}</option>
+                }
+              } @else {
+                @for (cat of deliveryVendorCategories; track cat) {
+                  <option [value]="cat">{{ cat }}</option>
+                }
+              }
+            </select>
+          </label>
+
+          <label>
+            Primary contact person <span class="required">*</span>
+            <input
+              name="contactPerson"
+              type="text"
+              required
+              maxlength="80"
+              placeholder="e.g. Ramesh Kadam"
+              [(ngModel)]="form.contactPerson">
+            @if (submitted && !form.contactPerson.trim()) { <small class="field-error">Contact person is required.</small> }
+          </label>
+
+          <label>
+            Designation / Role
+            <input
+              name="designation"
+              type="text"
+              maxlength="60"
+              placeholder="e.g. {{ form.vendorType === 'SUPPLIER' ? 'Farm Owner / Grower' : 'Shop Manager / Receiving Incharge' }}"
+              [(ngModel)]="form.designation">
+          </label>
+
+          <label>
+            Primary phone number <span class="required">*</span>
+            <input
+              name="phone"
+              type="tel"
+              required
+              maxlength="15"
+              placeholder="e.g. +91 98220 12345"
+              [(ngModel)]="form.phone">
+            @if (submitted && !form.phone.trim()) { <small class="field-error">10-digit phone number is required.</small> }
+          </label>
+
+          <label>
+            WhatsApp / Alternate phone
+            <input
+              name="alternatePhone"
+              type="tel"
+              maxlength="15"
+              placeholder="e.g. +91 94230 67890"
+              [(ngModel)]="form.alternatePhone">
+          </label>
+
+          <label>
+            Email address
+            <input
+              name="email"
+              type="email"
+              maxlength="100"
+              placeholder="e.g. contact@greenfieldpoultry.test"
+              [(ngModel)]="form.email">
+          </label>
+
+          <label class="wide">
+            {{ form.vendorType === 'SUPPLIER' ? 'Farm pickup location / Gate address' : 'Delivery drop address' }} <span class="required">*</span>
+            <input
+              name="address"
+              type="text"
+              required
+              maxlength="200"
+              placeholder="e.g. Gat No. 42, Dindori Road, Near Checkpost"
+              [(ngModel)]="form.address">
+            @if (submitted && !form.address.trim()) { <small class="field-error">Physical location address is required.</small> }
+          </label>
+
+          <label>
+            City / Town <span class="required">*</span>
+            <select name="city" [(ngModel)]="form.city">
+              @for (c of cities; track c) {
+                <option [value]="c">{{ c }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            State
+            <input name="state" type="text" [(ngModel)]="form.state">
+          </label>
+
+          <label>
+            PIN code
+            <input name="pincode" type="text" maxlength="6" placeholder="e.g. 422001" [(ngModel)]="form.pincode">
+          </label>
+        </div>
+      }
+    </section>
+
+    <!-- SECTION 02: Poultry Operational & Capacity Specs -->
+    <section class="panel form-panel">
+      <div class="section-heading" (click)="toggleSection('operations')">
+        <span class="section-icon" aria-hidden="true">02</span>
+        <div>
+          <span class="step">OPERATIONS & LOGISTICS</span>
+          <h2>{{ form.vendorType === 'SUPPLIER' ? 'Farm capacity & bird readiness' : 'Daily requirements & receiving specs' }}</h2>
+        </div>
+        <button type="button" class="collapse-toggle" [attr.aria-expanded]="sections.operations">
+          {{ sections.operations ? '−' : '+' }}
+        </button>
+      </div>
+
+      @if (sections.operations) {
+        <div class="form-grid">
+          @if (form.vendorType === 'SUPPLIER') {
+            <label>
+              Total farm capacity (birds)
+              <input name="farmCapacity" type="number" min="0" step="100" placeholder="e.g. 15000" [(ngModel)]="form.farmCapacity">
+              <small class="field-hint">Maximum shed capacity of the grower.</small>
+            </label>
+
+            <label>
+              Live birds available for lifting
+              <input name="dailyAvailableBirds" type="number" min="0" step="100" placeholder="e.g. 3500" [(ngModel)]="form.dailyAvailableBirds">
+              <small class="field-hint">Birds ready for current lifting cycle.</small>
+            </label>
+
+            <label>
+              Average bird weight (kg)
+              <input name="avgBirdWeightKg" type="number" min="0" step="0.05" placeholder="e.g. 2.15" [(ngModel)]="form.avgBirdWeightKg">
+              <small class="field-hint">Target weight for broiler lifting.</small>
+            </label>
+
+            <label>
+              Primary breed
+              <select name="breed" [(ngModel)]="form.breed">
+                @for (breed of breeds; track breed) {
+                  <option [value]="breed">{{ breed }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="wide">
+              Vehicle road accessibility
+              <select name="vehicleSuitability" [(ngModel)]="form.vehicleSuitability">
+                @for (suit of vehicleSuitabilities; track suit) {
+                  <option [value]="suit">{{ suit }}</option>
+                }
+              </select>
+              <small class="field-hint">Ensures appropriate vehicle allocation during trip dispatch planning.</small>
+            </label>
+
+            <label>
+              Preferred lifting route
+              <input name="preferredRoute" type="text" placeholder="e.g. Nashik - Sangamner Highway" [(ngModel)]="form.preferredRoute">
+            </label>
+          } @else {
+            <label>
+              Daily bird requirement (birds)
+              <input name="dailyRequirementBirds" type="number" min="0" step="10" placeholder="e.g. 500" [(ngModel)]="form.dailyRequirementBirds">
+              <small class="field-hint">Expected daily intake volume.</small>
+            </label>
+
+            <label>
+              Daily requirement weight (kg)
+              <input name="dailyRequirementKg" type="number" min="0" step="10" placeholder="e.g. 1000" [(ngModel)]="form.dailyRequirementKg">
+            </label>
+
+            <label>
+              Receiving time window
+              <input name="receivingWindow" type="text" placeholder="e.g. 04:00 AM - 08:00 AM" [(ngModel)]="form.receivingWindow">
+              <small class="field-hint">Crucial for live bird night/early morning transit.</small>
+            </label>
+
+            <label>
+              Delivery frequency
+              <select name="deliveryFrequency" [(ngModel)]="form.deliveryFrequency">
+                <option value="Daily">Daily</option>
+                <option value="Alternate Days">Alternate Days</option>
+                <option value="Twice a Week">Twice a Week</option>
+                <option value="Weekly">Weekly</option>
+                <option value="On-Demand">On-Demand</option>
+              </select>
+            </label>
+
+            <label>
+              Retail holding capacity (birds)
+              <input name="holdingCapacityBirds" type="number" min="0" step="50" placeholder="e.g. 600" [(ngModel)]="form.holdingCapacityBirds">
+            </label>
+
+            <label>
+              Delivery route sector
+              <input name="preferredRoute" type="text" placeholder="e.g. Pune Central Market Sector 3" [(ngModel)]="form.preferredRoute">
+            </label>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- SECTION 03: Commercial & Payment Terms -->
+    <section class="panel form-panel">
+      <div class="section-heading" (click)="toggleSection('commercial')">
+        <span class="section-icon" aria-hidden="true">03</span>
+        <div>
+          <span class="step">COMMERCIAL TERMS</span>
+          <h2>Pricing, credit limits & payment terms</h2>
+        </div>
+        <button type="button" class="collapse-toggle" [attr.aria-expanded]="sections.commercial">
+          {{ sections.commercial ? '−' : '+' }}
+        </button>
+      </div>
+
+      @if (sections.commercial) {
+        <div class="form-grid">
+          <label>
+            Agreed payment terms <span class="required">*</span>
+            <select name="paymentTerms" [(ngModel)]="form.paymentTerms">
+              @for (term of paymentTermsOptions; track term) {
+                <option [value]="term">{{ term }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            Credit limit (₹)
+            <input name="creditLimit" type="number" min="0" step="1000" placeholder="e.g. 50000" [(ngModel)]="form.creditLimit">
+            <small class="field-hint">Set 0 for strict spot cash / UPI payment.</small>
+          </label>
+
+          <label>
+            Pricing benchmark
+            <select name="pricingBenchmark" [(ngModel)]="form.pricingBenchmark">
+              @for (bm of pricingBenchmarks; track bm) {
+                <option [value]="bm">{{ bm }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            Base contract rate (₹ / kg)
+            <input name="baseRatePerKg" type="number" min="0" step="0.5" placeholder="e.g. 110.00" [(ngModel)]="form.baseRatePerKg">
+            <small class="field-hint">Applicable if fixed contract price is agreed.</small>
+          </label>
+        </div>
+      }
+    </section>
+
+    <!-- SECTION 04: Banking & Tax / KYC Details -->
+    <section class="panel form-panel">
+      <div class="section-heading" (click)="toggleSection('banking')">
+        <span class="section-icon" aria-hidden="true">04</span>
+        <div>
+          <span class="step">BANKING & TAX COMPLIANCE</span>
+          <h2>Settlement account & tax registration</h2>
+        </div>
+        <button type="button" class="collapse-toggle" [attr.aria-expanded]="sections.banking">
+          {{ sections.banking ? '−' : '+' }}
+        </button>
+      </div>
+
+      @if (sections.banking) {
+        <div class="form-grid">
+          <label>
+            Account holder name
+            <input name="accountHolder" type="text" maxlength="120" placeholder="e.g. Ramesh Poultry Farms" [(ngModel)]="form.accountHolder">
+          </label>
+
+          <label>
+            Bank name
+            <input name="bankName" type="text" maxlength="100" placeholder="e.g. State Bank of India" [(ngModel)]="form.bankName">
+          </label>
+
+          <label>
+            Account number
+            <input name="accountNumber" type="password" maxlength="30" placeholder="Enter bank account number" [(ngModel)]="form.accountNumber">
+          </label>
+
+          <label>
+            Confirm account number
+            <input name="confirmAccountNumber" type="text" maxlength="30" placeholder="Re-enter bank account number" [(ngModel)]="form.confirmAccountNumber">
+            @if (form.accountNumber && form.confirmAccountNumber && form.accountNumber !== form.confirmAccountNumber) {
+              <small class="field-error">Account numbers do not match.</small>
+            }
+          </label>
+
+          <label>
+            IFSC code
+            <input name="ifscCode" type="text" maxlength="11" placeholder="e.g. SBIN0001234" [(ngModel)]="form.ifscCode" style="text-transform: uppercase;">
+          </label>
+
+          <label>
+            PAN number
+            <input name="panNumber" type="text" maxlength="10" placeholder="e.g. ABCDE1234F" [(ngModel)]="form.panNumber" style="text-transform: uppercase;">
+          </label>
+
+          <label>
+            GSTIN (if registered)
+            <input name="gstin" type="text" maxlength="15" placeholder="e.g. 27ABCDE1234F1Z5" [(ngModel)]="form.gstin" style="text-transform: uppercase;">
+          </label>
+
+          <label>
+            FSSAI / APMC trade license
+            <input name="fssaiLicense" type="text" maxlength="30" placeholder="e.g. APMC-NSK-2024-88" [(ngModel)]="form.fssaiLicense">
+          </label>
+        </div>
+      }
+    </section>
+
+    <!-- SECTION 05: Verification, Review & Status -->
+    <section class="panel form-panel">
+      <div class="section-heading" (click)="toggleSection('verification')">
+        <span class="section-icon" aria-hidden="true">05</span>
+        <div>
+          <span class="step">APPROVAL & VERIFICATION</span>
+          <h2>Onboarding status & operational notes</h2>
+        </div>
+        <button type="button" class="collapse-toggle" [attr.aria-expanded]="sections.verification">
+          {{ sections.verification ? '−' : '+' }}
+        </button>
+      </div>
+
+      @if (sections.verification) {
+        <div class="form-grid">
+          <label>
+            Initial account status <span class="required">*</span>
+            <select name="status" [(ngModel)]="form.status">
+              <option value="Active">Active (Ready for Trip Scheduling & Trading)</option>
+              <option value="Pending Verification">Pending Verification (Under Review)</option>
+            </select>
+          </label>
+
+          <label>
+            Assigned relationship supervisor
+            <input name="assignedSupervisor" type="text" placeholder="e.g. Nilesh Deshmukh (Supervisor)" [(ngModel)]="form.assignedSupervisor">
+          </label>
+
+          <label class="wide">
+            Internal notes & special instructions
+            <textarea
+              name="notes"
+              rows="3"
+              maxlength="500"
+              placeholder="e.g. Gate access key with watchman. Weighbridge located 2 km before farm site."
+              [(ngModel)]="form.notes"></textarea>
+          </label>
+        </div>
+      }
+    </section>
+
+    <!-- LIVE ONBOARDING PREVIEW CARD -->
+    @if (form.name.trim()) {
+      <section class="panel preview-panel">
+        <div class="preview-heading">
+          <span class="step">LIVE PREVIEW</span>
+          <h3>{{ form.name }} · {{ form.code }}</h3>
+          <span class="badge" [class.badge-active]="form.status === 'Active'">{{ form.status }}</span>
+        </div>
+        <div class="preview-grid">
+          <div><small>Type</small><strong>{{ form.vendorType === 'SUPPLIER' ? 'Supplier (Pickup Farm)' : 'Delivery Vendor (Buyer Outlet)' }}</strong></div>
+          <div><small>Category</small><strong>{{ form.category }}</strong></div>
+          <div><small>Contact</small><strong>{{ form.contactPerson || '—' }} ({{ form.phone || '—' }})</strong></div>
+          <div><small>Location</small><strong>{{ form.city }}, {{ form.state }}</strong></div>
+          <div><small>Terms</small><strong>{{ form.paymentTerms }} (Limit ₹{{ form.creditLimit | number:'1.0-0' }})</strong></div>
+          <div><small>Benchmark</small><strong>{{ form.pricingBenchmark }}</strong></div>
+        </div>
+      </section>
+    }
+
+    <!-- FORM ACTIONS -->
+    <div class="form-actions">
+      <button type="button" class="button button-secondary" (click)="cancel()">
+        Cancel
+      </button>
+
+      <div class="action-buttons-right">
+        <button
+          type="button"
+          class="button button-secondary"
+          (click)="submitOnboarding(true)"
+          [disabled]="saving || !canOnboard">
+          Save & Onboard Another
+        </button>
+
+        <button
+          type="submit"
+          class="button button-primary submit-btn"
+          [disabled]="saving || !canOnboard">
+          {{ saving ? 'Onboarding...' : 'Submit & Onboard ' + (form.vendorType === 'SUPPLIER' ? 'Supplier' : 'Delivery Vendor') }}
+        </button>
+      </div>
+    </div>
+  </form>
+</main>

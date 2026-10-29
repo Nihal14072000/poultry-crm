@@ -7,6 +7,11 @@
     </div>
     <div class="heading-actions">
       <button class="button button-secondary" type="button" (click)="refresh()">↻ Refresh</button>
+      @if (['suppliers', 'vendor-destinations'].includes(resource)) {
+        <a class="button button-secondary" routerLink="/trading/onboarding" [queryParams]="{ type: resource === 'suppliers' ? 'supplier' : 'delivery-vendor' }">
+          ＋ Onboard {{ resource === 'suppliers' ? 'supplier' : 'vendor' }}
+        </a>
+      }
       @if (isReportResource && can('export')) { <button class="button button-secondary" type="button" (click)="exportCurrentRecords()">⇩ Export</button> }
       @if (mode !== 'read-only' && can('create')) { <button class="button button-primary" type="button" (click)="openCreate()"><span>＋</span> {{ resource === 'employees' ? 'Add employee' : mode === 'append-only' ? 'Add movement' : 'Add record' }}</button> }
     </div>
