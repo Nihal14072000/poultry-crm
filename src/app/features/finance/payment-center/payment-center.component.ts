@@ -53,6 +53,15 @@ export class PaymentCenterComponent implements OnInit {
   validForm(): boolean { const f=this.form; if (!f.partyId || !Number.isFinite(Number(f.amount)) || Number(f.amount)<=0 || !/^\d{4}-\d{2}-\d{2}$/.test(f.paymentDate)) { this.error='Party, positive amount, and payment date are required.'; return false; } return true; }
   id(row?: FinanceRecord): string { return String(row?.['id'] ?? row?.['paymentId'] ?? row?.['settlementId'] ?? ''); }
   text(row: FinanceRecord | undefined, ...keys: string[]): string { for (const key of keys) if (row?.[key] != null) return String(row[key]); return ''; }
+  paymentPartyName(row: FinanceRecord): string {
+    const name = this.text(row, 'partyName', 'buyingPartyName', 'sellingPartyName');
+    if (name) return name;
+    for (const key of ['buyingParty', 'sellingParty']) {
+      const party = row[key];
+      if (typeof party === 'object' && party !== null && 'name' in party && party['name'] != null) return String(party['name']);
+    }
+    return this.text(row, 'partyId', 'buyingPartyId', 'sellingPartyId');
+  }
   money(row: FinanceRecord | undefined, ...keys: string[]): number { for (const key of keys) { const value=row?.[key]; if (value != null && Number.isFinite(Number(value))) return Number(value); } return 0; }
   isReceivable(row: FinanceRecord): boolean { return this.text(row,'settlementType','type','paymentType').includes('BUYER') || !!row['buyingPartyId']; }
   allocationAllowed(settlement: FinanceRecord): boolean { const payment=this.selectedPayment; if (!payment) return false; return this.text(payment,'paymentType','type') === 'BUYER_RECEIPT' ? this.text(payment,'partyId','buyingPartyId') === this.text(settlement,'buyingPartyId') : this.text(payment,'partyId','sellingPartyId') === this.text(settlement,'sellingPartyId'); }
