@@ -21,7 +21,7 @@
           <span class="section-icon" aria-hidden="true">01</span>
           <div><span class="step">TRIP ASSIGNMENT</span><h2>Vehicle, driver & route</h2></div>
         </div>
-        <div class="assignment-grid">
+        <div class="trip-assignment-fields">
           <label>Vehicle <span class="required">*</span>
             <select name="vehicle" required [(ngModel)]="selectedVehicleId">
               <option value="">Select an active vehicle</option>
@@ -41,6 +41,15 @@
             </select>
             @if (submitted && !selectedDriverId) { <small class="field-error">Select an active driver.</small> }
             @if (!availableDrivers.length) { <small class="field-hint">No active driver employees are available to you.</small> }
+          </label>
+          <label>Assigned supervisor <span class="required">*</span>
+            <select name="supervisor" required [(ngModel)]="selectedSupervisorId">
+              <option value="">Select a supervisor</option>
+              @for (supervisor of availableSupervisors; track supervisor['_demoId']) { <option [value]="supervisor['_demoId']">{{ supervisor['name'] }}</option> }
+            </select>
+            <small class="field-hint">The backend supervisor assigned to this trip.</small>
+            @if (submitted && !selectedSupervisorId) { <small class="field-error">Select a supervisor.</small> }
+            @if (!availableSupervisors.length) { <small class="field-hint">No active supervisors are available to you.</small> }
           </label>
           <label>Route <span class="required">*</span>
             <input name="route" type="text" list="saved-trip-routes" maxlength="120" autocomplete="off" placeholder="Select or enter route name" [(ngModel)]="route">
@@ -74,10 +83,6 @@
         <div class="section-heading">
           <span class="section-icon" aria-hidden="true">02</span>
           <div><span class="step">SUPPLIER RECEIPTS</span><h2>Supplier pickups</h2></div>
-          <a class="button button-secondary onboard-link-btn" routerLink="/trading/onboarding" [queryParams]="{ type: 'supplier' }">+ Onboard supplier</a>
-          <button class="button button-secondary add-vendor" type="button" (click)="addVendor()" [disabled]="vendorPickups.length >= vendors.length">
-            ＋ Add vendor
-          </button>
         </div>
         <p class="vendor-hint">Enter quantities and total weights in kilograms. Line totals are calculated as weight × rate per kg.</p>
         @for (vendorPickup of vendorPickups; track vendorPickup.key; let index = $index) {
@@ -129,21 +134,14 @@
           </div>
         }
         @if (!vendorPickups.length) { <p class="field-error pickup-error" role="alert">Add at least one supplier pickup.</p> }
+        <div class="delivery-actions">
+          <a class="button button-secondary onboard-link-btn" routerLink="/trading/onboarding" [queryParams]="{ type: 'supplier' }">+ Onboard supplier</a>
+          <button class="button button-secondary add-vendor" type="button" (click)="addVendor()" [disabled]="vendorPickups.length >= vendors.length">＋ Add vendor</button>
+        </div>
       </section>
 
       <section class="panel assignment-panel">
-        <div class="section-heading"><span class="section-icon" aria-hidden="true">03</span><div><span class="step">VENDOR SALES</span><h2>Supervisor & vendor destinations</h2></div><a class="button button-secondary onboard-link-btn" routerLink="/trading/onboarding" [queryParams]="{ type: 'delivery-vendor' }">+ Onboard vendor</a><button class="button button-secondary add-vendor" type="button" (click)="addDeliveryStop()" [disabled]="deliveryStops.length >= deliveryVendors.length">＋ Add destination</button></div>
-        <div class="assignment-grid">
-          <label>Assigned supervisor
-            <select name="supervisor" required [(ngModel)]="selectedSupervisorId">
-              <option value="">Select a supervisor</option>
-              @for (supervisor of availableSupervisors; track supervisor['_demoId']) { <option [value]="supervisor['_demoId']">{{ supervisor['name'] }}</option> }
-            </select>
-            <small class="field-hint">The backend supervisor assigned to this trip.</small>
-            @if (submitted && !selectedSupervisorId) { <small class="field-error">Select a supervisor.</small> }
-            @if (!availableSupervisors.length) { <small class="field-hint">No active supervisors are available to you.</small> }
-          </label>
-        </div>
+        <div class="section-heading"><span class="section-icon" aria-hidden="true">03</span><div><span class="step">VENDOR SALES</span><h2>Supervisor & vendor destinations</h2></div></div>
         <p class="delivery-plan-hint">Plan bird and feed quantities, weights, and rates for each vendor destination. Sales totals use weight × rate; actual handoffs are entered by the assigned Supervisor.</p>
         @if (!deliveryVendors.length) { <p class="field-hint">Add active delivery vendors in Trading → Delivery vendors before creating a trip.</p> }
         @for (stop of deliveryStops; track stop.key; let index = $index) {
@@ -181,6 +179,10 @@
             </div>
           </div>
         }
+        <div class="delivery-actions">
+          <a class="button button-secondary onboard-link-btn" routerLink="/trading/onboarding" [queryParams]="{ type: 'delivery-vendor' }">+ Onboard vendor</a>
+          <button class="button button-secondary add-vendor" type="button" (click)="addDeliveryStop()" [disabled]="deliveryStops.length >= deliveryVendors.length">＋ Add destination</button>
+        </div>
         @if (submitted && deliveryStopError) { <p class="field-error pickup-error" role="alert">{{ deliveryStopError }}</p> }
       </section>
 
