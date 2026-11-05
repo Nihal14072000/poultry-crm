@@ -62,18 +62,7 @@ export class TripService {
 
   async softDeleteTrip(id: string): Promise<void> {
     if (!this.rolePermissions.can('trips', 'delete')) throw new Error('You do not have permission to delete trips.');
-    const trip = (await this.getTrips()).find((record) => String(record['_demoId'] ?? '') === id);
-    if (!trip) throw new Error('This trip could not be found or you do not have access to it.');
-    if (trip['status'] === 'Deleted') throw new Error('This trip has already been deleted.');
-    if (trip['status'] !== 'Assigned') throw new Error('Only trips that have not started can be deleted.');
-    const resources = ['trip-deliveries', 'trip-pickups', 'trip-mortality', 'trip-payments'];
-    const records = await Promise.all(resources.map((resource) => firstValueFrom(this.directories.getDirectory(resource))));
-    if (records.some((response) => response.records.some((record) => String(record['tripId'] ?? '') === id))) {
-      throw new Error('This trip already has operational records and cannot be deleted.');
-    }
-    await firstValueFrom(this.directories.updateRecord('trips', id, {
-      ...trip, status: 'Deleted', deletedAt: new Date().toISOString(), deletedBy: this.auth.currentUser?.name ?? ''
-    }));
+    await this.tripApi.deleteTrip(id);
   }
 
   async createTrip(input: CreateTripInput, createdBy: string): Promise<TripRecord> {

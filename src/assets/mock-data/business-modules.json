@@ -132,7 +132,7 @@
     { "code": "SU-042", "name": "Western Grain Co.", "category": "Feed", "phone": "+91 97654 83120", "orders": "7", "outstanding": "₹4,120", "status": "Active" }
   ] },
   "vendor-destinations": { "records": [
-    { "code": "VD-001", "name": "Greenfield Poultry Vendors", "address": "Market Road, Nashik", "contact": "Receiving Desk", "phone": "", "status": "Active" },
+    { "code": "VD-001", "name": "Bilal Poultry Vendors", "address": "Market Road, Nashik", "contact": "Receiving Desk", "phone": "", "status": "Active" },
     { "code": "VD-002", "name": "Fresh Basket Vendors", "address": "Central Market, Pune", "contact": "Receiving Desk", "phone": "", "status": "Active" }
   ] },
   "quotations": { "records": [
@@ -227,16 +227,16 @@
     { "alert": "Invoice INV-1048 is overdue", "category": "Finance", "relatedTo": "Sunrise Foods", "created": "2 hours ago", "recipient": "Accounts team", "severity": "Low", "status": "Read" }
   ] },
   "organization": { "records": [
-    { "unit": "Greenfield Poultry", "type": "Organization", "location": "Nashik, Maharashtra", "manager": "Alex Morgan", "currency": "INR", "timezone": "Asia/Kolkata", "status": "Active" },
+    { "unit": "Bilal Poultry", "type": "Organization", "location": "Nashik, Maharashtra", "manager": "Alex Morgan", "currency": "INR", "timezone": "Asia/Kolkata", "status": "Active" },
     { "unit": "Greenfield Farms", "type": "Business unit", "location": "Maharashtra", "manager": "Meera Joshi", "currency": "INR", "timezone": "Asia/Kolkata", "status": "Active" },
     { "unit": "Greenfield Trading", "type": "Business unit", "location": "Nashik, Maharashtra", "manager": "Alex Morgan", "currency": "INR", "timezone": "Asia/Kolkata", "status": "Active" }
   ] },
   "users-roles": { "records": [
-    { "name": "Alex Morgan", "email": "alex.morgan@example.test", "role": "Organization Admin", "permissions": "All organization modules", "businessUnit": "Greenfield Poultry", "lastActive": "Now", "status": "Active" },
+    { "name": "Alex Morgan", "email": "alex.morgan@example.test", "role": "Organization Admin", "permissions": "All organization modules", "businessUnit": "Bilal Poultry", "lastActive": "Now", "status": "Active" },
     { "name": "Meera Joshi", "email": "meera.joshi@example.test", "role": "Farm Manager", "permissions": "Assigned farms and flocks", "businessUnit": "Willow Creek", "lastActive": "Today, 10:12 AM", "status": "Active" },
     { "name": "Ravi Patil", "email": "ravi.patil@example.test", "role": "Warehouse Manager", "permissions": "Inventory and transfers", "businessUnit": "Central store", "lastActive": "Today, 08:44 AM", "status": "Active" },
-    { "name": "Nisha Kulkarni", "email": "nisha.kulkarni@example.test", "role": "Farm Supervisor", "permissions": "Assigned trip deliveries", "businessUnit": "Greenfield Poultry", "lastActive": "Never", "status": "Active" },
-    { "name": "Arjun Desai", "email": "arjun.desai@example.test", "role": "Sales Manager", "permissions": "Sales and trip planning", "businessUnit": "Greenfield Poultry", "lastActive": "Never", "status": "Active" },
+    { "name": "Nisha Kulkarni", "email": "nisha.kulkarni@example.test", "role": "Farm Supervisor", "permissions": "Assigned trip deliveries", "businessUnit": "Bilal Poultry", "lastActive": "Never", "status": "Active" },
+    { "name": "Arjun Desai", "email": "arjun.desai@example.test", "role": "Sales Manager", "permissions": "Sales and trip planning", "businessUnit": "Bilal Poultry", "lastActive": "Never", "status": "Active" },
     { "name": "Rustum", "email": "rustum@example.test", "role": "Sales Manager", "permissions": "Inventory, Trading, People & logistics, Finance", "moduleAccess": "inventory,trading,people-logistics,finance", "businessUnit": "Organization", "lastActive": "Never", "status": "Active" }
   ] },
   "documents": { "records": [
@@ -250,10 +250,10 @@
     { "event": "Goods receipt posted", "record": "GRN-1187", "performedBy": "Ravi Patil", "timestamp": "Oct 04 · 08:36 AM", "change": "2,400 kg grower pellets received", "source": "Inventory", "status": "Recorded" }
   ] },
   "administration": { "records": [
-    { "name": "Alex Morgan", "email": "alex.morgan@example.test", "role": "Organization Admin", "businessUnit": "Greenfield Poultry", "lastActive": "Now", "access": "Full access", "status": "Active" },
+    { "name": "Alex Morgan", "email": "alex.morgan@example.test", "role": "Organization Admin", "businessUnit": "Bilal Poultry", "lastActive": "Now", "access": "Full access", "status": "Active" },
     { "name": "Meera Joshi", "email": "meera.joshi@example.test", "role": "Farm Manager", "businessUnit": "Willow Creek", "lastActive": "Today, 10:12 AM", "access": "Farm operations", "status": "Active" },
     { "name": "Ravi Patil", "email": "ravi.patil@example.test", "role": "Warehouse Manager", "businessUnit": "Central store", "lastActive": "Today, 08:44 AM", "access": "Inventory", "status": "Active" },
-    { "name": "Nisha Kulkarni", "email": "nisha.kulkarni@example.test", "role": "Farm Supervisor", "businessUnit": "Greenfield Poultry", "lastActive": "Never", "access": "Assigned trips", "status": "Active" },
-    { "name": "Arjun Desai", "email": "arjun.desai@example.test", "role": "Sales Manager", "businessUnit": "Greenfield Poultry", "lastActive": "Never", "access": "Sales and trip planning", "status": "Active" }
+    { "name": "Nisha Kulkarni", "email": "nisha.kulkarni@example.test", "role": "Farm Supervisor", "businessUnit": "Bilal Poultry", "lastActive": "Never", "access": "Assigned trips", "status": "Active" },
+    { "name": "Arjun Desai", "email": "arjun.desai@example.test", "role": "Sales Manager", "businessUnit": "Bilal Poultry", "lastActive": "Never", "access": "Sales and trip planning", "status": "Active" }
   ] }
 }

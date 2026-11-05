@@ -367,6 +367,11 @@ export class TripApiService {
     await firstValueFrom(this.http.put(`${this.baseUrl}/trips/${tripId}`, { ...trip, tripId, status }));
   }
 
+  async deleteTrip(id: string): Promise<void> {
+    const tripId = this.parseId(id);
+    await firstValueFrom(this.http.delete<void>(`${this.baseUrl}/trips/${tripId}`));
+  }
+
   async insertTrip(input: CreateTripInput, options: TripFormOptions): Promise<TripRecord> {
     const response = await firstValueFrom(this.http.post<ApiTrip>(`${this.baseUrl}/trips/insert`, this.toRequest(input, options)));
     return this.tripRecord(response, new Map(), new Map());

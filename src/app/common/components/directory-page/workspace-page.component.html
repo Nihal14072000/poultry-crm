@@ -1,7 +1,7 @@
 <section class="workspace-page">
   <div class="page-heading">
     <div>
-      <div class="eyebrow">GREENFIELD POULTRY <span>/</span> OPERATIONS</div>
+      <div class="eyebrow">Bilal Poultry <span>/</span> OPERATIONS</div>
       <h1>{{ title }}</h1>
       <p>{{ description }}</p>
     </div>
@@ -48,7 +48,40 @@
     } @else if (!filteredRecords.length) {
       <div class="state-panel empty"><strong>No matching records</strong><span>Try changing your search or status filter.</span></div>
     } @else {
-      <app-data-grid [columnDefs]="gridColumns" [rowData]="gridRows" />
+      @if (resource === 'employees' || resource === 'vehicles') {
+        <div class="table-scroll">
+          <table class="directory-table">
+            <thead>
+              <tr>
+                @for (column of columns; track column.key) {
+                  <th><button type="button" class="sort-button" (click)="toggleSort(column.key)">{{ column.label }}<span>{{ sortKey === column.key ? (sortDescending ? '↓' : '↑') : '' }}</span></button></th>
+                }
+                <th class="actions-heading">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (record of pagedRecords; track record['_demoId']) {
+                <tr>
+                  @for (column of columns; track column.key) {
+                    <td [class.primary-value]="column.key === 'name' || column.key === 'vehicle'">{{ record[column.key] || '—' }}</td>
+                  }
+                  <td class="row-actions">
+                    @if (can('update')) { <button type="button" (click)="openEdit(record)">Edit</button> }
+                    @if (can('delete')) { <button type="button" class="delete-action" (click)="requestDelete(record)">Delete</button> }
+                    @if (!can('update') && !can('delete')) { <span class="immutable-label">—</span> }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span>Showing {{ (currentPage - 1) * pageSize + 1 }}–{{ (currentPage - 1) * pageSize + pagedRecords.length }} of {{ filteredRecords.length }} {{ title.toLowerCase() }}</span>
+          <div><button type="button" (click)="previousPage()" [disabled]="currentPage === 1">Previous</button><span class="current-page">{{ currentPage }}</span><button type="button" (click)="nextPage()" [disabled]="currentPage === pageCount">Next</button></div>
+        </div>
+      } @else {
+        <app-data-grid [columnDefs]="gridColumns" [rowData]="gridRows" />
+      }
     }
   </div>
   <p class="demo-note"><span>●</span> {{ resource === 'employees' ? 'Backend-connected · Employee records are managed by the employees API.' : resource === 'vehicles' ? 'Backend-connected · Vehicle records are managed by the vehicles API.' : 'Demo workspace · This view is powered by local JSON sample data.' }}</p>
@@ -97,9 +130,9 @@
   @if (deleteCandidate) {
     <div class="dialog-backdrop" (click)="cancelDelete()">
       <section class="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-title" (click)="$event.stopPropagation()">
-        <span class="confirm-icon">!</span><h2 id="delete-title">Remove this {{ resource === 'employees' ? 'driver' : resource === 'vehicles' ? 'vehicle' : 'demo record' }}?</h2><p>{{ ['employees', 'vehicles'].includes(resource) ? 'This removes the record from the backend.' : 'This removes the record from this browser’s local demo data. It cannot be undone.' }}</p>
+        <span class="confirm-icon">!</span><h2 id="delete-title">Remove this {{ resource === 'employees' ? 'employee' : resource === 'vehicles' ? 'vehicle' : 'demo record' }}?</h2><p>{{ ['employees', 'vehicles'].includes(resource) ? 'This removes the record from the backend.' : 'This removes the record from this browser’s local demo data. It cannot be undone.' }}</p>
         @if (actionError) { <div class="dialog-error" role="alert">{{ actionError }}</div> }
-        <div class="dialog-footer"><button class="button button-secondary" type="button" (click)="cancelDelete()">Keep record</button><button class="button danger-button" type="button" (click)="deleteRecord()">Remove record</button></div>
+        <div class="dialog-footer"><button class="button button-secondary" type="button" (click)="cancelDelete()" [disabled]="saving">Keep record</button><button class="button danger-button" type="button" (click)="deleteRecord()" [disabled]="saving">{{ saving ? 'Removing…' : 'Remove record' }}</button></div>
       </section>
     </div>
   }

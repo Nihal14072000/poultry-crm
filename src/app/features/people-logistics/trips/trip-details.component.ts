@@ -33,12 +33,12 @@ export class TripDetailsComponent implements OnInit {
       return;
     }
     try {
-      const details = await this.tripService.getTripDetails(id);
+      const details = await this.tripService.getDeliveryData(id, [], this.pendingVendorDeliveryIds(id));
       this.trip = details.trip;
-      this.vendorPickups = details.vendorPickups;
+      this.vendorPickups = details.supplierPickups;
       this.supplierReceipts = details.supplierReceipts;
-      this.vendorDestinations = details.vendorDestinations;
-      this.deliveryEntries = details.deliveryEntries;
+      this.vendorDestinations = details.destinations;
+      this.deliveryEntries = details.deliveries;
     } catch (error) {
       this.errorMessage = error instanceof Error
         ? error.message
@@ -46,6 +46,23 @@ export class TripDetailsComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  private pendingVendorDeliveryIds(tripId: string): string[] {
+    if (typeof window === 'undefined') return [];
+    const stored = window.sessionStorage.getItem(`trip-delivery-vendor-deliveries:${tripId}`);
+    if (!stored) return [];
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(stored);
+    } catch {
+      throw new Error("Saved vendor delivery IDs could not be read. Clear this trip's pending delivery data and try again.");
+    }
+    if (!Array.isArray(parsed) || !parsed.every((id): id is string => typeof id === 'string' && /^\d+$/.test(id))) {
+      throw new Error("Saved vendor delivery IDs are invalid. Clear this trip's pending delivery data and try again.");
+    }
+    return [...new Set(parsed)];
   }
 
   plannedSalesTotal(): number {
@@ -72,6 +89,11 @@ export class TripDetailsComponent implements OnInit {
     const id = String(destination['vendorDestinationId'] ?? '');
     return this.deliveryEntries.filter((entry) => String(entry['vendorDestinationId'] ?? '') === id)
       .reduce((sum, entry) => sum + Number(entry[`${kind}Total`] ?? 0), 0);
+  }
+
+  actualLineRate(destination: TripRecord, kind: 'broiler' | 'culls' | 'feed'): number {
+    const weight = this.actualWeight(destination, kind);
+    return weight > 0 ? this.actualLineSales(destination, kind) / weight : 0;
   }
 
   actualPickup(vendorId: string): TripRecord | undefined {

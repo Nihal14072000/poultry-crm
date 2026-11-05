@@ -124,6 +124,16 @@ describe('TripApiService', () => {
     await expectAsync(result).toBeResolvedTo(jasmine.objectContaining({ _demoId: '107', tripDate: '2026-10-23' }));
   });
 
+  it('deletes a trip through the trips API', async () => {
+    const result = service.deleteTrip('12');
+    const request = http.expectOne('http://localhost:8080/api/trips/12');
+
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null);
+
+    await expectAsync(result).toBeResolved();
+  });
+
   it('loads delivery details and actual entries from backend delivery APIs', async () => {
     const result = service.getDeliveryData('12', [], ['84']);
     http.expectOne('http://localhost:8080/api/trips/12/retrieve').flush({

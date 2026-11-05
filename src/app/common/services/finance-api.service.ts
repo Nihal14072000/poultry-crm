@@ -26,8 +26,8 @@ export class FinanceApiService {
 
   constructor(private readonly http: HttpClient) {}
 
-  payments(): Promise<FinanceRecord[]> { return this.getList(`${this.baseUrl}/payments`).then(rows => rows.map(row => this.paymentRow(row))); }
-  payment(id: string): Promise<FinanceRecord> { return firstValueFrom(this.http.get<FinanceRecord>(`${this.baseUrl}/payments/${encodeURIComponent(id)}`)); }
+  payments(): Promise<FinanceRecord[]> { return this.getList(`${this.baseUrl}/payments/retrieve`).then(rows => rows.map(row => this.paymentRow(row))); }
+  payment(id: string): Promise<FinanceRecord> { return firstValueFrom(this.http.get<FinanceRecord>(`${this.baseUrl}/payments/${encodeURIComponent(id)}/retrieve`)); }
   createPayment(input: PaymentInput): Promise<FinanceRecord> {
     const { partyId, reference, ...payment } = input;
     return firstValueFrom(this.http.post<FinanceRecord>(`${this.baseUrl}/payments`, {
@@ -36,7 +36,16 @@ export class FinanceApiService {
       externalReference: reference
     }));
   }
-  updatePayment(id: string, input: Partial<PaymentInput>): Promise<FinanceRecord> { return firstValueFrom(this.http.put<FinanceRecord>(`${this.baseUrl}/payments/${encodeURIComponent(id)}`, input)); }
+  updatePayment(id: string, input: Omit<Partial<PaymentInput>, 'status'> & { status?: PaymentStatus | 'DELETED' }): Promise<FinanceRecord> {
+    const { partyId, reference, ...payment } = input;
+    return firstValueFrom(this.http.put<FinanceRecord>(`${this.baseUrl}/payments/${encodeURIComponent(id)}`, {
+      ...payment,
+      ...(partyId !== undefined && input.paymentType
+        ? input.paymentType === 'BUYER_RECEIPT' ? { buyingPartyId: partyId } : { sellingPartyId: partyId }
+        : {}),
+      ...(reference !== undefined ? { externalReference: reference } : {})
+    })).then(row => this.paymentRow(row));
+  }
   settlements(tripId?: string): Promise<FinanceRecord[]> {
     const path = tripId ? `${this.baseUrl}/finance/trips/${encodeURIComponent(tripId)}/settlements` : `${this.baseUrl}/finance/settlements`;
     return this.getList(path);

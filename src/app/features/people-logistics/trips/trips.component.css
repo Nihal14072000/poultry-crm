@@ -21,6 +21,10 @@ td strong { color: #445248; }
 .edit-link { color: #315f45; font-size: 9px; font-weight: 700; text-decoration: none; }
 .edit-link:hover { text-decoration: underline; }
 .edit-link:focus-visible { border-radius: 2px; outline: 2px solid #a3c793; outline-offset: 2px; }
+.delete-link { background: none; border: 0; color: #a25243; cursor: pointer; font: inherit; font-size: 9px; font-weight: 700; margin-left: 9px; padding: 0; }
+.delete-link:hover { text-decoration: underline; }
+.delete-link:focus-visible { border-radius: 2px; outline: 2px solid #dca69b; outline-offset: 2px; }
+.delete-link:disabled { cursor: wait; opacity: .65; }
 .actions-cell { text-align: center; }
 .deleted-trip td { background: #f4f5f4; color: #9ba29c; }
 .deleted-trip .trip-link { color: #9ba29c; cursor: default; }

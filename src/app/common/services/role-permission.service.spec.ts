@@ -46,4 +46,15 @@ describe('RolePermissionService trips permissions', () => {
     expect(service.can('employees', 'update')).toBeFalse();
     expect(service.can('users-roles', 'update')).toBeFalse();
   });
+
+  it('keeps employee edit and delete available to Organization Admin despite stale role overrides', () => {
+    currentUser.role = 'Organization Admin';
+    spyOn(localStorage, 'getItem').and.returnValue(JSON.stringify({
+      'Organization Admin': ['employees.read']
+    }));
+
+    expect(service.can('employees', 'update')).toBeTrue();
+    expect(service.can('employees', 'delete')).toBeTrue();
+    expect(service.getRolePermissions('Organization Admin')).toContain('employees.*');
+  });
 });

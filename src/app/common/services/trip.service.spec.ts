@@ -61,7 +61,7 @@ describe('TripService', () => {
     };
     Object.defineProperty(auth, 'currentUser', { configurable: true, get: () => currentUser });
     tripApi = jasmine.createSpyObj<TripApiService>('TripApiService', [
-      'getTrips', 'getDeliveryData', 'linkSupplierPickups', 'linkVendorDeliveries', 'updateTripStatus'
+      'getTrips', 'getDeliveryData', 'linkSupplierPickups', 'linkVendorDeliveries', 'updateTripStatus', 'deleteTrip'
     ]);
     tripApi.getTrips.and.resolveTo([]);
     const permissions = jasmine.createSpyObj<RolePermissionService>('RolePermissionService', ['can', 'canAccessRecord']);
@@ -81,6 +81,15 @@ describe('TripService', () => {
 
     expect(await service.getDeliveryTrips()).toEqual([availableTrip]);
     expect(tripApi.getTrips).toHaveBeenCalled();
+  });
+
+  it('soft deletes in-transit and completed trips even when they have operational records', async () => {
+    await service.softDeleteTrip('trip-in-transit');
+    await service.softDeleteTrip('trip-completed');
+
+    expect(tripApi.deleteTrip).toHaveBeenCalledWith('trip-in-transit');
+    expect(tripApi.deleteTrip).toHaveBeenCalledWith('trip-completed');
+    expect(directories.updateRecord).not.toHaveBeenCalled();
   });
 
   it('completes a trip and links its pending records after every destination has a delivery', async () => {

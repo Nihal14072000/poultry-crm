@@ -45,7 +45,13 @@
                 <td class="actions-cell">
                   @if (!isDeleted(trip) && rolePermissions.can('trips', 'update')) {
                     <a class="edit-link" [routerLink]="['/people-logistics/trips', trip['_demoId'], 'edit']">Edit</a>
-                  } @else { <span>—</span> }
+                  }
+                  @if (!isDeleted(trip) && rolePermissions.can('trips', 'delete')) {
+                    <button class="delete-link" type="button" [disabled]="deletingTripId === trip['_demoId']" (click)="deleteTrip(trip)">
+                      {{ deletingTripId === trip['_demoId'] ? 'Deleting…' : 'Delete' }}
+                    </button>
+                  }
+                  @if (isDeleted(trip) || (!rolePermissions.can('trips', 'update') && !rolePermissions.can('trips', 'delete'))) { <span>—</span> }
                 </td>
               </tr>
             }

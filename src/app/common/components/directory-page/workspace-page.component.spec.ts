@@ -1,6 +1,6 @@
 import { EMPTY } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DirectoryService } from '../../services/directory.service';
 import { ModuleWorkflowService } from '../../services/module-workflow.service';
 import { FarmOperationsService } from '../../services/farm-operations.service';
@@ -11,6 +11,7 @@ import { WorkspacePageComponent } from './workspace-page.component';
 
 describe('WorkspacePageComponent validation', () => {
   let component: WorkspacePageComponent;
+  let fixture: ComponentFixture<WorkspacePageComponent>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -24,7 +25,8 @@ describe('WorkspacePageComponent validation', () => {
         { provide: RolePermissionService, useValue: { can: () => true, canAccessRecord: () => true, canManageRoles: () => false } }
       ]
     });
-    component = TestBed.createComponent(WorkspacePageComponent).componentInstance;
+    fixture = TestBed.createComponent(WorkspacePageComponent);
+    component = fixture.componentInstance;
     component.resource = 'products';
     component.columns = [{ key: 'sku', label: 'SKU' }];
     component.editorRecord = { sku: '' };
@@ -80,5 +82,39 @@ describe('WorkspacePageComponent validation', () => {
 
     component.editorMode = 'edit';
     expect(component.fieldError('name')).toBe('');
+  });
+
+  it('shows employee edit and delete actions in a table and opens the existing dialogs', () => {
+    component.resource = 'employees';
+    component.title = 'Employees';
+    component.mode = 'editable';
+    component.columns = [{ key: 'name', label: 'NAME' }, { key: 'status', label: 'STATUS' }];
+    component.records = [{ _demoId: '12', name: 'Asha Patil', status: 'Active' }];
+    component.loading = false;
+    fixture.detectChanges();
+
+    const buttons = Array.from(fixture.nativeElement.querySelectorAll('tbody button')) as HTMLButtonElement[];
+    expect(buttons.map((button) => button.textContent.trim())).toEqual(['Edit', 'Delete']);
+
+    buttons[0].click();
+    expect(component.editorOpen).toBeTrue();
+    component.closeEditor();
+
+    buttons[1].click();
+    expect(component.deleteCandidate?['_demoId']).toBe('12');
+  });
+
+  it('shows vehicle edit and delete actions in the table', () => {
+    component.resource = 'vehicles';
+    component.title = 'Company vehicles';
+    component.mode = 'editable';
+    component.columns = [{ key: 'vehicle', label: 'VEHICLE NUMBER' }, { key: 'status', label: 'STATUS' }];
+    component.records = [{ _demoId: '21', vehicle: 'MH-12-AB-4521', status: 'Active' }];
+    component.loading = false;
+    fixture.detectChanges();
+
+    const buttons = Array.from(fixture.nativeElement.querySelectorAll('tbody button')) as HTMLButtonElement[];
+    expect(buttons.map((button) => button.textContent.trim())).toEqual(['Edit', 'Delete']);
+    expect(fixture.nativeElement.textContent).toContain('MH-12-AB-4521');
   });
 });

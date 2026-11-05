@@ -41,35 +41,44 @@ const roleResources: Record<string, string[]> = {
 
 @Injectable({ providedIn: 'root' })
 export class RolePermissionService {
-  constructor(private readonly auth: SessionAuthService) {}
+  constructor(private readonly auth: SessionAuthService) { }
 
   can(resource: string, action: PermissionAction = 'read'): boolean {
     const user = this.auth.currentUser;
     if (!user || user.status.toLowerCase() !== 'active') return false;
     const moduleAccess = this.moduleResources(user.moduleAccess);
-    if (moduleAccess && resource !== 'dashboard' && !moduleAccess.resources.has(resource)) return false;
+    if (moduleAccess && resource !== 'dashboard' && !moduleAccess.resources.has(resource)) {
+      if (resource === 'trips') {
+        console.log('[RolePermissionService] trips permission', {
+          role: user.role, action, moduleAccess: user.moduleAccess, allowed: false, reason: 'Module access excludes trips'
+        });
+      }
+      return false;
+    }
     if (moduleAccess?.resources.has(resource) && action === 'read') return true;
     if (user.role === 'Authenticated') {
       return action === 'read' || (resource === 'employees' && action === 'create');
     }
     if (resource === 'trips') {
-      return action === 'read' ||
+      const allowed = action === 'read' ||
         (user.role === 'Sales Manager' && ['create', 'update', 'delete', 'transition'].includes(action)) ||
         (user.role === 'Organization Admin' && ['create', 'update', 'delete', 'transition', 'approve'].includes(action)) ||
         (['Farm Supervisor', 'Supervisor'].includes(user.role) && action === 'transition');
+      console.log('[RolePermissionService] trips permission', {
+        role: user.role, action, moduleAccess: user.moduleAccess || 'all modules', allowed
+      });
+      return allowed;
     }
     const allowedResources = roleResources[user.role] ?? [];
     if (!allowedResources.includes(resource)) return false;
+    if (user.role === 'Organization Admin') {
+      return !(['audit', 'reports', 'analytics'].includes(resource) && action === 'delete');
+    }
     const override = this.readOverrides()[user.role];
     if (override) return override.includes(`${resource}.${action}`) || override.includes(`${resource}.*`);
     if (action === 'read') return true;
     if (readOnlyRoles.has(user.role)) return action === 'export' && user.role === 'Owner';
     if (user.role === 'Super Admin') return false;
-
-    if (user.role === 'Organization Admin') {
-      if (resource === 'audit' || resource === 'reports' || resource === 'analytics') return action !== 'delete';
-      return true;
-    }
 
     const permissions: Record<string, Partial<Record<PermissionAction, string[]>>> = {
       'Farm Manager': {
@@ -190,7 +199,7 @@ export class RolePermissionService {
   }
 
   getRolePermissions(role: string): string[] {
-    const override = this.readOverrides()[role];
+    const override = role === 'Organization Admin' ? undefined : this.readOverrides()[role];
     if (override) return this.tripPermissions(role, override);
     const resources = roleResources[role] ?? [];
     if (readOnlyRoles.has(role)) return this.tripPermissions(role, resources.map((resource) => `${resource}.read`));
