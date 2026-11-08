@@ -80,12 +80,12 @@ export class TripDeliveriesComponent implements OnInit {
           const receipt = data.supplierReceipts.find((record) => String(record['vendorId'] ?? '') === pickup.vendorId);
           return {
             vendorId: pickup.vendorId, vendorName: pickup.vendorName,
-            broiler: receipt ? this.number(receipt['broilerQuantity']) : null,
-            broilerWeight: receipt ? this.number(receipt['broilerWeight']) : null,
-            culls: receipt ? this.number(receipt['cullsQuantity']) : null,
-            cullsWeight: receipt ? this.number(receipt['cullsWeight']) : null,
-            feed: receipt ? this.number(receipt['feedQuantity']) : null,
-            feedWeight: receipt ? this.number(receipt['feedWeight']) : null,
+            broiler: receipt ? this.number(receipt['broilerQuantity']) : 0,
+            broilerWeight: receipt ? this.number(receipt['broilerWeight']) : 0,
+            culls: receipt ? this.number(receipt['cullsQuantity']) : 0,
+            cullsWeight: receipt ? this.number(receipt['cullsWeight']) : 0,
+            feed: receipt ? this.number(receipt['feedQuantity']) : 0,
+            feedWeight: receipt ? this.number(receipt['feedWeight']) : 0,
             reason: String(receipt?.['reason'] ?? '')
           };
         });
@@ -201,8 +201,7 @@ export class TripDeliveriesComponent implements OnInit {
   supplierReceipt(vendorId: string): TripRecord | undefined { return this.supplierReceipts.find((receipt) => String(receipt['vendorId'] ?? '') === vendorId); }
   supplierActualSummary(vendorId: string, kind: 'broiler' | 'culls' | 'feed'): string {
     const receipt = this.supplierReceipt(vendorId);
-    if (!receipt) return 'Not recorded';
-    return `${this.number(receipt[`${kind}Quantity`])} · ${this.number(receipt[`${kind}Weight`])} kg · ₹${this.number(receipt[`${kind}Total`]).toFixed(2)}`;
+    return `${this.number(receipt?.[`${kind}Quantity`])} · ${this.number(receipt?.[`${kind}Weight`])} kg · ₹${this.number(receipt?.[`${kind}Total`]).toFixed(2)}`;
   }
   toggleSupplierReceiptForm(form: SupplierReceiptForm): void {
     this.activePickupVendorId = this.activePickupVendorId === form.vendorId ? '' : form.vendorId;

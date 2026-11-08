@@ -26,7 +26,7 @@
               <tr><th scope="row">Culls</th><td>{{ planned.culls.quantity }} · {{ planned.culls.weight }} kg · {{ planned.culls.rate | currency:'INR':'symbol':'1.2-2' }}/kg · {{ planned.culls.total | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ supplierActualSummary(form.vendorId, 'culls') }}</td></tr>
               <tr><th scope="row">Feed ({{ trip['feedUnit'] }})</th><td>{{ planned.feed.quantity }} · {{ planned.feed.weight }} kg · {{ planned.feed.rate | currency:'INR':'symbol':'1.2-2' }}/kg · {{ planned.feed.total | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ supplierActualSummary(form.vendorId, 'feed') }}</td></tr>
             </tbody></table></div>
-            <p class="calculation">Proposed cost {{ planned.total | currency:'INR':'symbol':'1.2-2' }} · Actual cost @if (supplierReceipt(form.vendorId); as receipt) { {{ number(receipt['total']) | currency:'INR':'symbol':'1.2-2' }} } @else { Not recorded }</p>
+            <p class="calculation">Proposed cost {{ planned.total | currency:'INR':'symbol':'1.2-2' }} · Actual cost {{ number(supplierReceipt(form.vendorId)?.['total']) | currency:'INR':'symbol':'1.2-2' }}</p>
           }
           @if (activePickupVendorId === form.vendorId) {
             <div class="pickup-entry-grid">

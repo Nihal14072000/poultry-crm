@@ -12,6 +12,7 @@ describe('SessionAuthService', () => {
   let router: jasmine.SpyObj<Router>;
 
   beforeEach(() => {
+    window.sessionStorage.clear();
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
     TestBed.configureTestingModule({
       providers: [
@@ -24,29 +25,47 @@ describe('SessionAuthService', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.verify();
+    window.sessionStorage.clear();
+  });
 
-  it('authenticates against the employee endpoint and keeps credentials in memory', () => {
+  it('authenticates and restores the session after a service reload', () => {
     let signedIn = false;
     auth.signIn('admin', 'admin').subscribe(() => signedIn = true);
 
-    const loginRequest = http.expectOne(`${environment.apiUrl}/employees`);
+    const loginRequest = http.expectOne(`${environment.apiUrl}/auth/me`);
     expect(loginRequest.request.headers.get('Authorization')).toBe('Basic YWRtaW46YWRtaW4=');
-    loginRequest.flush([]);
+    loginRequest.flush({ name: 'admin', role: 'ADMIN' });
 
     expect(signedIn).toBeTrue();
     expect(auth.currentUser?.name).toBe('admin');
-    expect(auth.currentUser?.role).toBe('Authenticated');
+    expect(auth.currentUser?.role).toBe('Organization Admin');
     expect(auth.authorization).toBe('Basic YWRtaW46YWRtaW4=');
+
+    const restoredAuth = new SessionAuthService(TestBed.inject(HttpClient), router);
+    expect(restoredAuth.currentUser).toEqual(auth.currentUser);
+    expect(restoredAuth.authorization).toBe(auth.authorization);
 
     auth.signOut();
     expect(auth.isAuthenticated).toBeFalse();
     expect(auth.authorization).toBeNull();
+    expect(window.sessionStorage.length).toBe(0);
+  });
+
+  it('discards an invalid stored session', () => {
+    window.sessionStorage.setItem('flockwise.auth.session', '{');
+
+    const restoredAuth = new SessionAuthService(TestBed.inject(HttpClient), router);
+
+    expect(restoredAuth.isAuthenticated).toBeFalse();
+    expect(restoredAuth.authorization).toBeNull();
+    expect(window.sessionStorage.length).toBe(0);
   });
 
   it('clears authentication and returns to login after an API 401', () => {
     auth.signIn('admin', 'admin').subscribe();
-    http.expectOne(`${environment.apiUrl}/employees`).flush([]);
+    http.expectOne(`${environment.apiUrl}/auth/me`).flush({ name: 'admin', role: 'ADMIN' });
 
     TestBed.inject(HttpClient).get(`${environment.apiUrl}/employees`).subscribe({ error: () => undefined });
     const request = http.expectOne(`${environment.apiUrl}/employees`);
@@ -55,12 +74,13 @@ describe('SessionAuthService', () => {
 
     expect(auth.isAuthenticated).toBeFalse();
     expect(auth.authorization).toBeNull();
+    expect(window.sessionStorage.length).toBe(0);
     expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
 
   it('keeps authentication and shows access denied after an API 403', () => {
     auth.signIn('admin', 'admin').subscribe();
-    http.expectOne(`${environment.apiUrl}/employees`).flush([]);
+    http.expectOne(`${environment.apiUrl}/auth/me`).flush({ name: 'admin', role: 'ADMIN' });
 
     TestBed.inject(HttpClient).get(`${environment.apiUrl}/employees`).subscribe({ error: () => undefined });
     http.expectOne(`${environment.apiUrl}/employees`).flush({}, { status: 403, statusText: 'Forbidden' });

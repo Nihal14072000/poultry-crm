@@ -215,7 +215,7 @@ describe('TripApiService', () => {
     expect(data.loadedBirds).toBe(9);
   });
 
-  it('creates supplier pickups with actual orders in the create request', async () => {
+  it('creates supplier pickups and persists actual orders through the order endpoint', async () => {
     const result = service.saveSupplierPickup('31', {
       broiler: 9, broilerWeight: 20, broilerRate: 100,
       culls: 0, cullsWeight: 0, cullsRate: 40,
@@ -232,18 +232,20 @@ describe('TripApiService', () => {
     expect(createPickup.request.method).toBe('POST');
     expect(createPickup.request.body).toEqual({
       buyingPartyId: 31,
-      actualOrders: [
-        { orderTypeId: 1, qty: 9, weight: 20, rate: 100, total: 2000, isActive: true, isDeleted: false },
-        { orderTypeId: 3, qty: 4, weight: 4, rate: 20, total: 80, isActive: true, isDeleted: false }
-      ],
       note: 'Received at farm',
       isActive: true,
       isDeleted: false
     });
     createPickup.flush({ id: 81 });
 
+    const orders = http.expectOne('http://localhost:8080/api/supplier-pickups/81/orders');
+    expect(orders.request.method).toBe('PUT');
+    expect(orders.request.body).toEqual([
+      { orderTypeId: 1, qty: 9, weight: 20, rate: 100, total: 2000, isActive: true, isDeleted: false },
+      { orderTypeId: 3, qty: 4, weight: 4, rate: 20, total: 80, isActive: true, isDeleted: false }
+    ]);
+    orders.flush([]);
     http.expectNone('http://localhost:8080/api/deliveries');
-    http.expectNone('http://localhost:8080/api/supplier-pickups/81/orders');
     await expectAsync(result).toBeResolvedTo('81');
   });
 

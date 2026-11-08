@@ -287,13 +287,13 @@ export class TripApiService {
       await firstValueFrom(this.http.put(`${this.baseUrl}/supplier-pickups/${pickupId}`, {
         id: pickupId, buyingPartyId: supplierId, note, isActive: true, isDeleted: false
       }));
-      await firstValueFrom(this.http.put(`${this.baseUrl}/supplier-pickups/${pickupId}/orders`, orders));
     } else {
       const pickup = await firstValueFrom(this.http.post<{ id: number }>(`${this.baseUrl}/supplier-pickups`, {
-        buyingPartyId: supplierId, actualOrders: orders, note, isActive: true, isDeleted: false
+        buyingPartyId: supplierId, note, isActive: true, isDeleted: false
       }));
       pickupId = this.parseId(String(pickup.id));
     }
+    await firstValueFrom(this.http.put(`${this.baseUrl}/supplier-pickups/${pickupId}/orders`, orders));
     return String(pickupId);
   }
 

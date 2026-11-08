@@ -5,12 +5,15 @@
       <h1>Trips</h1>
       <p>Plan vehicle trips, supplier orders, and vendor deliveries.</p>
     </div>
+    
+    <div style="display: flex; gap: 1rem;">
     @if (rolePermissions.can('trips', 'create')) {
       <a class="button button-primary" routerLink="/people-logistics/trips/new">＋ Create trip</a>
     }
     @if (canOpenTripDeliveries) {
       <a class="button button-primary" routerLink="/people-logistics/trips/deliveries">{{ tripDeliveriesLabel }}</a>
     }
+    </div>
   </header>
 
   @if (successMessage) { <p class="feedback success" role="status">{{ successMessage }}</p> }

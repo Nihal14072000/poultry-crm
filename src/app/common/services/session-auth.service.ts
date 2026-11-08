@@ -5,8 +5,14 @@ import { BehaviorSubject, map, Observable } from 'rxjs';
 import { UserSession } from '../models/auth.model';
 import { environment } from '../../../environments/environment';
 
+interface StoredAuthentication {
+  authorization: string;
+  session: UserSession;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SessionAuthService {
+  private static readonly storageKey = 'flockwise.auth.session';
   private authorizationHeader: string | null = null;
   private readonly sessionSubject: BehaviorSubject<UserSession | null>;
   readonly session$: Observable<UserSession | null>;
@@ -15,7 +21,9 @@ export class SessionAuthService {
     private readonly http: HttpClient,
     private readonly router: Router
   ) {
-    this.sessionSubject = new BehaviorSubject<UserSession | null>(null);
+    const storedAuthentication = this.restoreAuthentication();
+    this.authorizationHeader = storedAuthentication?.authorization ?? null;
+    this.sessionSubject = new BehaviorSubject<UserSession | null>(storedAuthentication?.session ?? null);
     this.session$ = this.sessionSubject.asObservable();
   }
 
@@ -46,6 +54,7 @@ export class SessionAuthService {
         status: 'Active',
         authenticatedAt: new Date().toISOString()
       };
+      this.persistAuthentication(header, session);
       this.authorizationHeader = header;
       this.sessionSubject.next(session);
       return session;
@@ -58,8 +67,54 @@ export class SessionAuthService {
   }
 
   clearAuthentication(): void {
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(SessionAuthService.storageKey);
+    }
     this.authorizationHeader = null;
     this.sessionSubject.next(null);
+  }
+
+  private persistAuthentication(authorization: string, session: UserSession): void {
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(
+        SessionAuthService.storageKey,
+        JSON.stringify({ authorization, session })
+      );
+    }
+  }
+
+  private restoreAuthentication(): StoredAuthentication | null {
+    if (typeof window === 'undefined') return null;
+
+    const stored = window.sessionStorage.getItem(SessionAuthService.storageKey);
+    if (!stored) return null;
+
+    try {
+      const value: unknown = JSON.parse(stored);
+      if (this.isStoredAuthentication(value)) return value;
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+    }
+
+    window.sessionStorage.removeItem(SessionAuthService.storageKey);
+    return null;
+  }
+
+  private isStoredAuthentication(value: unknown): value is StoredAuthentication {
+    if (typeof value !== 'object' || value === null ||
+      !('authorization' in value) || typeof value.authorization !== 'string' ||
+      !value.authorization.startsWith('Basic ') ||
+      !('session' in value) || typeof value.session !== 'object' || value.session === null) {
+      return false;
+    }
+
+    const session = value.session;
+    return 'name' in session && typeof session.name === 'string' &&
+      'email' in session && typeof session.email === 'string' &&
+      'role' in session && typeof session.role === 'string' &&
+      'permissions' in session && typeof session.permissions === 'string' &&
+      'status' in session && typeof session.status === 'string' &&
+      'authenticatedAt' in session && typeof session.authenticatedAt === 'string';
   }
 
   private encodeCredentials(username: string, password: string): string {
