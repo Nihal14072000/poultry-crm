@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { UserSession } from '../models/auth.model';
 import { CreateTripInput } from '../models/trip.model';
 import { TripFormOptions, TripApiService } from './trip-api.service';
+import { SessionAuthService } from './session-auth.service';
 
 describe('TripApiService', () => {
   let service: TripApiService;
@@ -75,6 +77,42 @@ describe('TripApiService', () => {
     expect(options.supervisors).toEqual([{
       _demoId: '41', name: 'Supervisor One', address: 'Pune', number: 'SUP-41', status: 'Active'
     }]);
+  });
+
+  it('lists only trips assigned to the signed-in driver', async () => {
+    spyOnProperty(TestBed.inject(SessionAuthService), 'currentUser', 'get').and.returnValue({
+      id: 12, name: 'Asha Patil', email: 'asha@example.com', role: 'Driver', permissions: '',
+      status: 'Active', authenticatedAt: ''
+    } satisfies UserSession);
+    const result = service.getTrips();
+    http.expectOne('http://localhost:8080/api/trips').flush([
+      { tripId: 101, date: '2026-10-23', route: 'A to B', driver: { id: 12 }, supervisor: { id: 41 } },
+      { tripId: 102, date: '2026-10-24', route: 'C to D', driver: { id: 13 }, supervisor: { id: 41 } }
+    ]);
+    http.expectOne('http://localhost:8080/api/vehicles').flush([]);
+    http.expectOne('http://localhost:8080/api/drivers').flush([]);
+
+    await expectAsync(result).toBeResolvedTo([
+      jasmine.objectContaining({ _demoId: '101', driverId: '12' })
+    ]);
+  });
+
+  it('lists only trips assigned to the signed-in supervisor', async () => {
+    spyOnProperty(TestBed.inject(SessionAuthService), 'currentUser', 'get').and.returnValue({
+      id: 41, name: 'Supervisor One', email: 'supervisor@example.com', role: 'Supervisor', permissions: '',
+      status: 'Active', authenticatedAt: ''
+    } satisfies UserSession);
+    const result = service.getTrips();
+    http.expectOne('http://localhost:8080/api/trips').flush([
+      { tripId: 101, date: '2026-10-23', route: 'A to B', driver: { id: 12 }, supervisor: { id: 41 } },
+      { tripId: 102, date: '2026-10-24', route: 'C to D', driver: { id: 13 }, supervisor: { id: 42 } }
+    ]);
+    http.expectOne('http://localhost:8080/api/vehicles').flush([]);
+    http.expectOne('http://localhost:8080/api/drivers').flush([]);
+
+    await expectAsync(result).toBeResolvedTo([
+      jasmine.objectContaining({ _demoId: '101', supervisorId: '41' })
+    ]);
   });
 
   it('inserts the trip and all nested orders with one API request', async () => {

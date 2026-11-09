@@ -1,6 +1,6 @@
 import { Route, Routes } from '@angular/router';
 import { DirectoryColumn } from './common/models/directory.model';
-import { requirePermissionGuard, requireSessionGuard, signedOutOnlyGuard } from './common/services/auth-guards';
+import { redirectToAccessibleRouteGuard, requirePermissionGuard, requireSessionGuard, signedOutOnlyGuard } from './common/services/auth-guards';
 
 interface DirectoryPage {
   path: string;
@@ -120,7 +120,7 @@ function sectionRoute(path: string, pages: DirectoryPage[], extraChildren: Route
 
 export const routes: Routes = [
   { path: 'login', canActivate: [signedOutOnlyGuard], loadComponent: () => import('./features/identity/login/login.component').then((module) => module.LoginComponent) },
-  { path: 'access-denied', canActivate: [requireSessionGuard], loadComponent: () => import('./features/identity/access-denied/access-denied.component').then((module) => module.AccessDeniedComponent) },
+  { path: 'access-denied', canActivate: [requireSessionGuard, redirectToAccessibleRouteGuard], loadComponent: () => import('./features/identity/access-denied/access-denied.component').then((module) => module.AccessDeniedComponent) },
   { path: '', pathMatch: 'full', redirectTo: 'workspace/overview' },
   {
     path: 'workspace',
@@ -149,10 +149,10 @@ export const routes: Routes = [
     { path: 'fleet', redirectTo: 'vehicles', pathMatch: 'full' },
     { path: 'vehicle-assignments', canActivate: [requirePermissionGuard], data: { resource: 'vehicle-assignments' }, loadComponent: () => import('./features/people-logistics/vehicle-assignments/vehicle-assignments.component').then((module) => module.VehicleAssignmentsComponent) },
     { path: 'vendors/onboard', canActivate: [requirePermissionGuard], data: { resource: 'suppliers' }, loadComponent: () => import('./features/trading/vendor-onboarding/vendor-onboarding.component').then((module) => module.VendorOnboardingComponent) },
-    { path: 'deliveries', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/trip-deliveries.component').then((module) => module.TripDeliveriesComponent) },
+    { path: 'deliveries', canActivate: [requirePermissionGuard], data: { resource: 'deliveries' }, loadComponent: () => import('./features/people-logistics/trips/trip-deliveries.component').then((module) => module.TripDeliveriesComponent) },
     { path: 'trips/new', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/create-trip.component').then((module) => module.CreateTripComponent) },
-    { path: 'trips/deliveries/:tripId', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/trip-deliveries.component').then((module) => module.TripDeliveriesComponent) },
-    { path: 'trips/deliveries', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/trip-deliveries.component').then((module) => module.TripDeliveriesComponent) },
+    { path: 'trips/deliveries/:tripId', canActivate: [requirePermissionGuard], data: { resource: 'deliveries' }, loadComponent: () => import('./features/people-logistics/trips/trip-deliveries.component').then((module) => module.TripDeliveriesComponent) },
+    { path: 'trips/deliveries', canActivate: [requirePermissionGuard], data: { resource: 'deliveries' }, loadComponent: () => import('./features/people-logistics/trips/trip-deliveries.component').then((module) => module.TripDeliveriesComponent) },
     { path: 'trips/:tripId/edit', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/create-trip.component').then((module) => module.CreateTripComponent) },
     { path: 'trips/:tripId', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/trip-details.component').then((module) => module.TripDetailsComponent) },
     { path: 'trips', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/trips.component').then((module) => module.TripsComponent) }

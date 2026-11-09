@@ -17,11 +17,19 @@ export const requirePermissionGuard: CanActivateFn = (route) => {
   const resource = String(route.data['resource'] ?? '');
   return resource && permissions.canAccessRoute(resource)
     ? true
-    : router.createUrlTree(['/access-denied']);
+    : router.createUrlTree([permissions.getDefaultRoute()]);
+};
+
+export const redirectToAccessibleRouteGuard: CanActivateFn = () => {
+  const permissions = inject(RolePermissionService);
+  const router = inject(Router);
+  const defaultRoute = permissions.getDefaultRoute();
+  return defaultRoute === '/access-denied' ? true : router.createUrlTree([defaultRoute]);
 };
 
 export const signedOutOnlyGuard: CanActivateFn = () => {
-  const auth = inject(SessionAuthService);
+  const permissions = inject(RolePermissionService);
   const router = inject(Router);
-  return auth.isAuthenticated ? router.createUrlTree(['/workspace/overview']) : true;
+  const auth = inject(SessionAuthService);
+  return auth.isAuthenticated ? router.createUrlTree([permissions.getDefaultRoute()]) : true;
 };

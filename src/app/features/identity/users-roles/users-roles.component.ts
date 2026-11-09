@@ -28,7 +28,6 @@ export class UsersRolesComponent implements OnInit {
   success = '';
   addUserOpen = false;
   newUser = { name: '', email: '', role: 'Farm Supervisor', businessUnit: '' };
-  permissionDraft: string[] = [];
 
   constructor(
     private readonly directories: DirectoryService,
@@ -36,7 +35,6 @@ export class UsersRolesComponent implements OnInit {
     readonly auth: SessionAuthService
   ) {
     this.roleNames = rolePermissions.roleNames;
-    this.permissionDraft = rolePermissions.getRolePermissions(this.selectedRole);
   }
 
   get userGridColumns(): ColDef[] {
@@ -94,45 +92,6 @@ export class UsersRolesComponent implements OnInit {
     ];
   }
 
-  get permissionGridRows(): object[] {
-    return this.rolePermissions.permissionResources.map((resource) => Object.fromEntries([
-      ['resource', resource],
-      ...this.rolePermissions.permissionActions.map((action) => [
-        action,
-        this.hasPermission(resource, action)
-      ])
-    ]));
-  }
-
-  get permissionGridColumns(): ColDef[] {
-    return [
-      { field: 'resource', headerName: 'MODULE', minWidth: 190 },
-      ...this.rolePermissions.permissionActions.map((action): ColDef => ({
-        field: action,
-        headerName: action,
-        cellRenderer: 'agCheckboxCellRenderer',
-        cellEditor: 'agCheckboxCellEditor',
-        editable: () => this.canEditPermissionTemplate,
-        onCellValueChanged: (params) => this.setGridPermission(
-          String(params.data?.['resource'] ?? ''),
-          action,
-          Boolean(params.newValue)
-        ),
-        minWidth: 90
-      }))
-    ];
-  }
-
-  private setGridPermission(resource: string, action: string, enabled: boolean): void {
-    const permission = this.permissionKey(resource, action);
-    const wildcard = `${resource}.*`;
-    if (enabled) {
-      this.permissionDraft = [...new Set([...this.permissionDraft, permission])];
-    } else {
-      this.permissionDraft = this.permissionDraft.filter((item) => item !== permission && item !== wildcard);
-    }
-  }
-
   ngOnInit(): void {
     this.refresh();
   }
@@ -171,7 +130,7 @@ export class UsersRolesComponent implements OnInit {
     this.success = '';
     const updated = {
       ...user,
-      permissions: user.moduleAccess ? this.moduleAccessSummary(user.moduleAccess) : this.permissionSummary(user.role)
+      permissions: this.permissionSummary(user.role)
     };
     this.directories.updateRecord('users-roles', id, updated as Record<string, string | number>).subscribe({
       next: (saved) => {
@@ -234,17 +193,6 @@ export class UsersRolesComponent implements OnInit {
     return this.rolePermissions.getRolePermissions(role).length + ' permissions';
   }
 
-  private moduleAccessSummary(moduleAccess: string): string {
-    const labels: Record<string, string> = {
-      inventory: 'Inventory',
-      trading: 'Trading',
-      'people-logistics': 'People & logistics',
-      finance: 'Finance'
-    };
-    return moduleAccess.split(/[;,|]/).map((module) => labels[module.trim().toLowerCase()])
-      .filter(Boolean).join(', ');
-  }
-
   requiresScope(role: string): boolean {
     return [
       'Farm Manager', 'Farm Supervisor', 'Veterinarian', 'Warehouse Manager', 'Procurement Manager',
@@ -255,41 +203,11 @@ export class UsersRolesComponent implements OnInit {
   }
 
   permissionsForSelectedRole(): string[] {
-    return this.permissionDraft;
+    return this.rolePermissions.getRolePermissions(this.selectedRole);
   }
 
   selectRole(role: string): void {
     this.selectedRole = role;
-    this.permissionDraft = this.rolePermissions.getRolePermissions(role);
-  }
-
-  permissionKey(resource: string, action: string): string {
-    return `${resource}.${action}`;
-  }
-
-  hasPermission(resource: string, action: string): boolean {
-    return this.permissionDraft.includes(`${resource}.${action}`) ||
-      this.permissionDraft.includes(`${resource}.*`);
-  }
-
-  togglePermission(resource: string, action: string, event: Event): void {
-    const input = event.target;
-    if (!(input instanceof HTMLInputElement)) return;
-    const permission = this.permissionKey(resource, action);
-    this.permissionDraft = input.checked
-      ? [...new Set([...this.permissionDraft, permission])]
-      : this.permissionDraft.filter((item) => item !== permission);
-  }
-
-  savePermissionTemplate(): void {
-    this.error = '';
-    this.success = '';
-    try {
-      this.rolePermissions.saveRolePermissions(this.selectedRole, this.permissionDraft);
-      this.success = `Saved the ${this.selectedRole} permission template for this browser.`;
-    } catch (error) {
-      this.error = error instanceof Error ? error.message : 'Permission template could not be saved.';
-    }
   }
 
   get canManageRoles(): boolean {
@@ -298,10 +216,6 @@ export class UsersRolesComponent implements OnInit {
 
   get assignableRoleNames(): string[] {
     return this.roleNames.filter((role) => role !== 'Super Admin');
-  }
-
-  get canEditPermissionTemplate(): boolean {
-    return this.canManageRoles && !['Organization Admin', 'Super Admin'].includes(this.selectedRole);
   }
 
   trackUser(user: DemoUser): string {
@@ -313,12 +227,12 @@ export class UsersRolesComponent implements OnInit {
   }
 
   private toDemoUser(record: Record<string, string | number>): DemoUser {
+    const role = String(record['role'] ?? '');
     const user: DemoUser = {
       name: String(record['name'] ?? ''),
       email: String(record['email'] ?? ''),
-      role: String(record['role'] ?? ''),
-      permissions: String(record['permissions'] ?? ''),
-      moduleAccess: String(record['moduleAccess'] ?? ''),
+      role,
+      permissions: this.permissionSummary(role),
       status: String(record['status'] ?? '')
     };
     const businessUnit = record['businessUnit'];

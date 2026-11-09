@@ -24,14 +24,9 @@
     }
   </section>
   <section class="card permission-card">
-    <div class="card-heading"><div><h2>Role permission templates</h2><p>Effective permissions used by the current demo session guard and screen actions.</p></div><label>Role<ng-select class="app-select role-select" labelForId="template-role" [ngModel]="selectedRole" (ngModelChange)="selectRole($event)" [clearable]="false"><ng-option *ngFor="let role of roleNames" [value]="role">{{ role }}</ng-option></ng-select></label></div>
+    <div class="card-heading"><div><h2>Role access policy</h2><p>Effective screen and action access from the central visibility configuration.</p></div><label>Role<ng-select class="app-select role-select" labelForId="template-role" [ngModel]="selectedRole" (ngModelChange)="selectRole($event)" [clearable]="false"><ng-option *ngFor="let role of roleNames" [value]="role">{{ role }}</ng-option></ng-select></label></div>
     <div class="selected-role"><strong>{{ selectedRole }}</strong><span>{{ permissionsForSelectedRole().length }} permissions</span></div>
-    @if (canEditPermissionTemplate) {
-      <app-data-grid [columnDefs]="permissionGridColumns" [rowData]="permissionGridRows" [paginationPageSize]="25" />
-      <button class="save-button template-save" type="button" (click)="savePermissionTemplate()">Save permission template</button>
-    } @else {
-      <div class="permission-list">@for (permission of permissionsForSelectedRole(); track permission) { <span>{{ permission }}</span> }</div>
-      <p class="locked-note">Organization Admin and Super Admin permission templates are locked.</p>
-    }
+    <div class="permission-list">@for (permission of permissionsForSelectedRole(); track permission) { <span>{{ permission }}</span> }</div>
+    <p class="locked-note">Access cannot be overridden here. Update the central visibility configuration to change it globally.</p>
   </section>
 </main>

@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Employee } from '../models/directory.model';
 import { CreateTripInput, TripRecord, TripVendorPickup } from '../models/trip.model';
+import { SessionAuthService } from './session-auth.service';
 
 type OrderKind = 'broiler' | 'culls' | 'feed';
 
@@ -124,7 +125,10 @@ export interface TripDetailsResponse {
 export class TripApiService {
   private readonly baseUrl = environment.apiUrl;
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly auth: SessionAuthService
+  ) {}
 
   async getFormOptions(): Promise<TripFormOptions> {
     const [vehicles, drivers, suppliers, supervisors, deliveryVendors, trips, orderTypes] = await Promise.all([
@@ -158,8 +162,14 @@ export class TripApiService {
     ]);
     const vehicleById = new Map(vehicles.map((vehicle) => [String(vehicle.id), vehicle]));
     const driverById = new Map(drivers.map((driver) => [String(driver.id), driver]));
+    const user = this.auth.currentUser;
+    const role = user?.role.toLowerCase() ?? '';
+    const assignedField = role.includes('driver') ? 'driverId'
+      : role.includes('supervisor') ? 'supervisorId' : null;
+    const userId = user?.id ?? user?._demoId;
     return trips.filter((trip) => !trip['isDeleted'])
       .map((trip) => this.tripRecord(trip, vehicleById, driverById))
+      .filter((trip) => !assignedField || (userId !== undefined && String(trip[assignedField]) === String(userId)))
       .sort((left, right) => String(right['tripDate'] ?? '').localeCompare(String(left['tripDate'] ?? '')));
   }
 

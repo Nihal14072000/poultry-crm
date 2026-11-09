@@ -11,7 +11,6 @@ import {
 } from '../models/trip.model';
 import { DirectoryService } from './directory.service';
 import { RolePermissionService } from './role-permission.service';
-import { SessionAuthService } from './session-auth.service';
 import { TripApiService } from './trip-api.service';
 
 function isValidDateOnly(value: string): boolean {
@@ -34,7 +33,6 @@ export class TripService {
   constructor(
     private readonly directories: DirectoryService,
     private readonly rolePermissions: RolePermissionService,
-    private readonly auth: SessionAuthService,
     private readonly tripApi: TripApiService
   ) {}
 
@@ -237,10 +235,8 @@ export class TripService {
   }
 
   private assertDeliveryRole(): void {
-    const email = this.auth.currentUser?.email.toLowerCase();
-    const role = this.auth.currentUser?.role ?? '';
-    if (!email || (!['farm supervisor', 'supervisor', 'sales manager'].includes(role.toLowerCase()) && role !== 'Organization Admin')) {
-      throw new Error('Trip delivery entry is available to Supervisors, Sales Managers, and Organization Admins.');
+    if (!this.rolePermissions.can('deliveries', 'transition')) {
+      throw new Error('You do not have permission to enter trip deliveries.');
     }
   }
 
@@ -367,7 +363,7 @@ export class TripService {
     const mortality = data.mortalities.reduce((sum, record) => sum + Number(record['quantity'] ?? 0), 0);
     const discrepancy = data.loadedBirds - delivered - mortality;
     const hasDiscrepancy = discrepancy !== 0;
-    if (hasDiscrepancy && this.auth.currentUser?.role !== 'Organization Admin') {
+    if (hasDiscrepancy && !this.rolePermissions.can('trips', 'approve')) {
       if (String(data.trip['status']) === 'Pending reconciliation') throw new Error('This trip is awaiting Organization Admin reconciliation approval.');
       if (pendingSupplierPickupIds.length) await this.tripApi.linkSupplierPickups(tripId, pendingSupplierPickupIds);
       if (pendingVendorDeliveryIds.length) await this.tripApi.linkVendorDeliveries(tripId, pendingVendorDeliveryIds);

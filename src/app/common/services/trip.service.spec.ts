@@ -64,10 +64,9 @@ describe('TripService', () => {
       'getTrips', 'getDeliveryData', 'linkSupplierPickups', 'linkVendorDeliveries', 'updateTripStatus', 'deleteTrip', 'saveMortality', 'deleteMortality'
     ]);
     tripApi.getTrips.and.resolveTo([]);
-    const permissions = jasmine.createSpyObj<RolePermissionService>('RolePermissionService', ['can', 'canAccessRecord']);
-    permissions.can.and.returnValue(true);
-    permissions.canAccessRecord.and.returnValue(true);
-    service = new TripService(directories, permissions, auth, tripApi);
+    const permissions = new RolePermissionService(auth);
+    spyOn(permissions, 'canAccessRecord').and.returnValue(true);
+    service = new TripService(directories, permissions, tripApi);
   });
 
   it('lists all non-deleted trips the current delivery user can access', async () => {

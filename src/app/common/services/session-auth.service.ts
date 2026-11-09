@@ -1,9 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, map, Observable } from 'rxjs';
+import { BehaviorSubject, map, Observable, switchMap } from 'rxjs';
 import { UserSession } from '../models/auth.model';
 import { environment } from '../../../environments/environment';
+import { resolveAccountRole } from '../config/screen-visibility.config';
 
 interface StoredAuthentication {
   authorization: string;
@@ -41,15 +42,19 @@ export class SessionAuthService {
 
   signIn(username: string, password: string): Observable<UserSession> {
     const header = `Basic ${this.encodeCredentials(username, password)}`;
-    return this.http.get<{ name: string; role: string }>(`${environment.apiUrl}/auth/me`, {
+    return this.http.get<{ id?: string | number; _demoId?: string | number; name: string; role: string }>(`${environment.apiUrl}/auth/me`, {
       headers: { Authorization: header }
-    }).pipe(map(account => {
+    }).pipe(switchMap(account => this.http.get<{ id?: string | number; _demoId?: string | number; name: string; type: string }[]>(
+      `${environment.apiUrl}/employees`,
+      { headers: { Authorization: header } }
+    ).pipe(map(employees => {
+      const employee = employees.find((item) => item.name === account.name);
       const session: UserSession = {
+        id: employee?.id ?? employee?._demoId ?? account.id ?? account._demoId,
         name: account.name,
         email: account.name,
-        role: account.role === 'ADMIN' ? 'Organization Admin' : 'Authenticated',
+        role: resolveAccountRole(account.name.toLowerCase().includes('admin') ? 'ADMIN' : employee?.type ?? account.role),
         permissions: '',
-        moduleAccess: '',
         businessUnit: '',
         status: 'Active',
         authenticatedAt: new Date().toISOString()
@@ -58,7 +63,7 @@ export class SessionAuthService {
       this.authorizationHeader = header;
       this.sessionSubject.next(session);
       return session;
-    }));
+    }))));
   }
 
   signOut(): void {

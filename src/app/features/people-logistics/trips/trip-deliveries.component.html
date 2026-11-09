@@ -1,5 +1,5 @@
 <main class="delivery-page">
-  <header class="page-heading"><div><div class="eyebrow">PEOPLE & LOGISTICS <span>/</span> TRIP DELIVERY</div><h1>{{ trip ? trip['tripNumber'] : 'All Trips' }}</h1><p>{{ trip ? 'Record vendor handoffs and reconcile this trip.' : 'Select a trip to record and review deliveries.' }}</p></div><a class="button button-secondary" [routerLink]="trip ? ['/people-logistics/trips/deliveries'] : ['/people-logistics/trips']">{{ trip ? '← All trips' : 'Trips' }}</a></header>
+  <header class="page-heading"><div><div class="eyebrow">PEOPLE & LOGISTICS <span>/</span> TRIP DELIVERY</div><h1>{{ trip ? trip['tripNumber'] : 'All Trips' }}</h1><p>{{ trip ? 'Record vendor handoffs and reconcile this trip.' : 'Select a trip to record and review deliveries.' }}</p></div>@if (trip) { <a class="button button-secondary" routerLink="/people-logistics/deliveries">← All deliveries</a> }</header>
   @if (error) { <p class="feedback error" role="alert">{{ error }}</p> }
   @if (success) { <p class="feedback success" role="status">{{ success }}</p> }
   @if (loading) { <section class="panel state">Loading trip delivery data…</section> }

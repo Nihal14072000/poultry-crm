@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
+import { navigationScreenResources } from './common/config/screen-visibility.config';
 import { provideRouter } from '@angular/router';
 import { DirectoryService } from './common/services/directory.service';
 import { RolePermissionService } from './common/services/role-permission.service';
@@ -25,17 +26,21 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render the Flockwise navigation', () => {
+  it('should render every navigation group permitted by the central policy', () => {
     const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.brand-name')?.textContent).toContain('flockwise');
     expect(compiled.querySelectorAll('.nav-link').length).toBeGreaterThan(5);
     const groupLabels = Array.from(compiled.querySelectorAll('.nav-group-toggle')).map((button) => button.textContent);
-    expect(groupLabels).not.toContain('Farm operations');
-    expect(groupLabels).not.toContain('Trading');
-    expect(groupLabels).not.toContain('Customer relations');
+    expect(groupLabels).toContain('Farm operations');
+    expect(groupLabels).toContain('Trading');
+    expect(groupLabels).toContain('Customer relations');
     expect(groupLabels).toContain('Inventory');
+    expect(compiled.querySelector('.nav-link[href="/people-logistics/vehicle-assignments"]')).toBeTruthy();
+    expect(app.navigation.flatMap((group) => group.links)
+      .every((link) => !!navigationScreenResources[link.path])).toBeTrue();
   });
 
   it('should show deliveries to users with trip access', () => {

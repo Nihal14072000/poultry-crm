@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { SessionAuthService } from '../../../common/services/session-auth.service';
 
 @Component({
@@ -21,7 +22,8 @@ export class LoginComponent {
   constructor(
     private readonly auth: SessionAuthService,
     private readonly route: ActivatedRoute,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly rolePermissions: RolePermissionService
   ) {}
 
   signIn(): void {
@@ -29,8 +31,8 @@ export class LoginComponent {
     this.loading = true;
     this.auth.signIn(this.username, this.password).subscribe({
       next: () => {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/workspace/overview';
-        void this.router.navigateByUrl(returnUrl.startsWith('/') ? returnUrl : '/workspace/overview');
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? this.rolePermissions.getDefaultRoute();
+        void this.router.navigateByUrl(returnUrl.startsWith('/') ? returnUrl : this.rolePermissions.getDefaultRoute());
       },
       error: (error: unknown) => {
         this.error = error instanceof HttpErrorResponse && error.status === 401

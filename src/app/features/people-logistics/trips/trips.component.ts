@@ -5,7 +5,6 @@ import { TripRecord } from '../../../common/models/trip.model';
 import { TripApiService } from '../../../common/services/trip-api.service';
 import { TripService } from '../../../common/services/trip.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
-import { SessionAuthService } from '../../../common/services/session-auth.service';
 import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 
 @Component({
@@ -26,19 +25,18 @@ export class TripsComponent implements OnInit {
     private readonly tripService: TripApiService,
     private readonly tripRecords: TripService,
     private readonly router: Router,
-    readonly rolePermissions: RolePermissionService,
-    readonly auth: SessionAuthService
+    readonly rolePermissions: RolePermissionService
   ) {
     const state = router.getCurrentNavigation()?.extras.state as { successMessage?: string } | undefined;
     this.successMessage = state?.successMessage ?? '';
   }
 
   get canOpenTripDeliveries(): boolean {
-    return ['Farm Supervisor', 'Supervisor', 'Sales Manager', 'Organization Admin'].includes(this.auth.currentUser?.role ?? '');
+    return this.rolePermissions.can('trips', 'transition');
   }
 
   get tripDeliveriesLabel(): string {
-    return ['Sales Manager', 'Organization Admin'].includes(this.auth.currentUser?.role ?? '')
+    return this.rolePermissions.can('trips', 'create')
       ? 'Trip deliveries' : 'My assigned trips';
   }
 

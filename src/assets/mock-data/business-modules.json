@@ -237,7 +237,7 @@
     { "name": "Ravi Patil", "email": "ravi.patil@example.test", "role": "Warehouse Manager", "permissions": "Inventory and transfers", "businessUnit": "Central store", "lastActive": "Today, 08:44 AM", "status": "Active" },
     { "name": "Nisha Kulkarni", "email": "nisha.kulkarni@example.test", "role": "Farm Supervisor", "permissions": "Assigned trip deliveries", "businessUnit": "Bilal Poultry", "lastActive": "Never", "status": "Active" },
     { "name": "Arjun Desai", "email": "arjun.desai@example.test", "role": "Sales Manager", "permissions": "Sales and trip planning", "businessUnit": "Bilal Poultry", "lastActive": "Never", "status": "Active" },
-    { "name": "Rustum", "email": "rustum@example.test", "role": "Sales Manager", "permissions": "Inventory, Trading, People & logistics, Finance", "moduleAccess": "inventory,trading,people-logistics,finance", "businessUnit": "Organization", "lastActive": "Never", "status": "Active" }
+    { "name": "Rustum", "email": "rustum@example.test", "role": "Sales Manager", "permissions": "Sales and trip planning", "businessUnit": "Organization", "lastActive": "Never", "status": "Active" }
   ] },
   "documents": { "records": [
     { "document": "FW-2412 placement record", "category": "Flock", "linkedTo": "Batch FW-2412", "uploadedBy": "M. Joshi", "updated": "Sep 06, 2025", "size": "248 KB", "status": "Available" },

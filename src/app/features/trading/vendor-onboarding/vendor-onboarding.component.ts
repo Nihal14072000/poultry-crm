@@ -7,7 +7,6 @@ import { firstValueFrom, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { DirectoryService } from '../../../common/services/directory.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
-import { SessionAuthService } from '../../../common/services/session-auth.service';
 import { environment } from '../../../../environments/environment';
 import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 
@@ -187,8 +186,7 @@ export class VendorOnboardingComponent implements OnInit {
     private readonly rolePermissions: RolePermissionService,
     private readonly http: HttpClient,
     private readonly router: Router,
-    private readonly activatedRoute: ActivatedRoute,
-    readonly auth: SessionAuthService
+    private readonly activatedRoute: ActivatedRoute
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -252,7 +250,7 @@ export class VendorOnboardingComponent implements OnInit {
 
   get canOnboard(): boolean {
     const resource = this.form.vendorType === 'SUPPLIER' ? 'suppliers' : 'vendor-destinations';
-    return this.rolePermissions.can(resource, 'create') || this.auth.currentUser?.role === 'Organization Admin';
+    return this.rolePermissions.can(resource, 'create');
   }
 
   get validationError(): string {

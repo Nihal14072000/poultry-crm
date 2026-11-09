@@ -1,9 +1,9 @@
 export interface DemoUser {
+  id?: string | number;
   name: string;
   email: string;
   role: string;
   permissions: string;
-  moduleAccess?: string;
   businessUnit?: string;
   status: string;
   _demoId?: string | number;

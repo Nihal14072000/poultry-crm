@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { HeaderControlsComponent } from './common/components/header-controls/header-controls.component';
+import { navigationScreenResources } from './common/config/screen-visibility.config';
 import { RolePermissionService } from './common/services/role-permission.service';
 import { SessionAuthService } from './common/services/session-auth.service';
 
@@ -85,8 +86,7 @@ export class AppComponent {
       links: [
         { label: 'Employees', path: '/people-logistics/employees', icon: 'employees' },
         { label: 'Vehicles', path: '/people-logistics/vehicles', icon: 'fleet' },
-        // Temporarily hidden from navigation; the route remains available.
-        // { label: 'Vehicle assignments', path: '/people-logistics/vehicle-assignments', icon: 'dispatch' },
+        { label: 'Vehicle assignments', path: '/people-logistics/vehicle-assignments', icon: 'dispatch' },
         { label: 'Trips', path: '/people-logistics/trips', icon: 'dispatch' },
         { label: 'Deliveries', path: '/people-logistics/deliveries', icon: 'dispatch' }
       ]
@@ -120,10 +120,11 @@ export class AppComponent {
 
   get visibleNavigation(): typeof this.navigation {
     return this.navigation
-      .filter((group) => !['Farm operations', 'Trading', 'Customer relations'].includes(group.label))
       .map((group) => ({
         ...group,
-        links: group.links.filter((link) => this.rolePermissions.canAccessRoute(this.resourceForPath(link.path)))
+        links: group.links.filter((link) =>
+          this.rolePermissions.canAccessRoute(navigationScreenResources[link.path] ?? '')
+        )
       }))
       .filter((group) => group.links.length > 0);
   }
@@ -135,36 +136,6 @@ export class AppComponent {
       .slice(0, 2)
       .join('')
       .toUpperCase();
-  }
-
-  private resourceForPath(path: string): string {
-    const segment = path.split('/').filter(Boolean).pop() ?? 'dashboard';
-    const routeResources: Record<string, string> = {
-      overview: 'dashboard',
-      farms: 'farms',
-      sheds: 'sheds',
-      batches: 'batches',
-      'daily-operations': 'daily-operations',
-      'order-desk': 'orders',
-      deliveries: 'trips',
-      'feed-health': 'feed-health',
-      'stock': 'inventory',
-      'finance': 'finance',
-      'receivables': 'receivables',
-      'payables': 'payables',
-      'payments': 'payments',
-      'profitability': 'profitability',
-      'reports': 'reports',
-      'analytics': 'analytics',
-      'notifications': 'notifications',
-      'organization': 'organization',
-      'users-roles': 'users-roles',
-      'administration': 'administration',
-      'audit': 'audit'
-    };
-    if (path === '/finance/overview') return 'finance';
-    if (path.startsWith('/workspace/')) return 'dashboard';
-    return routeResources[segment] ?? segment;
   }
 
   toggleGroup(label: string): void {

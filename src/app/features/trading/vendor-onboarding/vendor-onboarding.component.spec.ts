@@ -5,7 +5,6 @@ import { of } from 'rxjs';
 import { VendorOnboardingComponent } from './vendor-onboarding.component';
 import { DirectoryService } from '../../../common/services/directory.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
-import { SessionAuthService } from '../../../common/services/session-auth.service';
 
 describe('VendorOnboardingComponent', () => {
   let component: VendorOnboardingComponent;
@@ -32,13 +31,6 @@ describe('VendorOnboardingComponent', () => {
           provide: RolePermissionService,
           useValue: {
             can: () => true
-          }
-        },
-        {
-          provide: SessionAuthService,
-          useValue: {
-            currentUser: { role: 'Organization Admin', username: 'admin' },
-            user: () => ({ email: 'ops@flockwise.internal' })
           }
         }
       ]
