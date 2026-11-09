@@ -3,11 +3,12 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FarmOperationsData, FarmOperationsService } from '../../../common/services/farm-operations.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
+import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 
 @Component({
   selector: 'app-farm-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, StatusPillPipe],
   templateUrl: './farm-detail.component.html',
   styleUrl: './farm-detail.component.css'
 })

@@ -58,7 +58,7 @@
                       <td><strong>{{ employee['name'] || '—' }}</strong></td>
                       <td>{{ employee['type'] || '—' }}</td>
                       <td>{{ employee['number'] || '—' }}</td>
-                      <td><span class="status">{{ employee['status'] || '—' }}</span></td>
+                      <td><span class="status status-pill" [ngClass]="employee['status'] | statusPill">{{ employee['status'] || '—' }}</span></td>
                     </tr>
                   }
                 </tbody>
@@ -84,7 +84,7 @@
                       <td><strong>{{ vehicle['vehicle'] || '—' }}</strong></td>
                       <td>{{ vehicle['type'] || '—' }}</td>
                       <td>{{ vehicle['registrationNo'] || '—' }}</td>
-                      <td><span class="status">{{ vehicle['status'] || '—' }}</span></td>
+                      <td><span class="status status-pill" [ngClass]="vehicle['status'] | statusPill">{{ vehicle['status'] || '—' }}</span></td>
                     </tr>
                   }
                 </tbody>
@@ -112,7 +112,7 @@
                       <td>{{ trip['route'] || '—' }}</td>
                       <td>{{ trip['driverName'] || '—' }}</td>
                       <td>{{ trip['vehicleName'] || '—' }}</td>
-                      <td><span class="status">{{ trip['status'] || '—' }}</span></td>
+                      <td><span class="status status-pill" [ngClass]="trip['status'] | statusPill">{{ trip['status'] || '—' }}</span></td>
                     </tr>
                   }
                 </tbody>

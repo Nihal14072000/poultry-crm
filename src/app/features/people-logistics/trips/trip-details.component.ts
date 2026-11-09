@@ -3,11 +3,12 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TripRecord, TripVendorPickup } from '../../../common/models/trip.model';
 import { TripApiService } from '../../../common/services/trip-api.service';
+import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 
 @Component({
   selector: 'app-trip-details',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, StatusPillPipe],
   templateUrl: './trip-details.component.html',
   styleUrl: './trip-details.component.css'
 })

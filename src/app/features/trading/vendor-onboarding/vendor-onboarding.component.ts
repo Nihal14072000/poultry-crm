@@ -9,6 +9,7 @@ import { DirectoryService } from '../../../common/services/directory.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { SessionAuthService } from '../../../common/services/session-auth.service';
 import { environment } from '../../../../environments/environment';
+import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 
 export type OnboardingVendorType = 'SUPPLIER' | 'DELIVERY_VENDOR';
 
@@ -108,7 +109,7 @@ function emptyOnboardingForm(type: OnboardingVendorType = 'SUPPLIER'): VendorOnb
 @Component({
   selector: 'app-vendor-onboarding',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, StatusPillPipe],
   templateUrl: './vendor-onboarding.component.html',
   styleUrl: './vendor-onboarding.component.css'
 })

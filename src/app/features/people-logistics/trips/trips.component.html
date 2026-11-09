@@ -44,7 +44,7 @@
                 <td>{{ trip['vehicleName'] || '—' }}</td>
                 <td>{{ trip['driverName'] || '—' }}</td>
                 <td>{{ trip['route'] || '—' }}</td>
-                <td><span class="status">{{ trip['status'] || '—' }}</span></td>
+                <td><span class="status status-pill" [ngClass]="trip['status'] | statusPill">{{ trip['status'] || '—' }}</span></td>
                 <td class="actions-cell">
                   @if (!isDeleted(trip) && rolePermissions.can('trips', 'update')) {
                     <a class="edit-link" [routerLink]="['/people-logistics/trips', trip['_demoId'], 'edit']">Edit</a>

@@ -38,6 +38,20 @@ describe('AppComponent', () => {
     expect(groupLabels).toContain('Inventory');
   });
 
+  it('should show deliveries to users with trip access', () => {
+    const rolePermissions = jasmine.createSpyObj<RolePermissionService>('RolePermissionService', ['canAccessRoute']);
+    rolePermissions.canAccessRoute.and.callFake((resource) => resource === 'trips');
+    const app = new AppComponent(
+      { currentUser: null } as unknown as SessionAuthService,
+      rolePermissions
+    );
+
+    const peopleLogistics = app.visibleNavigation.find((group) => group.label === 'People & logistics');
+
+    expect(peopleLogistics?.links.map((link) => link.label)).toContain('Deliveries');
+    expect(peopleLogistics?.links.map((link) => link.label)).not.toContain('Vehicle assignments');
+  });
+
   it('should collapse and expand navigation groups', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();

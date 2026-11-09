@@ -9,7 +9,7 @@
 .panel { background: #fff; border: 1px solid #e9ece7; border-radius: 9px; margin-bottom: 15px; overflow: hidden; padding: 17px 19px; }
 .section-heading { align-items: center; display: flex; justify-content: space-between; margin-bottom: 14px; }
 .section-heading h2 { color: #334239; font-family: Calibri,Arial,sans-serif; font-size: 14px; margin: 5px 0 0; }
-.status { background: #eff6ef; border-radius: 10px; color: #5d8961; display: inline-flex; font-size: 8px; padding: 6px 9px; }
+.status { display: inline-flex; }
 .details-grid { display: grid; gap: 14px; grid-template-columns: repeat(4,minmax(0,1fr)); margin: 0; }
 .details-grid > div { min-width: 0; }
 .details-grid dt { color: #8a958c; font-size: 8px; margin-bottom: 5px; }

@@ -6,12 +6,13 @@ import { FinanceApiService, FinanceRecord, PaymentInput, PaymentMethod, PaymentS
 import { TripRecord } from '../../../common/models/trip.model';
 import { TripApiService } from '../../../common/services/trip-api.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
+import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 
 type View = 'overview' | 'receivables' | 'payables' | 'payments' | 'record' | 'allocate' | 'trip-summary';
 type FormValue = Omit<PaymentInput, 'partyId'> & { partyId: number | null };
 type PaymentPartyOption = TripRecord & { paymentType: PaymentType };
 
-@Component({ selector: 'app-payment-center', standalone: true, imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe], templateUrl: './payment-center.component.html', styleUrl: './payment-center.component.css' })
+@Component({ selector: 'app-payment-center', standalone: true, imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, StatusPillPipe], templateUrl: './payment-center.component.html', styleUrl: './payment-center.component.css' })
 export class PaymentCenterComponent implements OnInit {
   view: View = 'overview'; loading = true; saving = false; error = ''; success = ''; query = ''; statusFilter = ''; tripId = ''; partyId = ''; paymentPartyFilter = '';
   trips: TripRecord[] = []; parties: TripRecord[] = []; paymentParties: PaymentPartyOption[] = []; records: FinanceRecord[] = []; payments: FinanceRecord[] = []; settlements: FinanceRecord[] = []; summary?: FinanceRecord;

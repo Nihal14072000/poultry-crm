@@ -85,8 +85,10 @@ export class AppComponent {
       links: [
         { label: 'Employees', path: '/people-logistics/employees', icon: 'employees' },
         { label: 'Vehicles', path: '/people-logistics/vehicles', icon: 'fleet' },
-        { label: 'Vehicle assignments', path: '/people-logistics/vehicle-assignments', icon: 'dispatch' },
-        { label: 'Trips', path: '/people-logistics/trips', icon: 'dispatch' }
+        // Temporarily hidden from navigation; the route remains available.
+        // { label: 'Vehicle assignments', path: '/people-logistics/vehicle-assignments', icon: 'dispatch' },
+        { label: 'Trips', path: '/people-logistics/trips', icon: 'dispatch' },
+        { label: 'Deliveries', path: '/people-logistics/deliveries', icon: 'dispatch' }
       ]
     },
     {
@@ -144,6 +146,7 @@ export class AppComponent {
       batches: 'batches',
       'daily-operations': 'daily-operations',
       'order-desk': 'orders',
+      deliveries: 'trips',
       'feed-health': 'feed-health',
       'stock': 'inventory',
       'finance': 'finance',

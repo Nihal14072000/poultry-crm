@@ -7,13 +7,14 @@ import { DriverDirectoryService } from '../../../common/services/driver-director
 import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { TripApiService } from '../../../common/services/trip-api.service';
 import { VehicleDirectoryService } from '../../../common/services/vehicle-directory.service';
+import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 
 type OverviewRecord = Record<string, string | number>;
 
 @Component({
   selector: 'app-people-logistics-overview',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, StatusPillPipe],
   templateUrl: './people-logistics-overview.component.html',
   styleUrl: './people-logistics-overview.component.css'
 })

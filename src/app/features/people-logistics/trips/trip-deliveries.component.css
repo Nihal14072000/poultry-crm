@@ -15,6 +15,7 @@ input,select,textarea { background:#fff; border:1px solid #dfe5dd; border-radius
 .button-secondary { background:white; border:1px solid #e2e7e0; color:#536157; }
 .button:disabled { cursor:not-allowed; opacity:.55; }
 .trip-list { display:grid; gap:10px; }
+.trip-card-actions { align-items:center; display:flex; flex-direction:row; gap:12px; }
 .trip-card h2 { color:#334239; font-size:17px; margin:8px 0 2px; }
 .trip-card small { color:#879289; font-size:10px; }
 .status { background:#eff6ef; border-radius:10px; color:#5d8961; display:inline-flex; font-size:9px; padding:6px 9px; }
@@ -68,4 +69,4 @@ td small { color:#879289; margin-top:3px; }
 .empty,.state { color:#879289; font-size:12px; padding:24px 8px; text-align:center; }
 @keyframes arrive { from { opacity:.7; transform:translateY(2px); } to { opacity:1; transform:translateY(0); } }
 @media(max-width:800px) { .details-grid,.summary-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .filters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media(max-width:560px) { .page-heading,.trip-card,.reconcile { align-items:stretch; flex-direction:column; } .panel { padding:14px 12px; } .details-grid,.summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .filters,.form-grid,.payment-entry,.pickup-entry-grid { grid-template-columns:1fr; } .payment-summary,.pickup-receipt-heading { align-items:stretch; flex-direction:column; } .destination-edit-row { align-items:stretch; grid-template-columns:1fr; } .form-grid .wide,.pickup-entry-grid .wide { grid-column:auto; } .button { min-height:44px; } }
+@media(max-width:560px) { .page-heading,.trip-card,.reconcile { align-items:stretch; flex-direction:column; } .trip-card-actions { align-items:flex-start; } .panel { padding:14px 12px; } .details-grid,.summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .filters,.form-grid,.payment-entry,.pickup-entry-grid { grid-template-columns:1fr; } .payment-summary,.pickup-receipt-heading { align-items:stretch; flex-direction:column; } .destination-edit-row { align-items:stretch; grid-template-columns:1fr; } .form-grid .wide,.pickup-entry-grid .wide { grid-column:auto; } .button { min-height:44px; } }

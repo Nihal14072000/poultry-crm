@@ -17,7 +17,7 @@
     <section class="panel">
       <div class="section-heading">
         <div><span class="step">TRIP ASSIGNMENT</span><h2>Assignment details</h2></div>
-        <span class="status">{{ trip['status'] || '—' }}</span>
+        <span class="status status-pill" [ngClass]="trip['status'] | statusPill">{{ trip['status'] || '—' }}</span>
       </div>
       <dl class="details-grid">
         <div><dt>Trip number</dt><dd>{{ trip['tripNumber'] || '—' }}</dd></div>

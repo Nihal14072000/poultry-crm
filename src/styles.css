@@ -18,6 +18,18 @@ body { background: var(--canvas); color: var(--ink); margin: 0; min-width: 320px
 button,input,select,textarea { font: inherit; }
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible { outline: 3px solid #a3c793; outline-offset: 2px; }
 
+.status-pill { align-items: center; border-radius: 999px; display: inline-flex; font-size: 8px; font-weight: 600; line-height: 1.2; padding: 5px 8px; }
+.status-pill--completed { background: #e6f4ea !important; color: #27633f !important; }
+.status-pill--in-progress { background: #fff2cc !important; color: #765500 !important; }
+.status-pill--open { background: #e8f2fc !important; color: #205a8a !important; }
+.status-pill--failure { background: #fde8e5 !important; color: #8f2d22 !important; }
+.status-pill--neutral { background: #f0f2f0 !important; color: #56615b !important; }
+.status-pill.status-pill--completed i,
+.status-pill.status-pill--in-progress i,
+.status-pill.status-pill--open i,
+.status-pill.status-pill--failure i,
+.status-pill.status-pill--neutral i { background: currentColor !important; }
+
 .ng-select.app-select { display: block; font-size: 10px; width: 100%; }
 .ng-select.app-select .ng-select-container {
   background: #fff;

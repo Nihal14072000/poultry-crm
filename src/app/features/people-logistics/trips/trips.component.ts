@@ -6,11 +6,12 @@ import { TripApiService } from '../../../common/services/trip-api.service';
 import { TripService } from '../../../common/services/trip.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { SessionAuthService } from '../../../common/services/session-auth.service';
+import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 
 @Component({
   selector: 'app-trips',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, StatusPillPipe],
   templateUrl: './trips.component.html',
   styleUrl: './trips.component.css'
 })

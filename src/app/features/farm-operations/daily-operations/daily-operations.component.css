@@ -32,7 +32,7 @@
 .flock-summary > span:nth-child(2) { display: flex; flex: 1; flex-direction: column; gap: 3px; }
 .flock-summary strong { color: #55645a; font-size: 9px; font-weight: 650; }
 .flock-summary small { color: #969f98; font-size: 8px; }
-.summary-status { color: #629069; font-size: 7px; font-weight: 700; letter-spacing: .6px; }
+.summary-status { font-size: 7px; font-weight: 700; letter-spacing: .6px; }
 .validation-message { background: #fff5f2; border-radius: 5px; color: #a25243; font-size: 9px; margin: 0 0 13px; padding: 10px; }
 .summary-card { padding: 19px 16px 15px; position: sticky; top: 82px; }
 .summary-card h2 { font-size: 13px; }

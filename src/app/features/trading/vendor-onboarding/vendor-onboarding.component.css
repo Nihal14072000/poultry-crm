@@ -88,8 +88,7 @@ select:focus, input:focus, textarea:focus { border-color: #a3c793; box-shadow: 0
 .preview-panel { background: #fbfdfa; border: 1px dashed #bdd4bc; border-radius: 9px; padding: 14px 18px; }
 .preview-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .preview-heading h3 { font-size: 13px; color: #2e4d39; margin: 0; font-family: Calibri,Arial,sans-serif; }
-.badge { font-size: 8px; font-weight: 700; padding: 2px 8px; border-radius: 12px; background: #eef3ec; color: #5d6f62; }
-.badge-active { background: #d7eed4; color: #2b6134; }
+.badge { font-size: 8px; font-weight: 700; padding: 2px 8px; border-radius: 12px; }
 .preview-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
 .preview-grid > div { background: #fff; border: 1px solid #edf1eb; border-radius: 5px; padding: 8px 10px; }
 .preview-grid small { color: #8c978e; font-size: 8px; text-transform: uppercase; display: block; margin-bottom: 3px; }

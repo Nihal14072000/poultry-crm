@@ -7,11 +7,12 @@ import { DirectoryResponse } from '../../../common/models/directory.model';
 import { concatMap, forkJoin, Observable, of } from 'rxjs';
 import { FarmOperationsService } from '../../../common/services/farm-operations.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
+import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 
 @Component({
   selector: 'app-daily-operations',
   standalone: true,
-  imports: [CommonModule, NgSelectModule, ReactiveFormsModule],
+  imports: [CommonModule, NgSelectModule, ReactiveFormsModule, StatusPillPipe],
   templateUrl: './daily-operations.component.html',
   styleUrl: './daily-operations.component.css'
 })

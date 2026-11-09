@@ -21,7 +21,7 @@
             <label>Active batch <ng-select class="app-select" labelForId="active-batch-select" formControlName="batch" (change)="onBatchChanged()" [clearable]="false"><ng-option *ngFor="let batch of availableBatches" [value]="batch['batch']">{{ batch['batch'] }}</ng-option></ng-select></label>
           </div>
           <label class="field-label date-field">Record date <input type="date" [max]="todayDate" formControlName="date" (change)="onDateChanged()">@if (form.controls.date.touched && form.controls.date.hasError('futureDate')) { <em>Choose today or an earlier date.</em> }</label>
-          <div class="flock-summary"><span class="summary-icon">✣</span><span><strong>{{ selectedBatch?.['type'] ?? 'Flock' }} · {{ selectedBatch?.['batch'] }}</strong><small>{{ selectedBatch?.['farm'] }} · {{ selectedBatch?.['age'] }} · Average weight {{ selectedBatch?.['averageWeight'] }}</small></span><span class="summary-status">{{ selectedBatch?.['status'] }}</span></div>
+          <div class="flock-summary"><span class="summary-icon">✣</span><span><strong>{{ selectedBatch?.['type'] ?? 'Flock' }} · {{ selectedBatch?.['batch'] }}</strong><small>{{ selectedBatch?.['farm'] }} · {{ selectedBatch?.['age'] }} · Average weight {{ selectedBatch?.['averageWeight'] }}</small></span><span class="summary-status status-pill" [ngClass]="selectedBatch?.['status'] | statusPill">{{ selectedBatch?.['status'] }}</span></div>
         </article>
 
         <article class="form-card">

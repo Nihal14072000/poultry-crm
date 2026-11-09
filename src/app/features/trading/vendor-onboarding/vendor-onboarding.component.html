@@ -481,7 +481,7 @@
         <div class="preview-heading">
           <span class="step">LIVE PREVIEW</span>
           <h3>{{ form.name }} · {{ form.code }}</h3>
-          <span class="badge" [class.badge-active]="form.status === 'Active'">{{ form.status }}</span>
+          <span class="badge status-pill" [ngClass]="form.status | statusPill">{{ form.status }}</span>
         </div>
         <div class="preview-grid">
           <div><small>Type</small><strong>{{ form.vendorType === 'SUPPLIER' ? 'Supplier (Pickup Farm)' : 'Delivery Vendor (Buyer Outlet)' }}</strong></div>

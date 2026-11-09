@@ -6,6 +6,7 @@ import { TripRecord, TripVendorPickup } from '../../../common/models/trip.model'
 import { TripService } from '../../../common/services/trip.service';
 import { SessionAuthService } from '../../../common/services/session-auth.service';
 import { FinanceApiService, FinanceRecord, PaymentMethod, PaymentType } from '../../../common/services/finance-api.service';
+import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 
 interface SupplierReceiptForm {
   vendorId: string; vendorName: string;
@@ -15,7 +16,7 @@ interface SupplierReceiptForm {
 }
 
 @Component({
-  selector: 'app-trip-deliveries', standalone: true, imports: [CommonModule, FormsModule, RouterLink],
+  selector: 'app-trip-deliveries', standalone: true, imports: [CommonModule, FormsModule, RouterLink, StatusPillPipe],
   templateUrl: './trip-deliveries.component.html', styleUrl: './trip-deliveries.component.css'
 })
 export class TripDeliveriesComponent implements OnInit {

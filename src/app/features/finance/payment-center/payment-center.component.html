@@ -192,7 +192,7 @@
         <td class="money outstanding">{{ money(row,'outstandingBalance','balance') |
           currency:'INR':'symbol':'1.2-2':'en-IN' }}</td>
         <td>{{ text(row,'dueDate') || '—' }}</td>
-        <td><span class="status">{{ text(row,'status') }}</span></td>
+        <td><span class="status status-pill" [ngClass]="text(row,'status') | statusPill">{{ text(row,'status') }}</span></td>
       </tr> } @empty { <tr>
         <td colspan="10" class="empty">No settlements match the selected filters.</td>
       </tr> }</tbody>

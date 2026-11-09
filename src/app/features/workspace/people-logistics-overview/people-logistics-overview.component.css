@@ -24,7 +24,7 @@ table { border-collapse: collapse; min-width: 480px; text-align: left; width: 10
 th { background: #fcfdfa; border-bottom: 1px solid #eef0ed; color: #969f98; font-size: 8px; letter-spacing: .6px; padding: 11px 13px; white-space: nowrap; }
 td { border-bottom: 1px solid #f0f2ef; color: #6d786f; font-size: 9px; padding: 11px 13px; white-space: nowrap; }
 td strong { color: #445248; }
-.status { background: #eff6ef; border-radius: 10px; color: #5d8961; display: inline-flex; font-size: 8px; padding: 5px 8px; }
+.status { display: inline-flex; }
 .empty,.state { color: #879289; font-size: 10px; padding: 18px; }
 .state { text-align: center; }
 .state.error { color: #a25243; }

@@ -7,7 +7,7 @@
   } @else {
     <header class="page-heading">
       <div><div class="eyebrow">FARM OPERATIONS <span>/</span> {{ farm['code'] }}</div><h1>{{ farm['name'] }}</h1><p>{{ farm['location'] }}</p></div>
-      <span class="status-badge"><i></i>{{ farm['status'] }}</span>
+      <span class="status-badge status-pill" [ngClass]="farm['status'] | statusPill"><i></i>{{ farm['status'] }}</span>
     </header>
     <section class="metric-grid" aria-label="Farm capacity metrics">
       <article><span>ACTIVE BIRDS</span><strong>{{ occupancy | number }}</strong><small>Across {{ farmSheds.length }} sheds</small></article>
