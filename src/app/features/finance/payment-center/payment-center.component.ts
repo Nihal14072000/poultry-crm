@@ -50,10 +50,10 @@ export class PaymentCenterComponent implements OnInit {
     } catch (e) { this.error = e instanceof Error ? e.message : 'Finance data could not be loaded.'; } finally { this.loading = false; }
   }
   get filtered(): FinanceRecord[] { const q = this.query.trim().toLowerCase(); const [partyType, partyId] = this.paymentPartyFilter.split(':'); return (this.view === 'payments' ? this.payments : this.records).filter(row => (!q || Object.values(row).some(v => String(v ?? '').toLowerCase().includes(q))) && (!this.statusFilter || this.text(row, 'status') === this.statusFilter) && (this.view !== 'payments' || !this.paymentPartyFilter || (this.text(row, 'paymentType', 'type') === partyType && this.text(row, 'partyId', 'buyingPartyId', 'sellingPartyId') === partyId))); }
-  get completedPayments(): FinanceRecord[] { return this.payments.filter(p => this.text(p, 'status') === 'COMPLETED'); }
+  get completedPayments(): FinanceRecord[] { return this.payments.filter(p => p['isDeleted'] !== true && this.text(p, 'status') === 'COMPLETED'); }
   get selectedPayment(): FinanceRecord | undefined { return this.completedPayments.find(p => this.id(p) === this.selectedPaymentId); }
   get paymentRemaining(): number { return this.money(this.selectedPayment, 'remainingAmount', 'unallocatedAmount', 'amount') - Object.values(this.allocations).reduce((a, b) => a + (Number(b) || 0), 0); }
-  get metrics(): { label: string; value: number }[] { const receipts = this.payments.filter(p => this.text(p, 'paymentType', 'type') === 'BUYER_RECEIPT' && this.text(p, 'status') === 'COMPLETED').reduce((s,p)=>s+this.money(p,'amount'),0); const payouts = this.payments.filter(p => this.text(p, 'paymentType', 'type') === 'SELLER_PAYOUT' && this.text(p, 'status') === 'COMPLETED').reduce((s,p)=>s+this.money(p,'amount'),0); return [{label:'Buyer amounts due',value:this.records.filter(r=>this.isReceivable(r)).reduce((s,r)=>s+this.money(r,'amountDue','amount'),0)},{label:'Receipts collected',value:receipts},{label:'Seller amounts payable',value:this.records.filter(r=>!this.isReceivable(r)).reduce((s,r)=>s+this.money(r,'amountPayable','amount'),0)},{label:'Payouts made',value:payouts},{label:'Outstanding balance',value:this.records.reduce((s,r)=>s+this.money(r,'outstandingBalance','balance'),0)},{label:'Brokerage assessed',value:this.records.reduce((s,r)=>s+this.money(r,'brokerage','brokerageAmount'),0)}]; }
+  get metrics(): { label: string; value: number }[] { const receipts = this.payments.filter(p => p['isDeleted'] !== true && this.text(p, 'paymentType', 'type') === 'BUYER_RECEIPT' && this.text(p, 'status') === 'COMPLETED').reduce((s,p)=>s+this.money(p,'amount'),0); const payouts = this.payments.filter(p => p['isDeleted'] !== true && this.text(p, 'paymentType', 'type') === 'SELLER_PAYOUT' && this.text(p, 'status') === 'COMPLETED').reduce((s,p)=>s+this.money(p,'amount'),0); return [{label:'Buyer amounts due',value:this.records.filter(r=>this.isReceivable(r)).reduce((s,r)=>s+this.money(r,'amountDue','amount'),0)},{label:'Receipts collected',value:receipts},{label:'Seller amounts payable',value:this.records.filter(r=>!this.isReceivable(r)).reduce((s,r)=>s+this.money(r,'amountPayable','amount'),0)},{label:'Payouts made',value:payouts},{label:'Outstanding balance',value:this.records.reduce((s,r)=>s+this.money(r,'outstandingBalance','balance'),0)},{label:'Brokerage assessed',value:this.records.reduce((s,r)=>s+this.money(r,'brokerage','brokerageAmount'),0)}]; }
   setPaymentType(type: PaymentType): void { this.form.paymentType = type; this.form.partyId = null; this.parties = []; void this.loadPartyOptions(); }
   async loadPartyOptions(): Promise<void> { try { const options = await this.tripsApi.getFormOptions(); this.parties = this.form.paymentType === 'BUYER_RECEIPT' ? options.deliveryVendors : options.suppliers; } catch { this.error = 'Parties could not be loaded.'; } }
   async editPayment(payment: FinanceRecord): Promise<void> {
@@ -105,7 +105,7 @@ export class PaymentCenterComponent implements OnInit {
     finally { this.saving = false; }
   }
   requestDeletePayment(payment: FinanceRecord): void {
-    if (!this.permissions.can('payments', 'delete') || this.text(payment, 'status') === 'DELETED') return;
+    if (!this.permissions.can('payments', 'delete') || payment['isDeleted'] === true) return;
     this.error = '';
     this.success = '';
     if (!this.id(payment)) {
@@ -125,11 +125,12 @@ export class PaymentCenterComponent implements OnInit {
     this.saving = true;
     this.error = '';
     try {
-      await this.api.updatePayment(id, { status: 'DELETED' });
-      payment['status'] = 'DELETED';
-      this.success = 'Payment marked as deleted.';
+      await this.api.updatePayment(id, { isDeleted: true, isActive: false });
+      payment['isDeleted'] = true;
+      payment['isActive'] = false;
+      this.success = 'Payment deleted.';
       this.deleteCandidate = undefined;
-    } catch (e) { this.error = e instanceof Error ? e.message : 'Payment could not be marked as deleted.'; }
+    } catch (e) { this.error = e instanceof Error ? e.message : 'Payment could not be deleted.'; }
     finally { this.saving = false; }
   }
   async submitAllocations(): Promise<void> { if (!this.selectedPayment || !this.permissions.can('payments','update')) return; const rows = Object.entries(this.allocations).filter(([, amount]) => Number(amount)>0); if (!rows.length || this.paymentRemaining < 0) { this.error='Enter allocations within the remaining payment amount.'; return; } for (const [id, amount] of rows) { const settlement = this.settlements.find(s=>this.id(s)===id); if (!settlement || Number(amount)>this.money(settlement,'outstandingBalance','balance')) { this.error='An allocation exceeds its settlement balance.'; return; } } this.saving=true; this.error=''; try { for (const [settlementId, amount] of rows) await this.api.allocate({paymentId:Number(this.id(this.selectedPayment)),settlementId:Number(settlementId),amount:Number(amount)}); this.success='Allocation saved.'; this.allocations={}; await this.load(); } catch(e) { this.error=e instanceof Error?e.message:'Allocation could not be saved.'; } finally { this.saving=false; } }

@@ -244,7 +244,7 @@ export class TripService {
     }
   }
 
-  async getDeliveryData(tripId: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<{ trip: TripRecord; supplierPickups: TripVendorPickup[]; supplierReceipts: TripRecord[]; destinations: TripRecord[]; deliveries: TripRecord[]; mortality?: TripRecord; loadedBroiler: number; loadedCulls: number; loadedBirds: number }> {
+  async getDeliveryData(tripId: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<{ trip: TripRecord; supplierPickups: TripVendorPickup[]; supplierReceipts: TripRecord[]; destinations: TripRecord[]; deliveries: TripRecord[]; mortalities: TripRecord[]; loadedBroiler: number; loadedCulls: number; loadedBirds: number }> {
     this.assertDeliveryRole();
     const data = await this.tripApi.getDeliveryData(tripId, pendingSupplierPickupIds, pendingVendorDeliveryIds);
     if (data.trip['status'] === 'Deleted') {
@@ -329,15 +329,30 @@ export class TripService {
     await this.tripApi.updateTripStatus(tripId, 'In transit');
   }
 
-  async saveTripMortality(tripId: string, quantity: number, remarks: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<void> {
+  async saveTripMortality(tripId: string, quantity: number, remarks: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = [], mortalityId?: string): Promise<void> {
     const data = await this.getDeliveryData(tripId, pendingSupplierPickupIds, pendingVendorDeliveryIds);
     if (String(data.trip['status']) === 'Completed') throw new Error('Completed trip records are read-only.');
     if (data.supplierPickups.some((pickup) => !data.supplierReceipts.some((receipt) => String(receipt['vendorId'] ?? '') === pickup.vendorId))) throw new Error('Record actual receipts for every supplier before entering mortality.');
     if (!Number.isSafeInteger(quantity) || quantity < 0) throw new Error('Mortality must be a non-negative whole number.');
     const birdsLoaded = data.loadedBirds;
     const birdsDelivered = data.deliveries.reduce((sum, item) => sum + Number(item['broiler'] ?? 0) + Number(item['culls'] ?? 0), 0);
-    if (quantity > birdsLoaded - birdsDelivered) throw new Error('Mortality cannot exceed the remaining loaded bird quantity.');
-    await this.tripApi.saveMortality(tripId, quantity, remarks, data.mortality ? String(data.mortality['_demoId'] ?? '') : undefined);
+    const existingRecord = mortalityId
+      ? data.mortalities.find((record) => String(record['_demoId'] ?? '') === mortalityId)
+      : undefined;
+    if (mortalityId && !existingRecord) throw new Error('This trip mortality record could not be found.');
+    const existingMortality = data.mortalities
+      .filter((record) => record !== existingRecord)
+      .reduce((sum, record) => sum + Number(record['quantity'] ?? 0), 0);
+    if (quantity > birdsLoaded - birdsDelivered - existingMortality) throw new Error('Mortality cannot exceed the remaining loaded bird quantity.');
+    await this.tripApi.saveMortality(tripId, quantity, remarks, mortalityId);
+  }
+
+  async deleteTripMortality(tripId: string, mortalityId: string): Promise<void> {
+    const data = await this.getDeliveryData(tripId);
+    if (String(data.trip['status']) === 'Completed') throw new Error('Completed trip records are read-only.');
+    const record = data.mortalities.find((item) => String(item['_demoId'] ?? '') === mortalityId);
+    if (!record) throw new Error('This trip mortality record could not be found.');
+    await this.tripApi.deleteMortality(tripId, record);
   }
 
   async submitForReconciliation(tripId: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<'submitted' | 'completed'> {
@@ -345,12 +360,12 @@ export class TripService {
     if (String(data.trip['status']) === 'Completed') throw new Error('This trip has already been completed.');
     if (!data.destinations.length) throw new Error('Assign at least one vendor destination before completion.');
     if (data.supplierPickups.some((pickup) => !data.supplierReceipts.some((receipt) => String(receipt['vendorId'] ?? '') === pickup.vendorId))) throw new Error('Record actual receipts for every supplier before submitting reconciliation.');
-    if (!data.mortality) throw new Error('Record trip mortality or explicitly confirm zero.');
     if (data.destinations.some((destination) => !data.deliveries.some((item) => String(item['vendorDestinationId']) === String(destination['vendorDestinationId'])))) {
       throw new Error('Record a delivery for every vendor destination before submitting.');
     }
     const delivered = data.deliveries.reduce((sum, item) => sum + Number(item['broiler'] ?? 0) + Number(item['culls'] ?? 0), 0);
-    const discrepancy = data.loadedBirds - delivered - Number(data.mortality['quantity'] ?? 0);
+    const mortality = data.mortalities.reduce((sum, record) => sum + Number(record['quantity'] ?? 0), 0);
+    const discrepancy = data.loadedBirds - delivered - mortality;
     const hasDiscrepancy = discrepancy !== 0;
     if (hasDiscrepancy && this.auth.currentUser?.role !== 'Organization Admin') {
       if (String(data.trip['status']) === 'Pending reconciliation') throw new Error('This trip is awaiting Organization Admin reconciliation approval.');

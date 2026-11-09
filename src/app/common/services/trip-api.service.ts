@@ -96,7 +96,7 @@ export interface TripDeliveryData {
   supplierReceipts: TripRecord[];
   destinations: TripRecord[];
   deliveries: TripRecord[];
-  mortality?: TripRecord;
+  mortalities: TripRecord[];
   loadedBroiler: number;
   loadedCulls: number;
   loadedBirds: number;
@@ -247,13 +247,13 @@ export class TripApiService {
       }, orderNames));
     }
     const deliveries = [...deliveriesById.values()];
-    const mortalityRecord = mortalities.find((item) => Number(item.tripId) === tripId && item.isDeleted !== true);
-    const mortality = mortalityRecord ? {
-      _demoId: String(mortalityRecord.id ?? ''),
-      quantity: Number(mortalityRecord.combinedMortality ?? 0),
-      remarks: String(mortalityRecord.reason ?? ''),
-      recordedAt: String(mortalityRecord.createDate ?? '')
-    } : undefined;
+    const tripMortalities = mortalities.filter((item) => Number(item.tripId) === tripId && item.isDeleted !== true);
+    const mortalityRecords = tripMortalities.map((record) => ({
+      _demoId: String(record.id ?? ''),
+      quantity: Number(record.combinedMortality ?? 0),
+      remarks: String(record.reason ?? ''),
+      recordedAt: String(record.createDate ?? '')
+    }));
     const loadedBroiler = supplierReceipts.reduce((sum, receipt) => sum + Number(receipt['broilerQuantity'] ?? 0), 0);
     const loadedCulls = supplierReceipts.reduce((sum, receipt) => sum + Number(receipt['cullsQuantity'] ?? 0), 0);
     return {
@@ -262,7 +262,7 @@ export class TripApiService {
       supplierReceipts,
       destinations: details.vendorDestinations,
       deliveries,
-      mortality,
+      mortalities: mortalityRecords,
       loadedBroiler,
       loadedCulls,
       loadedBirds: loadedBroiler + loadedCulls
@@ -359,6 +359,18 @@ export class TripApiService {
     } else {
       await firstValueFrom(this.http.post(`${this.baseUrl}/mortalities`, mortality));
     }
+  }
+
+  async deleteMortality(tripId: string, record: TripRecord): Promise<void> {
+    const id = this.parseId(String(record['_demoId'] ?? ''));
+    await firstValueFrom(this.http.put(`${this.baseUrl}/mortalities/${id}`, {
+      id,
+      tripId: this.parseId(tripId),
+      combinedMortality: Number(record['quantity'] ?? 0),
+      reason: String(record['remarks'] ?? '').trim(),
+      isActive: false,
+      isDeleted: true
+    }));
   }
 
   async updateTripStatus(id: string, status: string): Promise<void> {

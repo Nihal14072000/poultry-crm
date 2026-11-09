@@ -54,8 +54,9 @@ describe('PaymentCenterComponent payment actions', () => {
 
     await component.deletePayment();
 
-    expect(api.updatePayment).toHaveBeenCalledWith('12', { status: 'DELETED' });
-    expect(payment['status']).toBe('DELETED');
+    expect(api.updatePayment).toHaveBeenCalledWith('12', { isDeleted: true, isActive: false });
+    expect(payment['isDeleted']).toBeTrue();
+    expect(payment['isActive']).toBeFalse();
     expect(component.deleteCandidate).toBeUndefined();
   });
 

@@ -61,7 +61,7 @@ describe('TripService', () => {
     };
     Object.defineProperty(auth, 'currentUser', { configurable: true, get: () => currentUser });
     tripApi = jasmine.createSpyObj<TripApiService>('TripApiService', [
-      'getTrips', 'getDeliveryData', 'linkSupplierPickups', 'linkVendorDeliveries', 'updateTripStatus', 'deleteTrip'
+      'getTrips', 'getDeliveryData', 'linkSupplierPickups', 'linkVendorDeliveries', 'updateTripStatus', 'deleteTrip', 'saveMortality', 'deleteMortality'
     ]);
     tripApi.getTrips.and.resolveTo([]);
     const permissions = jasmine.createSpyObj<RolePermissionService>('RolePermissionService', ['can', 'canAccessRecord']);
@@ -99,7 +99,7 @@ describe('TripService', () => {
       supplierReceipts: [],
       destinations: [{ vendorDestinationId: 'destination-1' }, { vendorDestinationId: 'destination-2' }],
       deliveries: [{ vendorDestinationId: 'destination-1' }, { vendorDestinationId: 'destination-2' }],
-      mortality: undefined,
+      mortalities: [],
       loadedBroiler: 0,
       loadedCulls: 0,
       loadedBirds: 0
@@ -244,7 +244,7 @@ describe('TripService', () => {
       deliveries: [{ vendorDestinationId: 'dest-1', broiler: 10, culls: 0 }],
       supplierPickups: [{ vendorId: 'sup-1', vendorName: 'Supplier 1', broiler: { quantity: 15, rate: 10, total: 150 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 150 }],
       supplierReceipts: [{ vendorId: 'sup-1', broilerQuantity: 15, broilerWeight: 30 }],
-      mortality: { quantity: 2, _demoId: 'mort-1' },
+      mortalities: [{ quantity: 2, _demoId: 'mort-1' }],
       loadedBroiler: 15,
       loadedCulls: 0,
       loadedBirds: 15
@@ -272,7 +272,7 @@ describe('TripService', () => {
       deliveries: [{ vendorDestinationId: 'dest-1', broiler: 10, culls: 0 }],
       supplierPickups: [{ vendorId: 'sup-1', vendorName: 'Supplier 1', broiler: { quantity: 15, rate: 10, total: 150 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 150 }],
       supplierReceipts: [{ vendorId: 'sup-1', broilerQuantity: 15, broilerWeight: 30 }],
-      mortality: { quantity: 2, _demoId: 'mort-1' },
+      mortalities: [{ quantity: 2, _demoId: 'mort-1' }],
       loadedBroiler: 15,
       loadedCulls: 0,
       loadedBirds: 15
@@ -282,6 +282,61 @@ describe('TripService', () => {
     const result = await service.submitForReconciliation('trip-1');
 
     expect(result).toBe('completed');
+    expect(tripApi.updateTripStatus).toHaveBeenCalledWith('trip-1', 'Completed');
+  });
+
+  it('updates one mortality record without counting its prior quantity twice', async () => {
+    tripApi.getDeliveryData.and.resolveTo({
+      trip: { status: 'In transit', _demoId: 'trip-1' },
+      destinations: [],
+      deliveries: [{ broiler: 10, culls: 0 }],
+      supplierPickups: [],
+      supplierReceipts: [],
+      mortalities: [{ _demoId: 'mort-1', quantity: 2 }, { _demoId: 'mort-2', quantity: 3 }],
+      loadedBroiler: 20,
+      loadedCulls: 0,
+      loadedBirds: 20
+    });
+    tripApi.saveMortality.and.resolveTo();
+
+    await service.saveTripMortality('trip-1', 7, 'Updated record', [], [], 'mort-1');
+
+    expect(tripApi.saveMortality).toHaveBeenCalledWith('trip-1', 7, 'Updated record', 'mort-1');
+  });
+
+  it('deletes only a mortality record belonging to the trip', async () => {
+    tripApi.getDeliveryData.and.resolveTo({
+      trip: { status: 'In transit', _demoId: 'trip-1' },
+      destinations: [],
+      deliveries: [],
+      supplierPickups: [],
+      supplierReceipts: [],
+      mortalities: [{ _demoId: 'mort-1', quantity: 2, remarks: 'Loss' }],
+      loadedBroiler: 2,
+      loadedCulls: 0,
+      loadedBirds: 2
+    });
+    tripApi.deleteMortality.and.resolveTo();
+
+    await service.deleteTripMortality('trip-1', 'mort-1');
+
+    expect(tripApi.deleteMortality).toHaveBeenCalledWith('trip-1', { _demoId: 'mort-1', quantity: 2, remarks: 'Loss' });
+  });
+
+  it('completes a trip without a mortality record when birds reconcile exactly', async () => {
+    tripApi.getDeliveryData.and.resolveTo({
+      trip: { status: 'In transit', _demoId: 'trip-1' },
+      destinations: [{ vendorDestinationId: 'dest-1' }],
+      deliveries: [{ vendorDestinationId: 'dest-1', broiler: 15, culls: 0 }],
+      supplierPickups: [{ vendorId: 'sup-1', vendorName: 'Supplier 1', broiler: { quantity: 15, rate: 10, total: 150 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 150 }],
+      supplierReceipts: [{ vendorId: 'sup-1', broilerQuantity: 15, broilerWeight: 30 }],
+      mortalities: [],
+      loadedBroiler: 15,
+      loadedCulls: 0,
+      loadedBirds: 15
+    });
+
+    await expectAsync(service.submitForReconciliation('trip-1')).toBeResolvedTo('completed');
     expect(tripApi.updateTripStatus).toHaveBeenCalledWith('trip-1', 'Completed');
   });
 

@@ -172,9 +172,11 @@ describe('TripApiService', () => {
     http.expectOne('http://localhost:8080/api/deliveries').flush([{ id: 75, tripId: 12, isActive: true }]);
     await Promise.resolve();
     await Promise.resolve();
-    http.expectOne('http://localhost:8080/api/mortalities').flush([{
-      id: 91, tripId: 12, combinedMortality: 1, reason: 'Transit loss', isActive: true
-    }]);
+    http.expectOne('http://localhost:8080/api/mortalities').flush([
+      { id: 91, tripId: 12, combinedMortality: 1, reason: 'Transit loss', isActive: true },
+      { id: 92, tripId: 12, combinedMortality: 2, reason: 'Second loss', isActive: true },
+      { id: 93, tripId: 13, combinedMortality: 10, reason: 'Other trip', isActive: true }
+    ]);
     http.expectOne('http://localhost:8080/api/deliveries/75/retrieve').flush({
       id: 75,
       supplierPickup: { id: 81 },
@@ -211,7 +213,10 @@ describe('TripApiService', () => {
     expect(data.deliveries[0]['broiler']).toBe(8);
     expect(data.deliveries[1]['_demoId']).toBe('84');
     expect(data.deliveries[1]['broiler']).toBe(1);
-    expect(data.mortality?.['quantity']).toBe(1);
+    expect(data.mortalities).toEqual([
+      jasmine.objectContaining({ quantity: 1, remarks: 'Transit loss' }),
+      jasmine.objectContaining({ quantity: 2, remarks: 'Second loss' })
+    ]);
     expect(data.loadedBirds).toBe(9);
   });
 
@@ -290,6 +295,59 @@ describe('TripApiService', () => {
     orders.flush([]);
     http.expectNone('http://localhost:8080/api/deliveries');
     await expectAsync(result).toBeResolvedTo('83');
+  });
+
+  it('creates a new trip mortality record', async () => {
+    const result = service.saveMortality('12', 2, 'Transit loss');
+    const request = http.expectOne('http://localhost:8080/api/mortalities');
+
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      tripId: 12,
+      combinedMortality: 2,
+      reason: 'Transit loss',
+      isActive: true,
+      isDeleted: false
+    });
+    request.flush({ id: 92 });
+
+    await expectAsync(result).toBeResolved();
+  });
+
+  it('updates an existing trip mortality record', async () => {
+    const result = service.saveMortality('12', 3, 'Updated loss', '91');
+    const request = http.expectOne('http://localhost:8080/api/mortalities/91');
+
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({
+      id: 91,
+      tripId: 12,
+      combinedMortality: 3,
+      reason: 'Updated loss',
+      isActive: true,
+      isDeleted: false
+    });
+    request.flush(null);
+
+    await expectAsync(result).toBeResolved();
+  });
+
+  it('soft-deletes a trip mortality record', async () => {
+    const result = service.deleteMortality('12', { _demoId: '91', quantity: 3, remarks: 'Transit loss' });
+    const request = http.expectOne('http://localhost:8080/api/mortalities/91');
+
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({
+      id: 91,
+      tripId: 12,
+      combinedMortality: 3,
+      reason: 'Transit loss',
+      isActive: false,
+      isDeleted: true
+    });
+    request.flush(null);
+
+    await expectAsync(result).toBeResolved();
   });
 
   it('links pending vendor delivery IDs to the trip only when finalizing', async () => {

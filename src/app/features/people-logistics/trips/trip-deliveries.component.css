@@ -36,6 +36,7 @@ thead th { color:#89948b; font-size:9px; letter-spacing:.4px; white-space:nowrap
 td strong,td small { display:block; }
 td small { color:#879289; margin-top:3px; }
 .link-button { background:transparent; border:0; color:#315f45; cursor:pointer; font:inherit; font-size:10px; font-weight:700; padding:5px 0; }
+.link-button + .link-button { margin-left:10px; }
 .readonly,.calculation { background:#f8faf7; border-radius:6px; color:#536157; font-size:11px; padding:10px 12px; }
 .form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 .form-grid .wide { grid-column:1/-1; }

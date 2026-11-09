@@ -25,6 +25,7 @@ describe('TripDetailsComponent', () => {
         broilerTotal: 1250,
         deliveryTotal: 1250
       }],
+      mortalities: [],
       loadedBroiler: 0,
       loadedCulls: 0,
       loadedBirds: 0

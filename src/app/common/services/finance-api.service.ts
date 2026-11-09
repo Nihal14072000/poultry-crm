@@ -11,6 +11,7 @@ export interface FinanceRecord { [key: string]: unknown; }
 export interface PaymentInput {
   paymentType: PaymentType;
   partyId: number;
+  partyRole?: 'BUYING' | 'SELLING';
   amount: number;
   paymentDate: string;
   paymentMethod: PaymentMethod;
@@ -29,19 +30,19 @@ export class FinanceApiService {
   payments(): Promise<FinanceRecord[]> { return this.getList(`${this.baseUrl}/payments/retrieve`).then(rows => rows.map(row => this.paymentRow(row))); }
   payment(id: string): Promise<FinanceRecord> { return firstValueFrom(this.http.get<FinanceRecord>(`${this.baseUrl}/payments/${encodeURIComponent(id)}/retrieve`)); }
   createPayment(input: PaymentInput): Promise<FinanceRecord> {
-    const { partyId, reference, ...payment } = input;
+    const { partyId, partyRole, reference, ...payment } = input;
     return firstValueFrom(this.http.post<FinanceRecord>(`${this.baseUrl}/payments`, {
       ...payment,
-      ...(input.paymentType === 'BUYER_RECEIPT' ? { buyingPartyId: partyId } : { sellingPartyId: partyId }),
+      ...(partyRole === 'BUYING' || (!partyRole && input.paymentType === 'BUYER_RECEIPT') ? { buyingPartyId: partyId } : { sellingPartyId: partyId }),
       externalReference: reference
-    }));
+    })).then(row => this.paymentRow(row));
   }
-  updatePayment(id: string, input: Omit<Partial<PaymentInput>, 'status'> & { status?: PaymentStatus | 'DELETED' }): Promise<FinanceRecord> {
-    const { partyId, reference, ...payment } = input;
+  updatePayment(id: string, input: Omit<Partial<PaymentInput>, 'status'> & { status?: PaymentStatus; isDeleted?: boolean; isActive?: boolean }): Promise<FinanceRecord> {
+    const { partyId, partyRole, reference, ...payment } = input;
     return firstValueFrom(this.http.put<FinanceRecord>(`${this.baseUrl}/payments/${encodeURIComponent(id)}`, {
       ...payment,
-      ...(partyId !== undefined && input.paymentType
-        ? input.paymentType === 'BUYER_RECEIPT' ? { buyingPartyId: partyId } : { sellingPartyId: partyId }
+      ...(partyId !== undefined && (partyRole || input.paymentType)
+        ? partyRole === 'BUYING' || (!partyRole && input.paymentType === 'BUYER_RECEIPT') ? { buyingPartyId: partyId } : { sellingPartyId: partyId }
         : {}),
       ...(reference !== undefined ? { externalReference: reference } : {})
     })).then(row => this.paymentRow(row));
@@ -75,7 +76,14 @@ export class FinanceApiService {
   }
 
   private paymentRow(row: FinanceRecord): FinanceRecord {
-    return { ...row, reference: row['externalReference'], partyId: row['buyingPartyId'] ?? row['sellingPartyId'] };
+    return {
+      ...row,
+      reference: row['externalReference'],
+      partyId: row['buyingPartyId'] ?? row['sellingPartyId'],
+      ...(row['buyingPartyId'] != null || row['sellingPartyId'] != null
+        ? { partyRole: row['buyingPartyId'] != null ? 'BUYING' : 'SELLING' }
+        : {})
+    };
   }
 
   private settlementRow(row: FinanceRecord, settlementType: PaymentType): FinanceRecord {

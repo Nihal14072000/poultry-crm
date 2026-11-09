@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TripRecord, TripVendorPickup } from '../../../common/models/trip.model';
 import { TripService } from '../../../common/services/trip.service';
 import { SessionAuthService } from '../../../common/services/session-auth.service';
-import { FinanceApiService, PaymentMethod, PaymentType } from '../../../common/services/finance-api.service';
+import { FinanceApiService, FinanceRecord, PaymentMethod, PaymentType } from '../../../common/services/finance-api.service';
 
 interface SupplierReceiptForm {
   vendorId: string; vendorName: string;
@@ -26,12 +26,13 @@ export class TripDeliveriesComponent implements OnInit {
   supplierPickups: TripVendorPickup[] = [];
   supplierReceipts: TripRecord[] = [];
   supplierReceiptForms: SupplierReceiptForm[] = [];
+  tripPayments: FinanceRecord[] = [];
   private pendingSupplierPickupIds: Record<string, string> = {};
   private pendingVendorDeliveryIds: string[] = [];
   activePickupVendorId = '';
   loadedBroiler = 0;
   loadedCulls = 0;
-  mortality?: TripRecord;
+  mortalities: TripRecord[] = [];
   loading = true;
   saving = false;
   error = '';
@@ -51,12 +52,16 @@ export class TripDeliveriesComponent implements OnInit {
   reason = '';
   mortalityQuantity = 0;
   mortalityRemarks = '';
+  showMortalityForm = false;
+  editingMortalityId = '';
   paymentType: PaymentType = 'BUYER_RECEIPT';
   paymentPartyId = '';
   paymentAmount: number | null = null;
   paymentDate = new Date().toISOString().slice(0, 10);
   paymentMethod: PaymentMethod = 'UPI';
   paymentReference = '';
+  showPaymentForm = false;
+  editingPaymentId = '';
 
   constructor(private readonly service: TripService, private readonly finance: FinanceApiService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService) {}
 
@@ -73,9 +78,13 @@ export class TripDeliveriesComponent implements OnInit {
       if (tripId) {
         this.readPendingSupplierPickups(tripId);
         this.readPendingVendorDeliveries(tripId);
-        const data = await this.service.getDeliveryData(tripId, this.pendingPickupIds(), this.pendingDeliveryIds());
-        this.trip = data.trip; this.destinations = data.destinations; this.deliveries = data.deliveries; this.mortality = data.mortality;
+        const [data, payments] = await Promise.all([
+          this.service.getDeliveryData(tripId, this.pendingPickupIds(), this.pendingDeliveryIds()),
+          this.finance.payments()
+        ]);
+        this.trip = data.trip; this.destinations = data.destinations; this.deliveries = data.deliveries; this.mortalities = data.mortalities;
         this.supplierPickups = data.supplierPickups; this.supplierReceipts = data.supplierReceipts;
+        this.tripPayments = payments.filter((payment) => String(payment['tripId'] ?? '') === tripId);
         this.supplierReceiptForms = data.supplierPickups.map((pickup) => {
           const receipt = data.supplierReceipts.find((record) => String(record['vendorId'] ?? '') === pickup.vendorId);
           return {
@@ -90,7 +99,6 @@ export class TripDeliveriesComponent implements OnInit {
           };
         });
         this.loadedBroiler = data.loadedBroiler; this.loadedCulls = data.loadedCulls;
-        if (this.mortality) { this.mortalityQuantity = Number(this.mortality['quantity'] ?? 0); this.mortalityRemarks = String(this.mortality['remarks'] ?? ''); }
       } else this.trips = await this.service.getDeliveryTrips();
     } catch (e) { this.error = e instanceof Error ? e.message : 'Trip delivery data could not be loaded.'; }
     finally { this.loading = false; }
@@ -161,9 +169,65 @@ export class TripDeliveriesComponent implements OnInit {
   get canEnterDelivery(): boolean { return ['In transit', 'Delivery in progress'].includes(String(this.trip?.['status'] ?? '')); }
   get canStartTrip(): boolean { return String(this.trip?.['status'] ?? '') === 'Assigned'; }
   get paymentParties(): { id: string; name: string }[] {
-    return this.paymentType === 'BUYER_RECEIPT'
-      ? this.destinations.map(party => ({ id: String(party['vendorDestinationId'] ?? ''), name: String(party['vendorName'] ?? '') }))
-      : this.supplierPickups.map(party => ({ id: party.vendorId, name: party.vendorName }));
+    const destinations = this.destinations.map((party) => ({
+      id: `SELLING:${String(party['vendorDestinationId'] ?? '')}`,
+      name: this.paymentType === 'SELLER_PAYOUT' ? `Delivery vendor · ${String(party['vendorName'] ?? '')}` : String(party['vendorName'] ?? '')
+    }));
+    if (this.paymentType === 'BUYER_RECEIPT') return destinations;
+    return [
+      ...this.supplierPickups.map((party) => ({ id: `BUYING:${party.vendorId}`, name: `Supplier · ${party.vendorName}` })),
+      ...destinations
+    ];
+  }
+  paymentPartyName(payment: FinanceRecord): string {
+    const partyId = String(payment['partyId'] ?? payment['buyingPartyId'] ?? payment['sellingPartyId'] ?? '');
+    const partyRole = payment['partyRole'] ?? (payment['buyingPartyId'] != null ? 'BUYING' : payment['sellingPartyId'] != null ? 'SELLING' : payment['paymentType'] === 'BUYER_RECEIPT' ? 'BUYING' : 'SELLING');
+    const name = partyRole === 'BUYING'
+      ? this.supplierPickups.find((party) => party.vendorId === partyId)?.vendorName
+      : this.destinations.find((party) => String(party['vendorDestinationId'] ?? '') === partyId)?.['vendorName'];
+    return String(name ?? payment['partyName'] ?? payment['buyingPartyName'] ?? payment['sellingPartyName'] ?? partyId ?? '—');
+  }
+  togglePaymentForm(): void {
+    if (this.showPaymentForm) this.cancelPaymentEdit();
+    else this.showPaymentForm = true;
+  }
+  toggleMortalityForm(): void {
+    if (this.showMortalityForm) this.cancelMortalityEdit();
+    else this.showMortalityForm = true;
+  }
+  editPayment(payment: FinanceRecord): void {
+    this.editingPaymentId = String(payment['id'] ?? payment['paymentId'] ?? '');
+    if (!this.editingPaymentId) return;
+    this.paymentType = payment['paymentType'] === 'SELLER_PAYOUT' ? 'SELLER_PAYOUT' : 'BUYER_RECEIPT';
+    const partyRole = payment['partyRole'] ?? (payment['buyingPartyId'] != null ? 'BUYING' : payment['sellingPartyId'] != null ? 'SELLING' : payment['paymentType'] === 'BUYER_RECEIPT' ? 'BUYING' : 'SELLING');
+    this.paymentPartyId = `${partyRole}:${String(payment['partyId'] ?? payment['buyingPartyId'] ?? payment['sellingPartyId'] ?? '')}`;
+    this.paymentAmount = this.number(payment['amount']);
+    this.paymentDate = String(payment['paymentDate'] ?? '').slice(0, 10);
+    this.paymentMethod = payment['paymentMethod'] as PaymentMethod;
+    this.paymentReference = String(payment['reference'] ?? payment['externalReference'] ?? '');
+    this.showPaymentForm = true;
+  }
+  cancelPaymentEdit(): void {
+    this.editingPaymentId = '';
+    this.paymentPartyId = '';
+    this.paymentAmount = null;
+    this.paymentDate = new Date().toISOString().slice(0, 10);
+    this.paymentMethod = 'UPI';
+    this.paymentReference = '';
+    this.showPaymentForm = false;
+  }
+  editMortality(record: TripRecord): void {
+    this.editingMortalityId = this.id(record);
+    if (!this.editingMortalityId) return;
+    this.mortalityQuantity = this.number(record['quantity']);
+    this.mortalityRemarks = String(record['remarks'] ?? '');
+    this.showMortalityForm = true;
+  }
+  cancelMortalityEdit(): void {
+    this.editingMortalityId = '';
+    this.mortalityQuantity = 0;
+    this.mortalityRemarks = '';
+    this.showMortalityForm = false;
   }
   changePaymentType(): void { this.paymentPartyId = ''; }
   entrySales(): number {
@@ -190,6 +254,7 @@ export class TripDeliveriesComponent implements OnInit {
   deliveredCullsTotal(): number { return this.deliveries.reduce((sum, item) => sum + this.number(item['culls']), 0); }
   totalDelivered(): number { return this.deliveredBroilerTotal() + this.deliveredCullsTotal(); }
   totalLoaded(): number { return this.loadedBroiler + this.loadedCulls; }
+  totalMortality(): number { return this.mortalities.reduce((sum, record) => sum + this.number(record['quantity']), 0); }
   totalLoadedWeight(): number { return this.supplierReceipts.reduce((sum, receipt) => sum + this.number(receipt['broilerWeight']) + this.number(receipt['cullsWeight']), 0); }
   allSupplierReceiptsSaved(): boolean { return this.supplierReceiptForms.length > 0 && this.supplierReceiptForms.every((form) => !!this.supplierReceipt(form.vendorId)); }
   proposedLoadedBroiler(): number { return this.supplierPickups.reduce((sum, pickup) => sum + pickup.broiler.quantity, 0); }
@@ -210,6 +275,12 @@ export class TripDeliveriesComponent implements OnInit {
   actualSalesTotal(): number { return this.deliveries.reduce((sum, entry) => sum + this.number(entry['deliveryTotal']), 0); }
   proposedSupplierCost(): number { return this.number(this.trip?.['grandTotal']); }
   actualSupplierCost(): number { return this.supplierReceipts.reduce((sum, receipt) => sum + this.number(receipt['total']), 0); }
+  paymentsToBeDone(): number { return this.actualSupplierCost(); }
+  totalPaymentReceived(): number {
+    return this.tripPayments
+      .filter((payment) => payment['paymentType'] === 'SELLER_PAYOUT' && payment['status'] === 'COMPLETED' && payment['isDeleted'] !== true)
+      .reduce((sum, payment) => sum + this.number(payment['amount']), 0);
+  }
   supplierReceiptEntryCost(form: SupplierReceiptForm): number {
     const planned = this.plannedSupplier(form.vendorId);
     return this.number(form.broilerWeight) * this.number(planned?.broiler.rate) +
@@ -260,10 +331,29 @@ export class TripDeliveriesComponent implements OnInit {
     finally { this.saving = false; }
   }
   async saveMortality(): Promise<void> {
-    if (!this.trip || this.saving) return;
+    if (!this.trip || this.saving || !this.allSupplierReceiptsSaved()) return;
     this.saving = true; this.error = ''; this.success = '';
-    try { await this.service.saveTripMortality(this.id(this.trip), Number(this.mortalityQuantity), this.mortalityRemarks, this.pendingPickupIds(), this.pendingDeliveryIds()); this.success = 'Trip mortality saved.'; await this.load(); }
+    try {
+      const editing = !!this.editingMortalityId;
+      await this.service.saveTripMortality(this.id(this.trip), Number(this.mortalityQuantity), this.mortalityRemarks, this.pendingPickupIds(), this.pendingDeliveryIds(), this.editingMortalityId || undefined);
+      this.cancelMortalityEdit();
+      this.success = editing ? 'Trip mortality record updated.' : 'Trip mortality record saved.';
+      await this.load();
+    }
     catch (e) { this.error = e instanceof Error ? e.message : 'Mortality could not be saved.'; }
+    finally { this.saving = false; }
+  }
+  async deleteMortality(record: TripRecord): Promise<void> {
+    const mortalityId = this.id(record);
+    if (!this.trip || !mortalityId || this.saving || String(this.trip['status']) === 'Completed') return;
+    if (!window.confirm('Delete this mortality record?')) return;
+    this.saving = true; this.error = ''; this.success = '';
+    try {
+      await this.service.deleteTripMortality(this.id(this.trip), mortalityId);
+      if (this.editingMortalityId === mortalityId) this.cancelMortalityEdit();
+      this.success = 'Trip mortality record deleted.';
+      await this.load();
+    } catch (e) { this.error = e instanceof Error ? e.message : 'Mortality record could not be deleted.'; }
     finally { this.saving = false; }
   }
   async savePayment(): Promise<void> {
@@ -273,14 +363,46 @@ export class TripDeliveriesComponent implements OnInit {
     }
     this.saving = true; this.error = ''; this.success = '';
     try {
-      await this.finance.createPayment({
-        paymentType: this.paymentType, partyId: Number(this.paymentPartyId), amount: this.paymentAmount,
+      const editing = !!this.editingPaymentId;
+      const existing = this.tripPayments.find((item) => String(item['id'] ?? item['paymentId'] ?? '') === this.editingPaymentId);
+      const status = (['PENDING', 'COMPLETED', 'FAILED', 'VOID'] as const)
+        .find((value) => value === existing?.['status']) ?? 'COMPLETED';
+      const [partyRole, partyId] = this.paymentPartyId.split(':', 2);
+      if ((partyRole !== 'BUYING' && partyRole !== 'SELLING') || !/^\d+$/.test(partyId)) {
+        this.error = 'Select a valid party.';
+        return;
+      }
+      const selectedPartyRole: 'BUYING' | 'SELLING' = partyRole;
+      const input = {
+        paymentType: this.paymentType, partyId: Number(partyId), partyRole: selectedPartyRole, amount: this.paymentAmount,
         paymentDate: this.paymentDate, paymentMethod: this.paymentMethod, reference: this.paymentReference,
-        status: 'COMPLETED', tripId: Number(this.id(this.trip))
-      });
-      this.paymentPartyId = ''; this.paymentAmount = null; this.paymentReference = '';
-      this.success = 'Payment recorded.';
+        status: editing ? status : 'COMPLETED', tripId: Number(this.id(this.trip))
+      };
+      const saved = editing
+        ? await this.finance.updatePayment(this.editingPaymentId, input)
+        : await this.finance.createPayment(input);
+      const payment = { ...saved, ...input, ...(editing ? { id: this.editingPaymentId } : {}), reference: this.paymentReference };
+      this.tripPayments = editing
+        ? this.tripPayments.map((item) => String(item['id'] ?? item['paymentId'] ?? '') === this.editingPaymentId ? payment : item)
+        : [payment, ...this.tripPayments];
+      this.cancelPaymentEdit();
+      this.success = editing ? 'Payment updated.' : 'Payment recorded.';
     } catch (e) { this.error = e instanceof Error ? e.message : 'Payment could not be recorded.'; }
+    finally { this.saving = false; }
+  }
+  async deletePayment(payment: FinanceRecord): Promise<void> {
+    const paymentId = String(payment['id'] ?? payment['paymentId'] ?? '');
+    if (!paymentId || this.saving || String(this.trip?.['status']) === 'Completed' || payment['isDeleted'] === true) return;
+    if (!window.confirm('Delete this payment? It will remain in the system for audit history.')) return;
+    this.saving = true; this.error = ''; this.success = '';
+    try {
+      await this.finance.updatePayment(paymentId, { isDeleted: true, isActive: false });
+      this.tripPayments = this.tripPayments.map((item) =>
+        String(item['id'] ?? item['paymentId'] ?? '') === paymentId ? { ...item, isDeleted: true, isActive: false } : item
+      );
+      if (this.editingPaymentId === paymentId) this.cancelPaymentEdit();
+      this.success = 'Payment deleted.';
+    } catch (e) { this.error = e instanceof Error ? e.message : 'Payment could not be deleted.'; }
     finally { this.saving = false; }
   }
   async saveSupplierReceipt(form: SupplierReceiptForm): Promise<void> {
@@ -301,7 +423,7 @@ export class TripDeliveriesComponent implements OnInit {
     } catch (e) { this.error = e instanceof Error ? e.message : 'Supplier pickup could not be saved.'; }
     finally { this.saving = false; }
   }
-  unreconciled(): number { return this.totalLoaded() - this.totalDelivered() - this.number(this.mortality?.['quantity']); }
+  unreconciled(): number { return this.totalLoaded() - this.totalDelivered() - this.totalMortality(); }
   async complete(): Promise<void> {
     if (!this.trip || this.saving) return;
     this.saving = true; this.error = ''; this.success = '';
