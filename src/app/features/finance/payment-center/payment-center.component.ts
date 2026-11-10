@@ -16,7 +16,7 @@ type PaymentTrend = { label: string; month: string; receipts: number; payouts: n
 @Component({ selector: 'app-payment-center', standalone: true, imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, StatusPillPipe], templateUrl: './payment-center.component.html', styleUrl: './payment-center.component.css' })
 export class PaymentCenterComponent implements OnInit {
   view: View = 'overview'; loading = true; saving = false; error = ''; success = ''; query = ''; statusFilter = ''; tripId = ''; partyId = ''; paymentPartyFilter = '';
-  trips: TripRecord[] = []; parties: TripRecord[] = []; paymentParties: PaymentPartyOption[] = []; records: FinanceRecord[] = []; payments: FinanceRecord[] = []; settlements: FinanceRecord[] = []; summary?: FinanceRecord;
+  trips: TripRecord[] = []; parties: TripRecord[] = []; paymentParties: PaymentPartyOption[] = []; records: FinanceRecord[] = []; payments: FinanceRecord[] = []; settlements: FinanceRecord[] = []; summary?: FinanceRecord; financeSummary?: FinanceRecord;
   selectedPaymentId = ''; allocations: Record<string, number> = {}; editingPaymentId = ''; deleteCandidate?: FinanceRecord;
   readonly methods: PaymentMethod[] = ['BANK_TRANSFER', 'CASH', 'CHEQUE', 'UPI', 'CARD', 'OTHER'];
   readonly statuses: PaymentStatus[] = ['PENDING', 'COMPLETED', 'FAILED', 'VOID'];
@@ -25,6 +25,7 @@ export class PaymentCenterComponent implements OnInit {
   async ngOnInit(): Promise<void> { this.view = this.route.snapshot.routeConfig?.path as View || 'overview'; this.tripId = this.route.snapshot.queryParamMap.get('tripId') ?? ''; await this.load(); }
   async load(): Promise<void> {
     this.loading = true; this.error = '';
+    if (this.view === 'overview') this.financeSummary = undefined;
     try {
       if (!this.trips.length) {
         const [options, trips] = await Promise.all([this.tripsApi.getFormOptions(), this.tripsApi.getTrips()]);
@@ -48,7 +49,7 @@ export class PaymentCenterComponent implements OnInit {
         this.settlements = [...receivables, ...payables];
       }
       else if (this.view === 'trip-summary' && this.tripId) this.summary = await this.api.tripSummary(this.tripId);
-      else if (this.view === 'overview') { const [receivables, payables, payments] = await Promise.all([this.api.receivables(this.tripId ? { tripId: this.tripId } : {}), this.api.payables(this.tripId ? { tripId: this.tripId } : {}), this.api.payments()]); this.records = [...receivables, ...payables]; this.payments = payments; }
+      else if (this.view === 'overview') { const [summary, receivables, payables, payments] = await Promise.all([this.tripId ? Promise.resolve(undefined) : this.api.summary(), this.api.receivables(this.tripId ? { tripId: this.tripId } : {}), this.api.payables(this.tripId ? { tripId: this.tripId } : {}), this.api.payments()]); this.financeSummary = summary; this.records = [...receivables, ...payables]; this.payments = payments; }
     } catch (e) { this.error = e instanceof Error ? e.message : 'Finance data could not be loaded.'; } finally { this.loading = false; }
   }
   get filtered(): FinanceRecord[] { const q = this.query.trim().toLowerCase(); const [partyType, partyId] = this.paymentPartyFilter.split(':'); return (this.view === 'payments' ? this.payments : this.records).filter(row => (!q || Object.values(row).some(v => String(v ?? '').toLowerCase().includes(q))) && (!this.statusFilter || this.text(row, 'status') === this.statusFilter) && (this.view !== 'payments' || !this.paymentPartyFilter || (this.text(row, 'paymentType', 'type') === partyType && this.text(row, 'partyId', 'buyingPartyId', 'sellingPartyId') === partyId))); }
@@ -102,7 +103,22 @@ export class PaymentCenterComponent implements OnInit {
     const max = Math.max(0, ...this.balanceComparison.map(item => item.value));
     return max ? value / max * 100 : 0;
   }
-  get metrics(): { label: string; value: number }[] { const receipts = this.payments.filter(p => p['isDeleted'] !== true && this.text(p, 'paymentType', 'type') === 'BUYER_RECEIPT' && this.text(p, 'status') === 'COMPLETED').reduce((s,p)=>s+this.money(p,'amount'),0); const payouts = this.payments.filter(p => p['isDeleted'] !== true && this.text(p, 'paymentType', 'type') === 'SELLER_PAYOUT' && this.text(p, 'status') === 'COMPLETED').reduce((s,p)=>s+this.money(p,'amount'),0); return [{label:'Buyer amounts due',value:this.records.filter(r=>this.isReceivable(r)).reduce((s,r)=>s+this.money(r,'amountDue','amount'),0)},{label:'Receipts collected',value:receipts},{label:'Seller amounts payable',value:this.records.filter(r=>!this.isReceivable(r)).reduce((s,r)=>s+this.money(r,'amountPayable','amount'),0)},{label:'Payouts made',value:payouts},{label:'Outstanding balance',value:this.records.reduce((s,r)=>s+this.money(r,'outstandingBalance','balance'),0)},{label:'Brokerage assessed',value:this.records.reduce((s,r)=>s+this.money(r,'brokerage','brokerageAmount'),0)}]; }
+  get metrics(): { label: string; value: number }[] {
+    if (this.financeSummary) return [
+      { label: 'Buyer amounts due', value: this.money(this.financeSummary, 'totalReceivable') },
+      { label: 'Receipts collected', value: this.money(this.financeSummary, 'totalReceived') },
+      { label: 'Seller amounts payable', value: this.money(this.financeSummary, 'totalPayable') },
+      { label: 'Payouts made', value: this.money(this.financeSummary, 'totalPaid') }
+    ];
+    const payments = this.payments.filter(payment => payment['isDeleted'] !== true && this.text(payment, 'status') === 'COMPLETED'
+      && (!this.tripId || this.text(payment, 'tripId') === this.tripId));
+    return [
+      { label: 'Buyer amounts due', value: this.records.filter(this.isReceivable, this).reduce((sum, row) => sum + this.money(row, 'amountDue', 'amount'), 0) },
+      { label: 'Receipts collected', value: payments.filter(payment => this.text(payment, 'paymentType', 'type') === 'BUYER_RECEIPT').reduce((sum, payment) => sum + this.money(payment, 'amount'), 0) },
+      { label: 'Seller amounts payable', value: this.records.filter(row => !this.isReceivable(row)).reduce((sum, row) => sum + this.money(row, 'amountPayable', 'amount'), 0) },
+      { label: 'Payouts made', value: payments.filter(payment => this.text(payment, 'paymentType', 'type') === 'SELLER_PAYOUT').reduce((sum, payment) => sum + this.money(payment, 'amount'), 0) }
+    ];
+  }
   setPaymentType(type: PaymentType): void { this.form.paymentType = type; this.form.partyId = null; this.parties = []; void this.loadPartyOptions(); }
   async loadPartyOptions(): Promise<void> { try { const options = await this.tripsApi.getFormOptions(); this.parties = this.form.paymentType === 'BUYER_RECEIPT' ? options.deliveryVendors : options.suppliers; } catch { this.error = 'Parties could not be loaded.'; } }
   async editPayment(payment: FinanceRecord): Promise<void> {

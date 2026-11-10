@@ -100,4 +100,19 @@ describe('FinanceApiService', () => {
 
     await expectAsync(updated).toBeResolvedTo(jasmine.objectContaining({ id: 23, isDeleted: true, isActive: false }));
   });
+
+  it('loads the finance summary with optional party filters', async () => {
+    const summary = service.summary({ buyingPartyId: '7', sellingPartyId: '9' });
+    const request = http.expectOne('http://localhost:8080/api/finance/summary?buyingPartyId=7&sellingPartyId=9');
+
+    expect(request.request.method).toBe('GET');
+    request.flush({ totalReceived: 125, totalReceivable: 300, totalPaid: 40, totalPayable: 80 });
+
+    await expectAsync(summary).toBeResolvedTo({
+      totalReceived: 125,
+      totalReceivable: 300,
+      totalPaid: 40,
+      totalPayable: 80
+    });
+  });
 });

@@ -62,16 +62,24 @@ export class FinanceApiService {
   payables(filters: { tripId?: string; sellingPartyId?: string } = {}): Promise<FinanceRecord[]> {
     return this.getList(`${this.baseUrl}/finance/payables`, filters).then(rows => rows.map(row => this.settlementRow(row, 'SELLER_PAYOUT')));
   }
+  async summary(filters: { buyingPartyId?: string; sellingPartyId?: string } = {}): Promise<FinanceRecord> {
+    const row = await firstValueFrom(this.http.get<FinanceRecord>(`${this.baseUrl}/finance/summary`, { params: this.params(filters) }));
+    return this.camelCaseRow(row);
+  }
   async tripSummary(tripId: string): Promise<FinanceRecord> {
     const rows = await this.getList(`${this.baseUrl}/finance/trips/summary`, { tripId });
     const row = this.camelCaseRow(rows[0] ?? {});
     return { ...row, collections: row['totalReceived'], payouts: row['totalPaidToSellers'], brokerage: row['brokerageAssessed'] };
   }
 
-  private async getList(url: string, values: Record<string, string | undefined> = {}): Promise<FinanceRecord[]> {
+  private params(values: Record<string, string | undefined>): HttpParams {
     let params = new HttpParams();
     for (const [key, value] of Object.entries(values)) if (value) params = params.set(key, value);
-    const response = await firstValueFrom(this.http.get<FinanceRecord[] | { items?: FinanceRecord[]; data?: FinanceRecord[] }>(url, { params }));
+    return params;
+  }
+
+  private async getList(url: string, values: Record<string, string | undefined> = {}): Promise<FinanceRecord[]> {
+    const response = await firstValueFrom(this.http.get<FinanceRecord[] | { items?: FinanceRecord[]; data?: FinanceRecord[] }>(url, { params: this.params(values) }));
     return Array.isArray(response) ? response : response.items ?? response.data ?? [];
   }
 
