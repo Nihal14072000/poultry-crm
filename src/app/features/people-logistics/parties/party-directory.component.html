@@ -1,0 +1,103 @@
+<section class="workspace-page">
+  <div class="page-heading">
+    <div>
+      <div class="eyebrow">Bilal Poultry <span>/</span> PEOPLE &amp; LOGISTICS</div>
+      <h1>{{ title }}</h1>
+      <p>Review all {{ partyType }} parties and their contact details.</p>
+    </div>
+    <div class="heading-actions">
+      <button class="button button-secondary" type="button" (click)="loadParties()" [disabled]="loading">↻ Refresh</button>
+      @if (canCreate) { <button class="button button-primary" type="button" (click)="openCreate()">＋ Add party</button> }
+    </div>
+  </div>
+
+  @if (successMessage) { <div class="success-banner" role="status">✓ {{ successMessage }}</div> }
+  @if (actionError && !editorOpen && !deleteCandidate) { <div class="page-error" role="alert">{{ actionError }}</div> }
+
+  <div class="directory-card">
+    <div class="directory-toolbar">
+      <div class="record-count"><strong>{{ records.length }}</strong> records <span>·</span> Updated just now</div>
+    </div>
+    @if (loading) {
+      <div class="state-panel" role="status"><span class="spinner"></span>Loading {{ title.toLowerCase() }}...</div>
+    } @else if (errorMessage) {
+      <div class="state-panel error" role="alert"><strong>Unable to load data</strong>{{ errorMessage }}</div>
+    } @else if (!records.length) {
+      <div class="state-panel empty"><strong>No {{ title.toLowerCase() }} found</strong><span>There are no party records to display.</span></div>
+    } @else {
+      <div class="table-scroll">
+        <table class="directory-table">
+          <thead>
+            <tr><th>PARTY ID</th><th>PARTY NAME</th><th>CONTACT</th><th>LOCATION</th><th>STATUS</th>@if (canUpdate || canDelete) { <th class="actions-heading">ACTIONS</th> }</tr>
+          </thead>
+          <tbody>
+            @for (record of records; track record['_demoId']) {
+              <tr>
+                <td>{{ record['_demoId'] || '—' }}</td>
+                <td class="primary-value"><a [routerLink]="['/people-logistics', partyType === 'buying' ? 'buying-parties' : 'selling-parties', record['_demoId']]">{{ record['name'] || '—' }}</a></td>
+                <td>{{ record['contact'] || '—' }}</td>
+                <td>{{ record['location'] || '—' }}</td>
+                <td><span class="status-badge" [class.positive]="record['status'] === 'Active'" [class.warning]="record['status'] === 'Inactive'" [class.muted]="record['status'] === 'Deleted'"><i></i>{{ record['status'] || '—' }}</span></td>
+                @if (canUpdate || canDelete) {
+                  <td class="row-actions">
+                    @if (record['isDeleted'] !== true && canUpdate) { <button type="button" (click)="openEdit(record)">Edit</button> }
+                    @if (record['isDeleted'] !== true && canDelete) { <button type="button" class="delete-action" (click)="requestDelete(record)">Delete</button> }
+                    @if (record['isDeleted'] === true) { <span class="immutable-label">Deleted</span> }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+  <p class="demo-note">Backend-connected · Showing all records returned by the {{ partyType }} parties API.</p>
+
+  @if (editorOpen) {
+    <div class="dialog-backdrop" (click)="closeEditor()">
+      <section class="record-dialog" role="dialog" aria-modal="true" [attr.aria-label]="(editorMode === 'create' ? 'Add ' : 'Edit ') + title" (click)="$event.stopPropagation()">
+        <div class="dialog-heading">
+          <div><h2>{{ editorMode === 'create' ? 'Add' : 'Edit' }} {{ partyType }} party</h2><p>{{ title }} · Saved to the backend.</p></div>
+          <button type="button" class="dialog-close" aria-label="Close" (click)="closeEditor()">×</button>
+        </div>
+        <form (ngSubmit)="createParty()" #partyFormElement="ngForm">
+          <div class="dialog-fields">
+            <label>Party name <span aria-hidden="true">*</span>
+              <input name="name" required maxlength="120" [(ngModel)]="partyForm.name" placeholder="Enter party name">
+            </label>
+            <label>Contact
+              <input name="contact" maxlength="120" [(ngModel)]="partyForm.contact" placeholder="Contact person or phone">
+            </label>
+            <label>Location
+              <input name="location" maxlength="200" [(ngModel)]="partyForm.location" placeholder="Address or location">
+            </label>
+            <label class="active-field"><input name="isActive" type="checkbox" [(ngModel)]="partyForm.isActive"> Active</label>
+          </div>
+          @if (formError) { <p class="dialog-error" role="alert">{{ formError }}</p> }
+          <div class="dialog-footer">
+            <button class="button button-secondary" type="button" (click)="closeEditor()" [disabled]="saving">Cancel</button>
+            <button class="button button-primary" type="submit" [disabled]="saving || partyFormElement.invalid">{{ saving ? 'Saving…' : editorMode === 'create' ? 'Save party' : 'Save changes' }}</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  }
+
+  @if (deleteCandidate) {
+    <div class="dialog-backdrop" (click)="cancelDelete()">
+      <section class="confirm-dialog" role="alertdialog" aria-modal="true" [attr.aria-label]="'Delete ' + title + ' record'" (click)="$event.stopPropagation()">
+        <div class="dialog-heading">
+          <div><h2>Delete party?</h2><p>This party will remain in the list as deleted, but will be marked inactive.</p></div>
+          <button type="button" class="dialog-close" aria-label="Close" (click)="cancelDelete()">×</button>
+        </div>
+        <p class="confirm-party-name">{{ deleteCandidate['name'] }}</p>
+        @if (actionError) { <p class="dialog-error" role="alert">{{ actionError }}</p> }
+        <div class="dialog-footer">
+          <button class="button button-secondary" type="button" (click)="cancelDelete()" [disabled]="saving">Cancel</button>
+          <button class="button button-danger" type="button" (click)="deleteParty()" [disabled]="saving">{{ saving ? 'Deleting…' : 'Delete party' }}</button>
+        </div>
+      </section>
+    </div>
+  }
+</section>

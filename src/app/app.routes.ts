@@ -147,6 +147,10 @@ export const routes: Routes = [
   sectionRoute('people-logistics', peoplePages, [
     { path: '', pathMatch: 'full', redirectTo: 'employees' },
     { path: 'fleet', redirectTo: 'vehicles', pathMatch: 'full' },
+    { path: 'buying-parties', canActivate: [requirePermissionGuard], data: { resource: 'suppliers', title: 'Buying parties', partyType: 'buying' }, loadComponent: () => import('./features/people-logistics/parties/party-directory.component').then((module) => module.PartyDirectoryComponent) },
+    { path: 'buying-parties/:partyId', canActivate: [requirePermissionGuard], data: { resource: 'suppliers', partyType: 'buying' }, loadComponent: () => import('./features/people-logistics/parties/party-details.component').then((module) => module.PartyDetailsComponent) },
+    { path: 'selling-parties', canActivate: [requirePermissionGuard], data: { resource: 'vendor-destinations', title: 'Selling parties', partyType: 'selling' }, loadComponent: () => import('./features/people-logistics/parties/party-directory.component').then((module) => module.PartyDirectoryComponent) },
+    { path: 'selling-parties/:partyId', canActivate: [requirePermissionGuard], data: { resource: 'vendor-destinations', partyType: 'selling' }, loadComponent: () => import('./features/people-logistics/parties/party-details.component').then((module) => module.PartyDetailsComponent) },
     { path: 'vehicle-assignments', canActivate: [requirePermissionGuard], data: { resource: 'vehicle-assignments' }, loadComponent: () => import('./features/people-logistics/vehicle-assignments/vehicle-assignments.component').then((module) => module.VehicleAssignmentsComponent) },
     { path: 'vendors/onboard', canActivate: [requirePermissionGuard], data: { resource: 'suppliers' }, loadComponent: () => import('./features/trading/vendor-onboarding/vendor-onboarding.component').then((module) => module.VendorOnboardingComponent) },
     { path: 'deliveries', canActivate: [requirePermissionGuard], data: { resource: 'deliveries' }, loadComponent: () => import('./features/people-logistics/trips/trip-deliveries.component').then((module) => module.TripDeliveriesComponent) },

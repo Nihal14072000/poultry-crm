@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TripRecord, TripVendorPickup } from '../../../common/models/trip.model';
 import { TripService } from '../../../common/services/trip.service';
 import { SessionAuthService } from '../../../common/services/session-auth.service';
+import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { FinanceApiService, FinanceRecord, PaymentMethod, PaymentType } from '../../../common/services/finance-api.service';
 import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 
@@ -64,7 +65,7 @@ export class TripDeliveriesComponent implements OnInit {
   showPaymentForm = false;
   editingPaymentId = '';
 
-  constructor(private readonly service: TripService, private readonly finance: FinanceApiService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService) {}
+  constructor(private readonly service: TripService, private readonly finance: FinanceApiService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService, readonly rolePermissions: RolePermissionService) {}
 
   async ngOnInit(): Promise<void> {
     const state = this.router.getCurrentNavigation()?.extras.state as { successMessage?: string } | undefined;
@@ -169,6 +170,7 @@ export class TripDeliveriesComponent implements OnInit {
   get currentDestination(): TripRecord | undefined { return this.destinations.find((destination) => this.id(destination) === this.activeOrderId); }
   get canEnterDelivery(): boolean { return ['In transit', 'Delivery in progress'].includes(String(this.trip?.['status'] ?? '')); }
   get canStartTrip(): boolean { return String(this.trip?.['status'] ?? '') === 'Assigned'; }
+  get canUpdateTrip(): boolean { return this.rolePermissions.can('trips', 'update'); }
   get paymentParties(): { id: string; name: string }[] {
     const destinations = this.destinations.map((party) => ({
       id: `SELLING:${String(party['vendorDestinationId'] ?? '')}`,

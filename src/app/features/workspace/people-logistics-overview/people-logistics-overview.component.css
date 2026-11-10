@@ -10,7 +10,7 @@
 .metric-grid { display: grid; gap: 12px; grid-template-columns: repeat(3,minmax(0,1fr)); margin-bottom: 15px; }
 .metric-card,.panel { background: #fff; border: 1px solid #e9ece7; border-radius: 9px; }
 .metric-card { display: flex; flex-direction: column; gap: 7px; padding: 17px 19px; }
-.metric-label { color: #89948b; font-size: 9px; font-weight: 700; letter-spacing: .7px; }
+.metric-label { color: #4a504b; font-size: 9px; font-weight: 700; letter-spacing: .7px; }
 .metric-card strong { color: #334239; font-size: 25px; line-height: 1; }
 .metric-card small { color: #858f87; font-size: 10px; }
 .data-grid { display: grid; gap: 15px; grid-template-columns: repeat(2,minmax(0,1fr)); }

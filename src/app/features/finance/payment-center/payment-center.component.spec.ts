@@ -101,4 +101,32 @@ describe('PaymentCenterComponent payment actions', () => {
 
     expect(component.paymentTrip({ tripId: 15 })).toEqual({ _demoId: '15', tripNumber: 'TR-0015' });
   });
+
+  it('builds a six-month cash-flow trend from completed, non-deleted payments', () => {
+    const thisMonth = new Date().toISOString().slice(0, 7);
+    component.payments = [
+      { status: 'COMPLETED', paymentType: 'BUYER_RECEIPT', amount: 125, paymentDate: `${thisMonth}-05` },
+      { status: 'COMPLETED', paymentType: 'SELLER_PAYOUT', amount: 40, paymentDate: `${thisMonth}-12` },
+      { status: 'PENDING', paymentType: 'BUYER_RECEIPT', amount: 70, paymentDate: `${thisMonth}-14` },
+      { status: 'COMPLETED', isDeleted: true, paymentType: 'BUYER_RECEIPT', amount: 20, paymentDate: `${thisMonth}-16` }
+    ];
+
+    expect(component.monthlyTrend).toHaveSize(6);
+    expect(component.monthlyTrend[5]).toEqual(jasmine.objectContaining({ month: thisMonth, receipts: 125, payouts: 40 }));
+    expect(component.trendPoints('receipts').split(' ')).toHaveSize(6);
+    expect(component.trendAxisValues).toEqual([125, 62.5, 0]);
+    expect(component.trendY(125)).toBe(18);
+  });
+
+  it('compares outstanding receivables and payables with a safe zero-value scale', () => {
+    component.records = [
+      { settlementType: 'BUYER_RECEIPT', outstandingBalance: 80 },
+      { settlementType: 'SELLER_PAYOUT', outstandingBalance: 40 }
+    ];
+
+    expect(component.balanceComparison.map(balance => balance.value)).toEqual([80, 40]);
+    expect(component.balanceWidth(40)).toBe(50);
+    component.records = [];
+    expect(component.balanceWidth(0)).toBe(0);
+  });
 });

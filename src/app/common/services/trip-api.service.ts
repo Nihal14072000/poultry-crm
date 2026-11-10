@@ -121,6 +121,18 @@ export interface TripDetailsResponse {
   deliveryEntries: TripRecord[];
 }
 
+export interface PartyDirectoryRecord {
+  [key: string]: string | number | boolean | undefined;
+  _demoId: string;
+  id: number;
+  name: string;
+  contact: string;
+  location: string;
+  isActive: boolean;
+  isDeleted: boolean;
+  status: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TripApiService {
   private readonly baseUrl = environment.apiUrl;
@@ -146,12 +158,37 @@ export class TripApiService {
     return {
       vehicles: vehicles.filter(this.isActive).map((vehicle) => this.vehicleRecord(vehicle)),
       drivers: drivers.filter(this.isActive).map((driver) => this.driverRecord(driver)),
-      suppliers: suppliers.filter(this.isActive).map((party) => this.partyRecord(party)),
+      suppliers: suppliers.map((party) => this.partyRecord(party)),
       supervisors: supervisors.filter(this.isActive).map((supervisor) => this.supervisorRecord(supervisor)),
-      deliveryVendors: deliveryVendors.filter(this.isActive).map((party) => this.partyRecord(party)),
+      deliveryVendors: deliveryVendors.map((party) => this.partyRecord(party)),
       trips: trips.filter((trip) => !trip['isDeleted']).map((trip) => this.tripRecord(trip, vehicleById, driverById)),
       orderTypeIds
     };
+  }
+
+  async getBuyingParties(): Promise<PartyDirectoryRecord[]> {
+    const parties = await firstValueFrom(this.http.get<ApiParty[]>(`${this.baseUrl}/buying-parties`));
+    return parties.map((party) => this.partyDirectoryRecord(party));
+  }
+
+  async getSellingParties(): Promise<PartyDirectoryRecord[]> {
+    const parties = await firstValueFrom(this.http.get<ApiParty[]>(`${this.baseUrl}/selling-parties`));
+    return parties.map((party) => this.partyDirectoryRecord(party));
+  }
+
+  async createParty(type: 'buying' | 'selling', party: { name: string; contact: string; location: string; isActive: boolean }): Promise<void> {
+    const endpoint = type === 'buying' ? 'buying-parties' : 'selling-parties';
+    await firstValueFrom(this.http.post(`${this.baseUrl}/${endpoint}`, { ...party, isDeleted: false }));
+  }
+
+  async updateParty(
+    type: 'buying' | 'selling',
+    id: string,
+    party: { name: string; contact: string; location: string; isActive: boolean; isDeleted: boolean }
+  ): Promise<void> {
+    const endpoint = type === 'buying' ? 'buying-parties' : 'selling-parties';
+    const partyId = this.parseId(id);
+    await firstValueFrom(this.http.put(`${this.baseUrl}/${endpoint}/${partyId}`, { ...party, id: partyId }));
   }
 
   async getTrips(): Promise<TripRecord[]> {
@@ -723,12 +760,26 @@ export class TripApiService {
   private partyRecord(party: ApiParty): TripRecord {
     return {
       _demoId: String(party.id),
+      id: party.id,
       name: String(party.name ?? ''),
       contact: String(party.contact ?? ''),
       location: String(party.location ?? ''),
       address: String(party.location ?? ''),
       phone: '',
-      status: party.isActive ? 'Active' : 'Inactive'
+      status: party.isDeleted ? 'Deleted' : party.isActive ? 'Active' : 'Inactive'
+    };
+  }
+
+  private partyDirectoryRecord(party: ApiParty): PartyDirectoryRecord {
+    return {
+      _demoId: String(party.id),
+      id: party.id,
+      name: String(party.name ?? ''),
+      contact: String(party.contact ?? ''),
+      location: String(party.location ?? ''),
+      isActive: party.isActive === true,
+      isDeleted: party.isDeleted === true,
+      status: party.isDeleted ? 'Deleted' : party.isActive ? 'Active' : 'Inactive'
     };
   }
 

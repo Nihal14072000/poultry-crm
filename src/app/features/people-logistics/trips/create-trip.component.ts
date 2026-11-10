@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TripExpenseInput, TripPaymentInput, TripRecord, VendorDeliveryInput, VendorPickupInput } from '../../../common/models/trip.model';
 import { DirectoryService } from '../../../common/services/directory.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
+import { SessionAuthService } from '../../../common/services/session-auth.service';
 import { summarizeTrip } from '../../../common/services/trip.service';
 import { TripApiService, TripFormOptions } from '../../../common/services/trip-api.service';
 import { firstValueFrom } from 'rxjs';
@@ -22,6 +23,58 @@ interface VendorDeliveryForm extends VendorDeliveryInput {
   feedQuantity: number | null;
   feedWeight: number | null;
   feedRate: number | null;
+}
+
+interface TripFormDraft {
+  version: 1;
+  selectedSupervisorId: string;
+  selectedVehicleId: string;
+  selectedDriverId: string;
+  route: string;
+  tripDate: string;
+  vendorPickups: VendorPickupForm[];
+  deliveryStops: VendorDeliveryForm[];
+  payments: TripPaymentInput[];
+  expenses: TripExpenseInput[];
+  nextPickupKey: number;
+  nextDeliveryKey: number;
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isNullableNumber(value: unknown): value is number | null {
+  return value === null || (typeof value === 'number' && Number.isFinite(value));
+}
+
+function isTripFormDraft(value: unknown): value is TripFormDraft {
+  if (!isObject(value) || value['version'] !== 1 ||
+    !['selectedSupervisorId', 'selectedVehicleId', 'selectedDriverId', 'route', 'tripDate'].every((key) => typeof value[key] === 'string') ||
+    !Number.isSafeInteger(value['nextPickupKey']) || !Number.isSafeInteger(value['nextDeliveryKey']) ||
+    !Array.isArray(value['vendorPickups']) || !Array.isArray(value['deliveryStops']) ||
+    !Array.isArray(value['payments']) || !Array.isArray(value['expenses'])) return false;
+
+  const isLine = (line: unknown): boolean => isObject(line) &&
+    ['quantity', 'weight', 'rate'].every((field) => isNullableNumber(line[field]));
+  const isPickup = (item: unknown): item is VendorPickupForm => isObject(item) &&
+    typeof item['key'] === 'number' && Number.isSafeInteger(item['key']) && typeof item['vendorId'] === 'string' &&
+    ['broiler', 'culls', 'feed'].every((kind) => isLine(item[kind]));
+  const isDelivery = (item: unknown): item is VendorDeliveryForm => isObject(item) &&
+    typeof item['key'] === 'number' && Number.isSafeInteger(item['key']) && typeof item['vendorDestinationId'] === 'string' &&
+    ['broilerQuantity', 'broilerWeight', 'broilerRate', 'cullsQuantity', 'cullsWeight', 'cullsRate',
+      'feedQuantity', 'feedWeight', 'feedRate'].every((field) => isNullableNumber(item[field]));
+  const isPayment = (item: unknown): item is TripPaymentInput => isObject(item) &&
+    ['paymentType', 'partyId', 'paymentDate', 'paymentMethod'].every((field) => typeof item[field] === 'string') &&
+    isNullableNumber(item['amount']) &&
+    (item['reference'] === undefined || typeof item['reference'] === 'string') &&
+    (item['note'] === undefined || typeof item['note'] === 'string');
+  const isExpense = (item: unknown): item is TripExpenseInput => isObject(item) &&
+    typeof item['category'] === 'string' && typeof item['expenseDate'] === 'string' &&
+    isNullableNumber(item['amount']) && (item['note'] === undefined || typeof item['note'] === 'string');
+
+  return value['vendorPickups'].every(isPickup) && value['deliveryStops'].every(isDelivery) &&
+    value['payments'].every(isPayment) && value['expenses'].every(isExpense);
 }
 
 function emptyPickup(key: number): VendorPickupForm {
@@ -76,13 +129,16 @@ export class CreateTripComponent implements OnInit {
   errorMessage = '';
   private nextPickupKey = 2;
   private nextDeliveryKey = 2;
+  private draftPersistenceEnabled = true;
+  private lastPersistedDraft = '';
 
   constructor(
     private readonly directories: DirectoryService,
     private readonly tripApi: TripApiService,
     private readonly activatedRoute: ActivatedRoute,
     private readonly router: Router,
-    readonly rolePermissions: RolePermissionService
+    readonly rolePermissions: RolePermissionService,
+    private readonly auth: SessionAuthService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -99,9 +155,7 @@ export class CreateTripComponent implements OnInit {
       this.drivers = options.drivers.filter((record) =>
         this.rolePermissions.canAccessRecord('employees', record)
       );
-      this.vendors = options.suppliers.filter((record) =>
-        this.rolePermissions.canAccessRecord('suppliers', record)
-      );
+      this.vendors = options.suppliers;
       this.supervisors = options.supervisors;
       this.deliveryVendors = options.deliveryVendors;
       this.savedRoutes = [...new Set(options.trips
@@ -156,8 +210,85 @@ export class CreateTripComponent implements OnInit {
         ? error.message
         : 'Vehicle, driver, vendor, or feed details could not be loaded. Refresh to try again.';
     } finally {
+      this.restoreDraft();
       this.loading = false;
     }
+  }
+
+  ngDoCheck(): void {
+    if (this.loading || !this.draftPersistenceEnabled || typeof window === 'undefined') return;
+    const serialized = JSON.stringify(this.currentDraft());
+    if (serialized === this.lastPersistedDraft) return;
+    try {
+      window.sessionStorage.setItem(this.draftStorageKey, serialized);
+      this.lastPersistedDraft = serialized;
+    } catch {
+      this.draftPersistenceEnabled = false;
+      this.errorMessage = 'The trip form could not be saved in this browser tab. Keep this page open until the trip is submitted.';
+    }
+  }
+
+  private get draftStorageKey(): string {
+    const user = this.auth.currentUser;
+    const userId = user?.id ?? user?._demoId ?? user?.email ?? 'anonymous';
+    return `trip-form-draft:${encodeURIComponent(String(userId))}:${this.editTripId || 'new'}`;
+  }
+
+  private currentDraft(): TripFormDraft {
+    return {
+      version: 1,
+      selectedSupervisorId: this.selectedSupervisorId,
+      selectedVehicleId: this.selectedVehicleId,
+      selectedDriverId: this.selectedDriverId,
+      route: this.route,
+      tripDate: this.tripDate,
+      vendorPickups: this.vendorPickups,
+      deliveryStops: this.deliveryStops,
+      payments: this.payments,
+      expenses: this.expenses,
+      nextPickupKey: this.nextPickupKey,
+      nextDeliveryKey: this.nextDeliveryKey
+    };
+  }
+
+  private restoreDraft(): void {
+    if (typeof window === 'undefined') return;
+    let stored: string | null;
+    try {
+      stored = window.sessionStorage.getItem(this.draftStorageKey);
+    } catch {
+      this.draftPersistenceEnabled = false;
+      this.errorMessage = 'The saved trip form could not be accessed in this browser tab.';
+      return;
+    }
+    if (!stored) return;
+
+    let draft: unknown;
+    try {
+      draft = JSON.parse(stored);
+    } catch {
+      this.draftPersistenceEnabled = false;
+      this.errorMessage = 'The saved trip form is invalid and was not restored. It remains in session storage.';
+      return;
+    }
+    if (!isTripFormDraft(draft)) {
+      this.draftPersistenceEnabled = false;
+      this.errorMessage = 'The saved trip form has an invalid format and was not restored. It remains in session storage.';
+      return;
+    }
+
+    this.selectedSupervisorId = draft.selectedSupervisorId;
+    this.selectedVehicleId = draft.selectedVehicleId;
+    this.selectedDriverId = draft.selectedDriverId;
+    this.route = draft.route;
+    this.tripDate = draft.tripDate;
+    this.vendorPickups = draft.vendorPickups;
+    this.deliveryStops = draft.deliveryStops;
+    this.payments = draft.payments;
+    this.expenses = draft.expenses;
+    this.nextPickupKey = Math.max(draft.nextPickupKey, ...draft.vendorPickups.map((pickup) => pickup.key + 1));
+    this.nextDeliveryKey = Math.max(draft.nextDeliveryKey, ...draft.deliveryStops.map((stop) => stop.key + 1));
+    this.lastPersistedDraft = stored;
   }
 
   recordId(record: TripRecord): string { return String(record['_demoId'] ?? ''); }
@@ -422,6 +553,7 @@ export class CreateTripComponent implements OnInit {
       } else {
         await this.tripApi.insertTrip(input, this.formOptions);
       }
+      if (typeof window !== 'undefined') window.sessionStorage.removeItem(this.draftStorageKey);
       await this.router.navigateByUrl('/people-logistics/trips', {
         state: { successMessage: this.editTripId ? 'Trip updated successfully.' : 'Trip created successfully.' }
       });

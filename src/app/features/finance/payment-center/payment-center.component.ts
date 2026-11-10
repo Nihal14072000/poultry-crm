@@ -11,6 +11,7 @@ import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 type View = 'overview' | 'receivables' | 'payables' | 'payments' | 'record' | 'allocate' | 'trip-summary';
 type FormValue = Omit<PaymentInput, 'partyId'> & { partyId: number | null };
 type PaymentPartyOption = TripRecord & { paymentType: PaymentType };
+type PaymentTrend = { label: string; month: string; receipts: number; payouts: number };
 
 @Component({ selector: 'app-payment-center', standalone: true, imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, StatusPillPipe], templateUrl: './payment-center.component.html', styleUrl: './payment-center.component.css' })
 export class PaymentCenterComponent implements OnInit {
@@ -54,6 +55,53 @@ export class PaymentCenterComponent implements OnInit {
   get completedPayments(): FinanceRecord[] { return this.payments.filter(p => p['isDeleted'] !== true && this.text(p, 'status') === 'COMPLETED'); }
   get selectedPayment(): FinanceRecord | undefined { return this.completedPayments.find(p => this.id(p) === this.selectedPaymentId); }
   get paymentRemaining(): number { return this.money(this.selectedPayment, 'remainingAmount', 'unallocatedAmount', 'amount') - Object.values(this.allocations).reduce((a, b) => a + (Number(b) || 0), 0); }
+  get monthlyTrend(): PaymentTrend[] {
+    const now = new Date();
+    const months = Array.from({ length: 6 }, (_, index) => {
+      const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5 + index, 1));
+      return {
+        month: date.toISOString().slice(0, 7),
+        label: new Intl.DateTimeFormat('en', { month: 'short', timeZone: 'UTC' }).format(date),
+        receipts: 0,
+        payouts: 0
+      };
+    });
+    for (const payment of this.payments) {
+      if (payment['isDeleted'] === true || this.text(payment, 'status') !== 'COMPLETED'
+        || (this.tripId && this.text(payment, 'tripId') !== this.tripId)) continue;
+      const date = new Date(this.text(payment, 'paymentDate', 'date', 'createdAt'));
+      if (!Number.isFinite(date.getTime())) continue;
+      const month = months.find(item => item.month === date.toISOString().slice(0, 7));
+      if (!month) continue;
+      const type = this.text(payment, 'paymentType', 'type');
+      if (type === 'BUYER_RECEIPT') month.receipts += this.money(payment, 'amount');
+      else if (type === 'SELLER_PAYOUT') month.payouts += this.money(payment, 'amount');
+    }
+    return months;
+  }
+  get balanceComparison(): { label: string; value: number }[] {
+    return [
+      { label: 'Receivables', value: this.records.filter(this.isReceivable, this).reduce((sum, row) => sum + this.money(row, 'outstandingBalance', 'amountDue', 'amount'), 0) },
+      { label: 'Payables', value: this.records.filter(row => !this.isReceivable(row)).reduce((sum, row) => sum + this.money(row, 'outstandingBalance', 'amountPayable', 'amount'), 0) }
+    ];
+  }
+  get trendMaximum(): number {
+    return Math.max(0, ...this.monthlyTrend.flatMap(month => [month.receipts, month.payouts]));
+  }
+  get trendAxisValues(): number[] {
+    return [this.trendMaximum, this.trendMaximum / 2, 0];
+  }
+  trendPoints(series: 'receipts' | 'payouts'): string {
+    const trend = this.monthlyTrend;
+    const max = Math.max(1, this.trendMaximum);
+    return trend.map((month, index) => `${this.trendX(index)},${this.trendY(month[series], max)}`).join(' ');
+  }
+  trendX(index: number): number { return index * (480 / (this.monthlyTrend.length - 1)); }
+  trendY(value: number, max = Math.max(1, this.trendMaximum)): number { return 150 - value / max * 132; }
+  balanceWidth(value: number): number {
+    const max = Math.max(0, ...this.balanceComparison.map(item => item.value));
+    return max ? value / max * 100 : 0;
+  }
   get metrics(): { label: string; value: number }[] { const receipts = this.payments.filter(p => p['isDeleted'] !== true && this.text(p, 'paymentType', 'type') === 'BUYER_RECEIPT' && this.text(p, 'status') === 'COMPLETED').reduce((s,p)=>s+this.money(p,'amount'),0); const payouts = this.payments.filter(p => p['isDeleted'] !== true && this.text(p, 'paymentType', 'type') === 'SELLER_PAYOUT' && this.text(p, 'status') === 'COMPLETED').reduce((s,p)=>s+this.money(p,'amount'),0); return [{label:'Buyer amounts due',value:this.records.filter(r=>this.isReceivable(r)).reduce((s,r)=>s+this.money(r,'amountDue','amount'),0)},{label:'Receipts collected',value:receipts},{label:'Seller amounts payable',value:this.records.filter(r=>!this.isReceivable(r)).reduce((s,r)=>s+this.money(r,'amountPayable','amount'),0)},{label:'Payouts made',value:payouts},{label:'Outstanding balance',value:this.records.reduce((s,r)=>s+this.money(r,'outstandingBalance','balance'),0)},{label:'Brokerage assessed',value:this.records.reduce((s,r)=>s+this.money(r,'brokerage','brokerageAmount'),0)}]; }
   setPaymentType(type: PaymentType): void { this.form.paymentType = type; this.form.partyId = null; this.parties = []; void this.loadPartyOptions(); }
   async loadPartyOptions(): Promise<void> { try { const options = await this.tripsApi.getFormOptions(); this.parties = this.form.paymentType === 'BUYER_RECEIPT' ? options.deliveryVendors : options.suppliers; } catch { this.error = 'Parties could not be loaded.'; } }

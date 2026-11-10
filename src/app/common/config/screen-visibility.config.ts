@@ -24,18 +24,19 @@ export const enabledFeatures = [
 ] as const;
 
 const allScreens: readonly ScreenResource[] = enabledFeatures;
+const organizationAdminScreens: readonly ScreenResource[] = [...allScreens, 'suppliers', 'vendor-destinations'];
 const organizationAdminActions: ActionGrants = {
-  create: allScreens,
-  update: allScreens,
-  delete: allScreens.filter((resource) => !['audit', 'reports', 'analytics'].includes(resource)),
-  transition: allScreens,
-  approve: allScreens,
-  export: allScreens,
-  manage: allScreens
+  create: organizationAdminScreens,
+  update: organizationAdminScreens,
+  delete: organizationAdminScreens.filter((resource) => !['audit', 'reports', 'analytics'].includes(resource)),
+  transition: organizationAdminScreens,
+  approve: organizationAdminScreens,
+  export: organizationAdminScreens,
+  manage: organizationAdminScreens
 };
 
 export const roleVisibility: Record<string, RoleVisibility> = {
-  'Organization Admin': { resources: allScreens, actions: organizationAdminActions },
+  'Organization Admin': { resources: organizationAdminScreens, actions: organizationAdminActions },
   Owner: { resources: allScreens, actions: { export: ['reports', 'analytics', 'profitability'] } },
   'Farm Manager': {
     resources: ['dashboard', 'farms', 'sheds', 'batches', 'daily-operations', 'broiler', 'layer', 'breeder', 'hatchery', 'feed-health', 'feed', 'health', 'medication', 'employees', 'documents', 'notifications', 'reports', 'analytics', 'audit'],
@@ -198,8 +199,6 @@ export const navigationScreenResources: Record<string, ScreenResource> = {
   '/inventory/stock': 'inventory',
   '/inventory/transfers': 'transfers',
   '/inventory/stock-ledger': 'stock-ledger',
-  '/trading/customers': 'customers',
-  '/trading/suppliers': 'suppliers',
   '/trading/sales': 'sales',
   '/trading/order-desk': 'orders',
   '/trading/quotations': 'quotations',
@@ -211,6 +210,8 @@ export const navigationScreenResources: Record<string, ScreenResource> = {
   '/customer-relations/follow-ups': 'follow-ups',
   '/customer-relations/complaints': 'complaints',
   '/people-logistics/employees': 'employees',
+  '/people-logistics/buying-parties': 'suppliers',
+  '/people-logistics/selling-parties': 'vendor-destinations',
   '/people-logistics/vehicles': 'vehicles',
   '/people-logistics/vehicle-assignments': 'vehicle-assignments',
   '/people-logistics/trips': 'trips',

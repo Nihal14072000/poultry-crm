@@ -17,6 +17,8 @@
 body { background: var(--canvas); color: var(--ink); margin: 0; min-width: 320px; }
 button,input,select,textarea { font: inherit; }
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible { outline: 3px solid #a3c793; outline-offset: 2px; }
+:where(.panel,.card,[class*="-card"]) { box-shadow: 0 2px 8px rgba(35,55,40,.06); }
+button,.button,[role="button"] { box-shadow: 0 1px 3px rgba(35,55,40,.12); }
 
 .status-pill { align-items: center; border-radius: 999px; display: inline-flex; font-size: 8px; font-weight: 600; line-height: 1.2; padding: 5px 8px; }
 .status-pill--completed { background: #e6f4ea !important; color: #27633f !important; }

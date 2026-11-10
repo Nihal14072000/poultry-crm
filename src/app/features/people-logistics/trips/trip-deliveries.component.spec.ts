@@ -2,6 +2,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FinanceApiService } from '../../../common/services/finance-api.service';
 import { TripDeliveryData } from '../../../common/services/trip-api.service';
 import { SessionAuthService } from '../../../common/services/session-auth.service';
+import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { TripService } from '../../../common/services/trip.service';
 import { TripDeliveriesComponent } from './trip-deliveries.component';
 
@@ -37,7 +38,8 @@ describe('TripDeliveriesComponent payments', () => {
       finance,
       route,
       router,
-      jasmine.createSpyObj<SessionAuthService>('SessionAuthService', [])
+      jasmine.createSpyObj<SessionAuthService>('SessionAuthService', []),
+      jasmine.createSpyObj<RolePermissionService>('RolePermissionService', ['can'])
     );
   });
 
@@ -45,6 +47,15 @@ describe('TripDeliveriesComponent payments', () => {
     await component.ngOnInit();
 
     expect(component.tripPayments).toEqual([{ id: 21, tripId: 12, amount: 25 }]);
+  });
+
+  it('allows adding a route stop or supplier pickup only with trip update permission', () => {
+    component.rolePermissions.can.and.returnValue(true);
+    expect(component.canUpdateTrip).toBeTrue();
+    expect(component.rolePermissions.can).toHaveBeenCalledWith('trips', 'update');
+
+    component.rolePermissions.can.and.returnValue(false);
+    expect(component.canUpdateTrip).toBeFalse();
   });
 
   it('shows actual supplier cost and completed seller payouts', () => {

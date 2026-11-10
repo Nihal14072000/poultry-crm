@@ -57,6 +57,8 @@ describe('RolePermissionService', () => {
     currentUser.role = 'Organization Admin';
 
     expect(service.canAccessRoute('users-roles')).toBeTrue();
+    expect(service.canAccessRoute('suppliers')).toBeTrue();
+    expect(service.canAccessRoute('vendor-destinations')).toBeTrue();
     expect(service.can('employees', 'update')).toBeTrue();
     expect(service.can('employees', 'delete')).toBeTrue();
     expect(service.can('reports', 'delete')).toBeFalse();

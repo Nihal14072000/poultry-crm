@@ -1,0 +1,43 @@
+<section class="party-page">
+  <a class="back-link" [routerLink]="['/people-logistics', partyType === 'buying' ? 'buying-parties' : 'selling-parties']">← Back to {{ partyType }} parties</a>
+  @if (loading) {
+    <div class="state" role="status">Loading party details…</div>
+  } @else if (errorMessage) {
+    <div class="state error" role="alert">{{ errorMessage }}</div>
+  } @else if (party) {
+    <header class="page-heading">
+      <div>
+        <div class="eyebrow">PEOPLE &amp; LOGISTICS <span>/</span> {{ partyType === 'buying' ? 'BUYING' : 'SELLING' }} PARTY</div>
+        <h1>{{ party.name }}</h1>
+        <p>{{ party.contact || 'No contact provided' }} · {{ party.location || 'No location provided' }}</p>
+      </div>
+      <label class="month-select">Month
+        <select [(ngModel)]="selectedMonth">
+          @for (month of months; track month.value) { <option [value]="month.value">{{ month.label }}</option> }
+        </select>
+      </label>
+    </header>
+
+    <section class="metrics" aria-label="Monthly payment summary">
+      <article><span>{{ receivedLabel }} · {{ selectedMonthLabel }}</span><strong>{{ receivedTotal | currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong></article>
+      <article><span>{{ dueLabel }} · {{ selectedMonthLabel }}</span><strong>{{ dueTotal | currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong></article>
+      <article><span>Trips covered till now</span><strong>{{ trips.length }}</strong></article>
+    </section>
+
+    <section class="trip-card">
+      <div class="card-heading"><div><h2>Trips covered till now</h2><p>All trips associated with {{ party.name }}.</p></div><strong>{{ trips.length }} trips</strong></div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>TRIP</th><th>DATE</th><th>ROUTE</th><th>STATUS</th></tr></thead>
+          <tbody>
+            @for (trip of trips; track trip['_demoId']) {
+              <tr><td><a [routerLink]="['/people-logistics/trips', trip['_demoId']]">{{ trip['tripNumber'] }}</a></td><td>{{ tripDate(trip) | date:'mediumDate' }}</td><td>{{ trip['route'] || '—' }}</td><td>{{ trip['status'] || '—' }}</td></tr>
+            } @empty {
+              <tr><td colspan="4" class="empty">No trips have been recorded for this party.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</section>

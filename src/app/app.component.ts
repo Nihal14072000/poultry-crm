@@ -85,6 +85,8 @@ export class AppComponent {
       label: 'People & logistics',
       links: [
         { label: 'Employees', path: '/people-logistics/employees', icon: 'employees' },
+        { label: 'Buying parties', path: '/people-logistics/buying-parties', icon: 'suppliers' },
+        { label: 'Selling parties', path: '/people-logistics/selling-parties', icon: 'customers' },
         { label: 'Vehicles', path: '/people-logistics/vehicles', icon: 'fleet' },
         { label: 'Vehicle assignments', path: '/people-logistics/vehicle-assignments', icon: 'dispatch' },
         { label: 'Trips', path: '/people-logistics/trips', icon: 'dispatch' },

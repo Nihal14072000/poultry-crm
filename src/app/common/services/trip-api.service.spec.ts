@@ -50,19 +50,25 @@ describe('TripApiService', () => {
 
   afterEach(() => http.verify());
 
-  it('loads unified drivers and supervisors from their existing endpoints', async () => {
+  it('loads all supplier and delivery party records from their endpoints', async () => {
     const result = service.getFormOptions();
     http.expectOne('http://localhost:8080/api/vehicles').flush([]);
     http.expectOne('http://localhost:8080/api/drivers').flush([{
       id: 12, name: 'Asha Patil', address: 'Nashik', number: 'DL-12', type: 'DRIVER', status: 'Active',
       isActive: true, isDeleted: false, createDate: null, updatedDate: null, createdBy: null, updatedBy: null
     }]);
-    http.expectOne('http://localhost:8080/api/buying-parties').flush([]);
+    http.expectOne('http://localhost:8080/api/buying-parties').flush([
+      { id: 31, name: 'Active supplier', location: 'Nashik', isActive: true, isDeleted: false },
+      { id: 32, name: 'Inactive supplier', location: 'Pune', isActive: false, isDeleted: false }
+    ]);
     http.expectOne('http://localhost:8080/api/supervisors').flush([{
       id: 41, name: 'Supervisor One', address: 'Pune', number: 'SUP-41', type: 'SUPERVISOR', status: 'Active',
       isActive: true, isDeleted: false, createDate: null, updatedDate: null, createdBy: null, updatedBy: null
     }]);
-    http.expectOne('http://localhost:8080/api/selling-parties').flush([]);
+    http.expectOne('http://localhost:8080/api/selling-parties').flush([
+      { id: 51, name: 'Active delivery vendor', location: 'Pune', isActive: true, isDeleted: false },
+      { id: 52, name: 'Inactive delivery vendor', location: 'Mumbai', isActive: false, isDeleted: false }
+    ]);
     http.expectOne('http://localhost:8080/api/trips').flush([]);
     http.expectOne('http://localhost:8080/api/order-types').flush([
       { id: 1, name: 'Broiler', isActive: true, isDeleted: false },
@@ -77,6 +83,84 @@ describe('TripApiService', () => {
     expect(options.supervisors).toEqual([{
       _demoId: '41', name: 'Supervisor One', address: 'Pune', number: 'SUP-41', status: 'Active'
     }]);
+    expect(options.suppliers.map((supplier) => supplier['name'])).toEqual(['Active supplier', 'Inactive supplier']);
+    expect(options.deliveryVendors.map((vendor) => vendor['name'])).toEqual(['Active delivery vendor', 'Inactive delivery vendor']);
+  });
+
+  it('returns every buying party, including inactive and deleted records', async () => {
+    const result = service.getBuyingParties();
+    http.expectOne('http://localhost:8080/api/buying-parties').flush([
+      { id: 31, name: 'Active supplier', isActive: true, isDeleted: false },
+      { id: 32, name: 'Inactive supplier', isActive: false, isDeleted: false },
+      { id: 33, name: 'Deleted supplier', isActive: true, isDeleted: true }
+    ]);
+
+    await expectAsync(result).toBeResolvedTo([
+      jasmine.objectContaining({ _demoId: '31', name: 'Active supplier', status: 'Active' }),
+      jasmine.objectContaining({ _demoId: '32', name: 'Inactive supplier', status: 'Inactive' }),
+      jasmine.objectContaining({ _demoId: '33', name: 'Deleted supplier', status: 'Deleted' })
+    ]);
+  });
+
+  it('returns every selling party without filtering inactive records', async () => {
+    const result = service.getSellingParties();
+    http.expectOne('http://localhost:8080/api/selling-parties').flush([
+      { id: 51, name: 'Active buyer', isActive: true, isDeleted: false },
+      { id: 52, name: 'Inactive buyer', isActive: false, isDeleted: false }
+    ]);
+
+    await expectAsync(result).toBeResolvedTo([
+      jasmine.objectContaining({ _demoId: '51', name: 'Active buyer', status: 'Active' }),
+      jasmine.objectContaining({ _demoId: '52', name: 'Inactive buyer', status: 'Inactive' })
+    ]);
+  });
+
+  it('posts a buying party to the buying-parties endpoint', async () => {
+    const party = { name: 'Farm supplier', contact: 'Pat', location: 'Nashik', isActive: true };
+    const result = service.createParty('buying', party);
+    const request = http.expectOne('http://localhost:8080/api/buying-parties');
+
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ ...party, isDeleted: false });
+    request.flush({ id: 33 });
+
+    await expectAsync(result).toBeResolved();
+  });
+
+  it('posts a selling party to the selling-parties endpoint', async () => {
+    const party = { name: 'Market buyer', contact: 'Receiving', location: 'Pune', isActive: false };
+    const result = service.createParty('selling', party);
+    const request = http.expectOne('http://localhost:8080/api/selling-parties');
+
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ ...party, isDeleted: false });
+    request.flush({ id: 54 });
+
+    await expectAsync(result).toBeResolved();
+  });
+
+  it('updates a party through its matching endpoint with the party ID', async () => {
+    const party = { name: 'Farm supplier', contact: 'Pat', location: 'Nashik', isActive: true, isDeleted: false };
+    const result = service.updateParty('buying', '33', party);
+    const request = http.expectOne('http://localhost:8080/api/buying-parties/33');
+
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({ ...party, id: 33 });
+    request.flush({ id: 33 });
+
+    await expectAsync(result).toBeResolved();
+  });
+
+  it('soft-deletes a selling party using the update endpoint', async () => {
+    const party = { name: 'Market buyer', contact: 'Receiving', location: 'Pune', isActive: false, isDeleted: true };
+    const result = service.updateParty('selling', '54', party);
+    const request = http.expectOne('http://localhost:8080/api/selling-parties/54');
+
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({ ...party, id: 54 });
+    request.flush({ id: 54 });
+
+    await expectAsync(result).toBeResolved();
   });
 
   it('lists only trips assigned to the signed-in driver', async () => {

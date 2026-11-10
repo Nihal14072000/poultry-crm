@@ -91,13 +91,13 @@
               <span class="vendor-number">{{ (index + 1) | number:'2.0-0' }}</span>
               <label>Vendor name <span class="required">*</span>
                 <select [name]="'vendor-' + vendorPickup.key" required [(ngModel)]="vendorPickup.vendorId">
-                <option value="">Select an active supplier</option>
+                <option value="">Select a supplier</option>
                   @for (vendor of availableVendors(vendorPickup); track vendor['_demoId']) {
                     <option [value]="vendor['_demoId']">{{ vendor['name'] }} · {{ vendor['location'] }}</option>
                   }
                 </select>
                 @if (vendorError(vendorPickup)) { <small class="field-error">{{ vendorError(vendorPickup) }}</small> }
-                  @if (!vendors.length) { <small class="field-hint">No active suppliers are available to you.</small> }
+                  @if (!vendors.length) { <small class="field-hint">No suppliers are available.</small> }
               </label>
               @if (vendorPickups.length > 1) {
                 <button class="remove-vendor" type="button" (click)="removeVendor(vendorPickup.key)" [attr.aria-label]="'Remove supplier pickup ' + (index + 1)">Remove</button>
@@ -135,7 +135,7 @@
         }
         @if (!vendorPickups.length) { <p class="field-error pickup-error" role="alert">Add at least one supplier pickup.</p> }
         <div class="delivery-actions">
-          <a class="button button-secondary onboard-link-btn" routerLink="/trading/onboarding" [queryParams]="{ type: 'supplier' }">+ Onboard supplier</a>
+          <a class="button button-secondary onboard-link-btn" routerLink="/people-logistics/buying-parties">+ Onboard supplier</a>
           <button class="button button-secondary add-vendor" type="button" (click)="addVendor()" [disabled]="vendorPickups.length >= vendors.length">＋ Add vendor</button>
         </div>
       </section>
@@ -143,10 +143,10 @@
       <section class="panel assignment-panel">
         <div class="section-heading"><span class="section-icon" aria-hidden="true">03</span><div><span class="step">VENDOR SALES</span><h2>Supervisor & vendor destinations</h2></div></div>
         <p class="delivery-plan-hint">Plan bird and feed quantities, weights, and rates for each vendor destination. Sales totals use weight × rate; actual handoffs are entered by the assigned Supervisor.</p>
-        @if (!deliveryVendors.length) { <p class="field-hint">Add active delivery vendors in Trading → Delivery vendors before creating a trip.</p> }
+        @if (!deliveryVendors.length) { <p class="field-hint">Add delivery vendors in Trading → Delivery vendors before creating a trip.</p> }
         @for (stop of deliveryStops; track stop.key; let index = $index) {
           <div class="vendor-card">
-            <div class="vendor-card-heading"><span class="vendor-number">{{ (index + 1) | number:'2.0-0' }}</span><label>Delivery vendor <span class="required">*</span><select [name]="'delivery-vendor-' + stop.key" [(ngModel)]="stop.vendorDestinationId"><option value="">Select an active delivery vendor</option>@for (vendor of availableDeliveryVendors(stop); track vendor['_demoId']) { <option [value]="vendor['_demoId']">{{ vendor['name'] }} · {{ vendor['address'] }}</option> }</select></label>@if (deliveryStops.length > 1) { <button class="remove-vendor" type="button" (click)="removeDeliveryStop(stop.key)">Remove</button> }</div>
+            <div class="vendor-card-heading"><span class="vendor-number">{{ (index + 1) | number:'2.0-0' }}</span><label>Delivery vendor <span class="required">*</span><select [name]="'delivery-vendor-' + stop.key" [(ngModel)]="stop.vendorDestinationId"><option value="">Select a delivery vendor</option>@for (vendor of availableDeliveryVendors(stop); track vendor['_demoId']) { <option [value]="vendor['_demoId']">{{ vendor['name'] }} · {{ vendor['address'] }}</option> }</select></label>@if (deliveryStops.length > 1) { <button class="remove-vendor" type="button" (click)="removeDeliveryStop(stop.key)">Remove</button> }</div>
             @if (selectedDeliveryVendor(stop); as destination) { <p class="field-hint destination-meta">{{ destination['address'] }} · {{ destination['contact'] || 'No contact' }} {{ destination['phone'] || '' }}</p> }
             <div class="pickup-table-wrap">
               <table class="pickup-table delivery-plan-table">
@@ -180,7 +180,7 @@
           </div>
         }
         <div class="delivery-actions">
-          <a class="button button-secondary onboard-link-btn" routerLink="/trading/onboarding" [queryParams]="{ type: 'delivery-vendor' }">+ Onboard vendor</a>
+          <a class="button button-secondary onboard-link-btn" routerLink="/people-logistics/selling-parties">+ Onboard vendor</a>
           <button class="button button-secondary add-vendor" type="button" (click)="addDeliveryStop()" [disabled]="deliveryStops.length >= deliveryVendors.length">＋ Add destination</button>
         </div>
         @if (submitted && deliveryStopError) { <p class="field-error pickup-error" role="alert">{{ deliveryStopError }}</p> }

@@ -32,6 +32,38 @@
   @if (loading) { <section class="state">Loading finance data…</section> } @else if (view === 'overview') {
   <section class="metrics">@for (metric of metrics; track metric.label) { <article><span>{{ metric.label
         }}</span><strong>{{ metric.value | currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong></article> }</section>
+  <section class="finance-charts" aria-label="Finance charts">
+    <article class="chart-card">
+      <div class="chart-heading"><div><h2>Cash flow</h2><p>Completed receipts and payouts · last 6 months</p></div></div>
+      <div class="chart-body">
+        <div class="chart-y-labels">@for (value of trendAxisValues; track $index) { <span>{{ value | currency:'INR':'symbol':'1.0-0':'en-IN' }}</span> }</div>
+        <div class="chart-plot">
+          <div class="chart-lines"><i></i><i></i><i></i></div>
+          <svg viewBox="0 0 480 165" preserveAspectRatio="none" role="img" aria-label="Monthly completed receipts and payouts trend">
+            <polyline [attr.points]="trendPoints('receipts')" fill="none" stroke="#4b8b5a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
+            <polyline [attr.points]="trendPoints('payouts')" fill="none" stroke="#d3a25a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
+            @for (month of monthlyTrend; track month.month; let i = $index) {
+              <circle class="trend-point" [attr.cx]="trendX(i)" [attr.cy]="trendY(month.receipts)" r="4" fill="#4b8b5a" tabindex="0" [attr.aria-label]="month.label + ' receipts: ' + (month.receipts | currency:'INR':'symbol':'1.2-2':'en-IN')"><title>{{ month.label }} receipts: {{ month.receipts | currency:'INR':'symbol':'1.2-2':'en-IN' }}</title></circle>
+              <circle class="trend-point" [attr.cx]="trendX(i)" [attr.cy]="trendY(month.payouts)" r="4" fill="#d3a25a" tabindex="0" [attr.aria-label]="month.label + ' payouts: ' + (month.payouts | currency:'INR':'symbol':'1.2-2':'en-IN')"><title>{{ month.label }} payouts: {{ month.payouts | currency:'INR':'symbol':'1.2-2':'en-IN' }}</title></circle>
+            }
+          </svg>
+          <div class="chart-x-labels">@for (month of monthlyTrend; track month.month) { <span>{{ month.label }}</span> }</div>
+        </div>
+      </div>
+      <div class="chart-legend"><span><i class="receipt-dot"></i>Receipts</span><span><i class="payout-dot"></i>Payouts</span></div>
+    </article>
+    <article class="chart-card">
+      <div class="chart-heading"><div><h2>Outstanding balances</h2><p>Receivables compared with payables</p></div></div>
+      <div class="balance-chart">
+        @for (balance of balanceComparison; track balance.label) {
+          <div class="balance-row">
+            <div class="balance-label"><span>{{ balance.label }}</span><strong>{{ balance.value | currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong></div>
+            <div class="balance-track"><div [class.payable-bar]="balance.label === 'Payables'" [style.width.%]="balanceWidth(balance.value)"></div></div>
+          </div>
+        }
+      </div>
+    </article>
+  </section>
   <section class="panel">
     <h2>Open settlements</h2>
     <p class="muted">Use receivables and payables for the complete balance details.</p><ng-container

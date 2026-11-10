@@ -39,6 +39,8 @@ describe('AppComponent', () => {
     expect(groupLabels).toContain('Customer relations');
     expect(groupLabels).toContain('Inventory');
     expect(compiled.querySelector('.nav-link[href="/people-logistics/vehicle-assignments"]')).toBeTruthy();
+    expect(compiled.querySelector('.nav-link[href="/people-logistics/buying-parties"]')).toBeTruthy();
+    expect(compiled.querySelector('.nav-link[href="/people-logistics/selling-parties"]')).toBeTruthy();
     expect(app.navigation.flatMap((group) => group.links)
       .every((link) => !!navigationScreenResources[link.path])).toBeTrue();
   });
