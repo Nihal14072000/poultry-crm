@@ -104,9 +104,10 @@
               } @else if (resource === 'employees' && column.key === 'type') {
                 <ng-select class="app-select" labelForId="editor-employee-type" [(ngModel)]="editorRecord[column.key]" [ngModelOptions]="{standalone: true}" [attr.aria-invalid]="showFieldError(column.key)" [attr.aria-describedby]="showFieldError(column.key) ? 'field-error-' + column.key : null" [clearable]="false">
                   <ng-option value="">Select employee type</ng-option>
-                  <ng-option value="DRIVER">DRIVER</ng-option>
-                  <ng-option value="SUPERVISOR">SUPERVISOR</ng-option>
-                  <ng-option value="ACCOUNTANT">ACCOUNTANT</ng-option>
+                  <ng-option value="DRIVER">Driver</ng-option>
+                  <ng-option value="SUPERVISOR">Supervisor</ng-option>
+                  <ng-option value="ACCOUNTANT">Accountant</ng-option>
+                  <ng-option value="LABOUR">Labour</ng-option>
                 </ng-select>
               } @else {
                 <input [type]="fieldInputType(column.key)" [attr.min]="minimumValue(column.key)" [attr.max]="percentageMax(column.key)" [attr.maxlength]="maxFieldLength(column.key)" [attr.required]="!['notes', 'note', 'comments', 'remark', 'email', 'assignedTo'].includes(column.key) ? true : null" [attr.list]="editorMode === 'create' && suggestionsFor(column.key).length ? suggestionsId(column.key) : null" [(ngModel)]="editorRecord[column.key]" [ngModelOptions]="{standalone: true}" [placeholder]="'Enter ' + column.label.toLowerCase()" [attr.aria-invalid]="showFieldError(column.key)" [attr.aria-describedby]="showFieldError(column.key) ? 'field-error-' + column.key : null">

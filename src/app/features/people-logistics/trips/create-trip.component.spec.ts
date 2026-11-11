@@ -10,6 +10,7 @@ describe('CreateTripComponent draft persistence', () => {
   const options: TripFormOptions = {
     vehicles: [],
     drivers: [],
+    labourers: [],
     suppliers: [],
     supervisors: [],
     deliveryVendors: [],
@@ -47,6 +48,7 @@ describe('CreateTripComponent draft persistence', () => {
     await first.ngOnInit();
     first.selectedVehicleId = '21';
     first.selectedDriverId = '12';
+    first.selectedLabourId = '13';
     first.selectedSupervisorId = '41';
     first.route = 'Nashik to Pune';
     first.tripDate = '2026-11-10';
@@ -73,6 +75,7 @@ describe('CreateTripComponent draft persistence', () => {
 
     expect(restored.selectedVehicleId).toBe('21');
     expect(restored.selectedDriverId).toBe('12');
+    expect(restored.selectedLabourId).toBe('13');
     expect(restored.selectedSupervisorId).toBe('41');
     expect(restored.route).toBe('Nashik to Pune');
     expect(restored.tripDate).toBe('2026-11-10');

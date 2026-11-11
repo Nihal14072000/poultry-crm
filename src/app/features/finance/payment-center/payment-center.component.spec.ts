@@ -22,6 +22,7 @@ describe('PaymentCenterComponent payment actions', () => {
     tripsApi.getFormOptions.and.resolveTo({
       vehicles: [],
       drivers: [],
+      labourers: [],
       suppliers: [],
       supervisors: [],
       deliveryVendors: [],
@@ -83,6 +84,7 @@ describe('PaymentCenterComponent payment actions', () => {
     tripsApi.getFormOptions.and.resolveTo({
       vehicles: [],
       drivers: [],
+      labourers: [],
       suppliers: [{ _demoId: '7', name: 'Buyer party' }],
       supervisors: [],
       deliveryVendors: [{ _demoId: '7', name: 'Seller party' }],

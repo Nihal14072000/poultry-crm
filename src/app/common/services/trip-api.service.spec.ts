@@ -13,6 +13,7 @@ describe('TripApiService', () => {
   const options: TripFormOptions = {
     vehicles: [{ _demoId: '21', vehicle: 'MH-12-AB-4521', type: 'Truck', status: 'Active' }],
     drivers: [{ _demoId: '12', name: 'Asha Patil', address: 'Nashik', number: 'DL-12', status: 'Active' }],
+    labourers: [{ _demoId: '13', name: 'Ravi Labour', address: 'Nashik', number: '', status: 'Active' }],
     suppliers: [{ _demoId: '31', name: 'Farm Vendor', contact: 'Vendor Desk', location: 'Nashik', status: 'Active' }],
     supervisors: [{ _demoId: '41', name: 'Supervisor One', address: 'Pune', number: 'SUP-41', status: 'Active' }],
     deliveryVendors: [{ _demoId: '51', name: 'Market Vendor', contact: 'Receiving', location: 'Pune', status: 'Active' }],
@@ -24,6 +25,7 @@ describe('TripApiService', () => {
     tripDate: '2026-10-23',
     vehicleId: '21',
     driverId: '12',
+    labourId: '13',
     supervisorId: '41',
     route: 'Nashik to Pune',
     vendorPickups: [{
@@ -57,6 +59,11 @@ describe('TripApiService', () => {
       id: 12, name: 'Asha Patil', address: 'Nashik', number: 'DL-12', type: 'DRIVER', status: 'Active',
       isActive: true, isDeleted: false, createDate: null, updatedDate: null, createdBy: null, updatedBy: null
     }]);
+    http.expectOne('http://localhost:8080/api/employees').flush([
+      { id: 13, name: 'Ravi Labour', address: 'Nashik', number: '', type: 'LABOUR', status: 'Active', isActive: true, isDeleted: false },
+      { id: 14, name: 'Inactive Labour', address: 'Nashik', number: '', type: 'LABOUR', status: 'Inactive', isActive: false, isDeleted: false },
+      { id: 15, name: 'Another Driver', address: 'Nashik', number: '', type: 'DRIVER', status: 'Active', isActive: true, isDeleted: false }
+    ]);
     http.expectOne('http://localhost:8080/api/buying-parties').flush([
       { id: 31, name: 'Active supplier', location: 'Nashik', isActive: true, isDeleted: false },
       { id: 32, name: 'Inactive supplier', location: 'Pune', isActive: false, isDeleted: false }
@@ -79,6 +86,9 @@ describe('TripApiService', () => {
     const options = await result;
     expect(options.drivers).toEqual([{
       _demoId: '12', name: 'Asha Patil', address: 'Nashik', number: 'DL-12', status: 'Active'
+    }]);
+    expect(options.labourers).toEqual([{
+      _demoId: '13', name: 'Ravi Labour', address: 'Nashik', number: '', status: 'Active'
     }]);
     expect(options.supervisors).toEqual([{
       _demoId: '41', name: 'Supervisor One', address: 'Pune', number: 'SUP-41', status: 'Active'
@@ -213,6 +223,10 @@ describe('TripApiService', () => {
         id: 12, name: 'Asha Patil', address: 'Nashik', number: 'DL-12', status: 'Active',
         isActive: true, isDeleted: false
       },
+      labour: {
+        id: 13, name: 'Ravi Labour', address: 'Nashik', number: '', status: 'Active',
+        isActive: true, isDeleted: false
+      },
       supervisor: {
         id: 41, name: 'Supervisor One', address: 'Pune', number: 'SUP-41', status: 'Active',
         isActive: true, isDeleted: false
@@ -244,6 +258,26 @@ describe('TripApiService', () => {
     request.flush({ tripId: 107, date: '2026-10-23', route: 'Nashik to Pune', status: 'Assigned' });
 
     await expectAsync(result).toBeResolvedTo(jasmine.objectContaining({ _demoId: '107', tripDate: '2026-10-23' }));
+  });
+
+  it('sends the selected labour employee when updating a trip', async () => {
+    const result = service.updateTrip('107', input, options);
+    http.expectOne('http://localhost:8080/api/trips/107').flush({
+      tripId: 107, date: '2026-10-23', route: 'Nashik to Pune', status: 'Assigned'
+    });
+    const request = http.expectOne('http://localhost:8080/api/trips/107/update');
+
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual(jasmine.objectContaining({
+      labour: {
+        id: 13, name: 'Ravi Labour', address: 'Nashik', number: '', status: 'Active',
+        isActive: true, isDeleted: false
+      },
+      tripId: 107
+    }));
+    request.flush({ tripId: 107, date: '2026-10-23', route: 'Nashik to Pune', status: 'Assigned' });
+
+    await expectAsync(result).toBeResolved();
   });
 
   it('deletes a trip through the trips API', async () => {

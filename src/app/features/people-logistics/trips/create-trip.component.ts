@@ -30,6 +30,7 @@ interface TripFormDraft {
   selectedSupervisorId: string;
   selectedVehicleId: string;
   selectedDriverId: string;
+  selectedLabourId?: string;
   route: string;
   tripDate: string;
   vendorPickups: VendorPickupForm[];
@@ -51,6 +52,7 @@ function isNullableNumber(value: unknown): value is number | null {
 function isTripFormDraft(value: unknown): value is TripFormDraft {
   if (!isObject(value) || value['version'] !== 1 ||
     !['selectedSupervisorId', 'selectedVehicleId', 'selectedDriverId', 'route', 'tripDate'].every((key) => typeof value[key] === 'string') ||
+    (value['selectedLabourId'] !== undefined && typeof value['selectedLabourId'] !== 'string') ||
     !Number.isSafeInteger(value['nextPickupKey']) || !Number.isSafeInteger(value['nextDeliveryKey']) ||
     !Array.isArray(value['vendorPickups']) || !Array.isArray(value['deliveryStops']) ||
     !Array.isArray(value['payments']) || !Array.isArray(value['expenses'])) return false;
@@ -107,6 +109,7 @@ function today(): string {
 export class CreateTripComponent implements OnInit {
   vehicles: TripRecord[] = [];
   drivers: TripRecord[] = [];
+  labourers: TripRecord[] = [];
   vendors: TripRecord[] = [];
   supervisors: TripRecord[] = [];
   deliveryVendors: TripRecord[] = [];
@@ -116,6 +119,7 @@ export class CreateTripComponent implements OnInit {
   savedRoutes: string[] = [];
   selectedVehicleId = '';
   selectedDriverId = '';
+  selectedLabourId = '';
   route = '';
   tripDate = today();
   feedUnit = '';
@@ -155,6 +159,9 @@ export class CreateTripComponent implements OnInit {
       this.drivers = options.drivers.filter((record) =>
         this.rolePermissions.canAccessRecord('employees', record)
       );
+      this.labourers = options.labourers.filter((record) =>
+        this.rolePermissions.canAccessRecord('employees', record)
+      );
       this.vendors = options.suppliers;
       this.supervisors = options.supervisors;
       this.deliveryVendors = options.deliveryVendors;
@@ -177,6 +184,7 @@ export class CreateTripComponent implements OnInit {
         const trip = details.trip;
         this.selectedVehicleId = String(trip['vehicleId'] ?? '');
         this.selectedDriverId = String(trip['driverId'] ?? '');
+        this.selectedLabourId = String(trip['labourId'] ?? '');
         this.route = String(trip['route'] ?? '');
         this.selectedSupervisorId = String(trip['supervisorId'] ?? '');
         try {
@@ -240,6 +248,7 @@ export class CreateTripComponent implements OnInit {
       selectedSupervisorId: this.selectedSupervisorId,
       selectedVehicleId: this.selectedVehicleId,
       selectedDriverId: this.selectedDriverId,
+      selectedLabourId: this.selectedLabourId,
       route: this.route,
       tripDate: this.tripDate,
       vendorPickups: this.vendorPickups,
@@ -280,6 +289,7 @@ export class CreateTripComponent implements OnInit {
     this.selectedSupervisorId = draft.selectedSupervisorId;
     this.selectedVehicleId = draft.selectedVehicleId;
     this.selectedDriverId = draft.selectedDriverId;
+    this.selectedLabourId = draft.selectedLabourId ?? '';
     this.route = draft.route;
     this.tripDate = draft.tripDate;
     this.vendorPickups = draft.vendorPickups;
@@ -380,6 +390,7 @@ export class CreateTripComponent implements OnInit {
       tripDate: this.tripDate,
       vehicleId: this.selectedVehicleId,
       driverId: this.selectedDriverId,
+      labourId: this.selectedLabourId,
       route: this.route,
       vendorPickups: this.vendorPickups
     });
@@ -519,7 +530,7 @@ export class CreateTripComponent implements OnInit {
       this.errorMessage = 'Trip reference data is unavailable. Reload the page before saving.';
       return;
     }
-    if (!this.selectedVehicleId || !this.selectedDriverId || !this.route.trim() ||
+    if (!this.selectedVehicleId || !this.selectedDriverId || !this.selectedLabourId || !this.route.trim() ||
     !this.tripDate ||
       !this.vendorPickups.length || this.hasPickupError || this.capacityError || this.financeError || !this.feedUnit ||
       !this.selectedSupervisorId || this.deliveryStopError) {
@@ -541,6 +552,7 @@ export class CreateTripComponent implements OnInit {
         tripDate: this.tripDate,
         vehicleId: this.selectedVehicleId,
         driverId: this.selectedDriverId,
+        labourId: this.selectedLabourId,
         route: this.route,
         vendorPickups: this.vendorPickups,
         supervisorId: this.selectedSupervisorId,

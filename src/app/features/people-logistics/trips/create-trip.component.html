@@ -22,7 +22,7 @@
           <div><span class="step">TRIP ASSIGNMENT</span><h2>Vehicle, driver & route</h2></div>
         </div>
         <div class="trip-assignment-fields">
-          <label>Vehicle <span class="required">*</span>
+          <label><span class="field-label">Vehicle <span class="required">*</span></span>
             <select name="vehicle" required [(ngModel)]="selectedVehicleId">
               <option value="">Select an active vehicle</option>
               @for (vehicle of vehicles; track vehicle['_demoId']) {
@@ -32,7 +32,7 @@
             @if (submitted && !selectedVehicleId) { <small class="field-error">Select a vehicle.</small> }
             @if (!vehicles.length) { <small class="field-hint">No active vehicles are available to you.</small> }
           </label>
-          <label>Driver <span class="required">*</span>
+          <label><span class="field-label">Driver <span class="required">*</span></span>
             <select name="driver" required [(ngModel)]="selectedDriverId">
               <option value="">Select an active driver</option>
               @for (driver of availableDrivers; track driver['_demoId']) {
@@ -42,7 +42,17 @@
             @if (submitted && !selectedDriverId) { <small class="field-error">Select an active driver.</small> }
             @if (!availableDrivers.length) { <small class="field-hint">No active driver employees are available to you.</small> }
           </label>
-          <label>Assigned supervisor <span class="required">*</span>
+          <label><span class="field-label">Labour <span class="required">*</span></span>
+            <select name="labour" required [(ngModel)]="selectedLabourId">
+              <option value="">Select a labour employee</option>
+              @for (labourer of labourers; track labourer['_demoId']) {
+                <option [value]="labourer['_demoId']">{{ labourer['name'] }}</option>
+              }
+            </select>
+            @if (submitted && !selectedLabourId) { <small class="field-error">Select a labour employee.</small> }
+            @if (!labourers.length) { <small class="field-hint">No active labour employees are available to you.</small> }
+          </label>
+          <label><span class="field-label">Assigned supervisor <span class="required">*</span></span>
             <select name="supervisor" required [(ngModel)]="selectedSupervisorId">
               <option value="">Select a supervisor</option>
               @for (supervisor of availableSupervisors; track supervisor['_demoId']) { <option [value]="supervisor['_demoId']">{{ supervisor['name'] }}</option> }
@@ -51,13 +61,17 @@
             @if (submitted && !selectedSupervisorId) { <small class="field-error">Select a supervisor.</small> }
             @if (!availableSupervisors.length) { <small class="field-hint">No active supervisors are available to you.</small> }
           </label>
-          <label>Route <span class="required">*</span>
+          <label><span class="field-label">Route <span class="required">*</span></span>
             <input name="route" type="text" list="saved-trip-routes" maxlength="120" autocomplete="off" placeholder="Select or enter route name" [(ngModel)]="route">
             <datalist id="saved-trip-routes">
               @for (savedRoute of savedRoutes; track savedRoute) { <option [value]="savedRoute"></option> }
             </datalist>
             <small class="field-hint">{{ savedRoutes.length ? 'Choose a saved route or enter a new route name.' : 'Routes are not configured as a master list yet. Enter a route name.' }}</small>
             @if (submitted && !route.trim()) { <small class="field-error">Enter a route name.</small> }
+          </label>
+          <label class="date-field"><span class="field-label">Trip date <span class="required">*</span></span>
+            <input name="tripDate" type="date" required [(ngModel)]="tripDate">
+            @if (submitted && !tripDate) { <small class="field-error">Select a trip date.</small> }
           </label>
         </div>
         @if (selectedVehicle; as vehicle) {
@@ -73,10 +87,6 @@
           </div>
         }
         @if (capacityError) { <p class="field-error capacity-error" role="alert">{{ capacityError }}</p> }
-        <label class="date-field">Trip date <span class="required">*</span>
-          <input name="tripDate" type="date" required [(ngModel)]="tripDate">
-          @if (submitted && !tripDate) { <small class="field-error">Select a trip date.</small> }
-        </label>
       </section>
 
       <section class="panel vendor-panel">
@@ -89,7 +99,7 @@
           <div class="vendor-card">
             <div class="vendor-card-heading">
               <span class="vendor-number">{{ (index + 1) | number:'2.0-0' }}</span>
-              <label>Vendor name <span class="required">*</span>
+              <label><span class="field-label">Vendor name <span class="required">*</span></span>
                 <select [name]="'vendor-' + vendorPickup.key" required [(ngModel)]="vendorPickup.vendorId">
                 <option value="">Select a supplier</option>
                   @for (vendor of availableVendors(vendorPickup); track vendor['_demoId']) {
@@ -146,7 +156,7 @@
         @if (!deliveryVendors.length) { <p class="field-hint">Add delivery vendors in Trading → Delivery vendors before creating a trip.</p> }
         @for (stop of deliveryStops; track stop.key; let index = $index) {
           <div class="vendor-card">
-            <div class="vendor-card-heading"><span class="vendor-number">{{ (index + 1) | number:'2.0-0' }}</span><label>Delivery vendor <span class="required">*</span><select [name]="'delivery-vendor-' + stop.key" [(ngModel)]="stop.vendorDestinationId"><option value="">Select a delivery vendor</option>@for (vendor of availableDeliveryVendors(stop); track vendor['_demoId']) { <option [value]="vendor['_demoId']">{{ vendor['name'] }} · {{ vendor['address'] }}</option> }</select></label>@if (deliveryStops.length > 1) { <button class="remove-vendor" type="button" (click)="removeDeliveryStop(stop.key)">Remove</button> }</div>
+            <div class="vendor-card-heading"><span class="vendor-number">{{ (index + 1) | number:'2.0-0' }}</span><label><span class="field-label">Delivery vendor <span class="required">*</span></span><select [name]="'delivery-vendor-' + stop.key" [(ngModel)]="stop.vendorDestinationId"><option value="">Select a delivery vendor</option>@for (vendor of availableDeliveryVendors(stop); track vendor['_demoId']) { <option [value]="vendor['_demoId']">{{ vendor['name'] }} · {{ vendor['address'] }}</option> }</select></label>@if (deliveryStops.length > 1) { <button class="remove-vendor" type="button" (click)="removeDeliveryStop(stop.key)">Remove</button> }</div>
             @if (selectedDeliveryVendor(stop); as destination) { <p class="field-hint destination-meta">{{ destination['address'] }} · {{ destination['contact'] || 'No contact' }} {{ destination['phone'] || '' }}</p> }
             <div class="pickup-table-wrap">
               <table class="pickup-table delivery-plan-table">

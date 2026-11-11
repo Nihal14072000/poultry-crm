@@ -81,7 +81,7 @@ export class DriverDirectoryService {
     const name = String(record['name'] ?? '').trim();
     const type = String(record['type'] ?? '').trim().toUpperCase();
     const status = String(record['status'] ?? '').trim().toLowerCase();
-    if (!name || !['DRIVER', 'SUPERVISOR', 'ACCOUNTANT'].includes(type) || !['active', 'inactive'].includes(status)) {
+    if (!name || !['DRIVER', 'SUPERVISOR', 'ACCOUNTANT', 'LABOUR'].includes(type) || !['active', 'inactive'].includes(status)) {
       throw new Error('An employee name, valid type, and active status are required.');
     }
     return {

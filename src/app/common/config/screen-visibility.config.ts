@@ -170,7 +170,8 @@ export const recordScopeBypassRoles = ['Organization Admin', 'Owner'];
 const employeeRoles: Record<string, string> = {
   DRIVER: 'Driver',
   SUPERVISOR: 'Supervisor',
-  ACCOUNTANT: 'Accountant'
+  ACCOUNTANT: 'Accountant',
+  LABOUR: 'Labour'
 };
 
 export function resolveAccountRole(role: string): string {

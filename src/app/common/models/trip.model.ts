@@ -8,6 +8,7 @@ export interface CreateTripInput {
   tripDate: string;
   vehicleId: string;
   driverId: string;
+  labourId?: string;
   route: string;
   vendorPickups: VendorPickupInput[];
   supervisorId?: string;

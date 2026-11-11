@@ -34,6 +34,7 @@ interface ApiTrip extends Record<string, unknown> {
   id?: number;
   vehicle?: ApiEntity;
   driver?: Employee;
+  labour?: Employee;
   supervisor?: Employee;
   buyingParties?: ApiParty[];
   sellingParties?: ApiParty[];
@@ -106,6 +107,7 @@ export interface TripDeliveryData {
 export interface TripFormOptions {
   vehicles: TripRecord[];
   drivers: TripRecord[];
+  labourers: TripRecord[];
   suppliers: TripRecord[];
   supervisors: TripRecord[];
   deliveryVendors: TripRecord[];
@@ -143,9 +145,10 @@ export class TripApiService {
   ) {}
 
   async getFormOptions(): Promise<TripFormOptions> {
-    const [vehicles, drivers, suppliers, supervisors, deliveryVendors, trips, orderTypes] = await Promise.all([
+    const [vehicles, drivers, employees, suppliers, supervisors, deliveryVendors, trips, orderTypes] = await Promise.all([
       firstValueFrom(this.http.get<ApiEntity[]>(`${this.baseUrl}/vehicles`)),
       firstValueFrom(this.http.get<Employee[]>(`${this.baseUrl}/drivers`)),
+      firstValueFrom(this.http.get<Employee[]>(`${this.baseUrl}/employees`)),
       firstValueFrom(this.http.get<ApiParty[]>(`${this.baseUrl}/buying-parties`)),
       firstValueFrom(this.http.get<Employee[]>(`${this.baseUrl}/supervisors`)),
       firstValueFrom(this.http.get<ApiParty[]>(`${this.baseUrl}/selling-parties`)),
@@ -157,7 +160,10 @@ export class TripApiService {
     const driverById = new Map(drivers.filter(this.isActive).map((driver) => [String(driver.id), driver]));
     return {
       vehicles: vehicles.filter(this.isActive).map((vehicle) => this.vehicleRecord(vehicle)),
-      drivers: drivers.filter(this.isActive).map((driver) => this.driverRecord(driver)),
+      drivers: drivers.filter(this.isActive).map((driver) => this.employeeRecord(driver)),
+      labourers: employees.filter((employee) =>
+        this.isActive(employee) && employee.type.trim().toLowerCase() === 'labour'
+      ).map((employee) => this.employeeRecord(employee)),
       suppliers: suppliers.map((party) => this.partyRecord(party)),
       supervisors: supervisors.filter(this.isActive).map((supervisor) => this.supervisorRecord(supervisor)),
       deliveryVendors: deliveryVendors.map((party) => this.partyRecord(party)),
@@ -455,6 +461,7 @@ export class TripApiService {
     }
     const vehicle = this.selected(options.vehicles, input.vehicleId, 'vehicle');
     const driver = this.selected(options.drivers, input.driverId, 'driver');
+    const labour = this.selected(options.labourers, String(input.labourId ?? ''), 'labour employee');
     const supervisor = this.selected(options.supervisors, String(input.supervisorId ?? ''), 'supervisor');
     const activeTrips = (options.trips ?? []).filter((t) => {
       const isCurrent = !!currentTripId && (
@@ -500,7 +507,8 @@ export class TripApiService {
     });
     return {
       vehicle: this.vehiclePayload(vehicle),
-      driver: this.driverPayload(driver),
+      driver: this.employeePayload(driver),
+      labour: this.employeePayload(labour),
       supervisor: this.supervisorPayload(supervisor),
       buyingParties,
       sellingParties,
@@ -565,13 +573,13 @@ export class TripApiService {
     };
   }
 
-  private driverPayload(driver: TripRecord): Record<string, unknown> {
+  private employeePayload(employee: TripRecord): Record<string, unknown> {
     return {
-      id: this.parseId(String(driver['_demoId'] ?? '')),
-      name: String(driver['name'] ?? ''),
-      address: String(driver['address'] ?? ''),
-      number: String(driver['number'] ?? ''),
-      status: String(driver['status'] ?? ''),
+      id: this.parseId(String(employee['_demoId'] ?? '')),
+      name: String(employee['name'] ?? ''),
+      address: String(employee['address'] ?? ''),
+      number: String(employee['number'] ?? ''),
+      status: String(employee['status'] ?? ''),
       isActive: true,
       isDeleted: false
     };
@@ -747,13 +755,13 @@ export class TripApiService {
     };
   }
 
-  private driverRecord(driver: Employee): TripRecord {
+  private employeeRecord(employee: Employee): TripRecord {
     return {
-      _demoId: String(driver.id),
-      name: String(driver.name ?? ''),
-      address: String(driver.address ?? ''),
-      number: String(driver.number ?? ''),
-      status: String(driver.status ?? (driver.isActive ? 'Active' : 'Inactive'))
+      _demoId: String(employee.id),
+      name: String(employee.name ?? ''),
+      address: String(employee.address ?? ''),
+      number: String(employee.number ?? ''),
+      status: String(employee.status ?? (employee.isActive ? 'Active' : 'Inactive'))
     };
   }
 
@@ -800,6 +808,7 @@ export class TripApiService {
     }
     const vehicleId = trip.vehicle?.['id'] ?? trip['vehicleId'];
     const driverId = trip.driver?.['id'] ?? trip['driverId'];
+    const labourId = trip.labour?.id ?? trip['labourId'];
     const vehicle = trip.vehicle ?? vehicles.get(String(vehicleId));
     const driver = trip.driver ?? drivers.get(String(driverId));
     return {
@@ -811,6 +820,8 @@ export class TripApiService {
       vehicleType: String(vehicle?.['name'] ?? ''),
       driverId: String(driverId ?? ''),
       driverName: String(driver?.['name'] ?? ''),
+      labourId: String(labourId ?? ''),
+      labourName: String(trip.labour?.name ?? trip['labourName'] ?? ''),
       supervisorId: String(trip.supervisor?.['id'] ?? trip['supervisorId'] ?? ''),
       supervisorName: String(trip.supervisor?.['name'] ?? ''),
       route: trip.route,
