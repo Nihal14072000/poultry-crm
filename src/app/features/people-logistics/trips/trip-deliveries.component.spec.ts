@@ -15,7 +15,8 @@ describe('TripDeliveriesComponent payments', () => {
     const route = { snapshot: { paramMap: { get: () => '12' } } } as unknown as ActivatedRoute;
     const router = jasmine.createSpyObj<Router>('Router', ['getCurrentNavigation']);
     router.getCurrentNavigation.and.returnValue(null);
-    service = jasmine.createSpyObj<TripService>('TripService', ['getDeliveryData', 'getDeliveryTrips', 'saveTripMortality', 'deleteTripMortality']);
+    service = jasmine.createSpyObj<TripService>('TripService', ['getDeliveryData', 'getDeliveryTrips', 'saveDelivery', 'saveTripMortality', 'deleteTripMortality']);
+    service.saveDelivery.and.resolveTo('83');
     service.saveTripMortality.and.resolveTo();
     service.getDeliveryData.and.resolveTo({
       trip: { _demoId: '12' },
@@ -56,6 +57,38 @@ describe('TripDeliveriesComponent payments', () => {
 
     component.rolePermissions.can.and.returnValue(false);
     expect(component.canUpdateTrip).toBeFalse();
+  });
+
+  it('lets Organization Admin edit saved actual delivery quantities, weights, and rates', async () => {
+    component.rolePermissions.can.and.returnValue(true);
+    Object.defineProperty(component.auth, 'currentUser', {
+      configurable: true,
+      get: () => ({ role: 'Organization Admin' })
+    });
+    component.trip = { _demoId: '12', status: 'Completed' };
+    const delivery = {
+      _demoId: '83', vendorDestinationId: '51', broiler: 8, broilerWeight: 18, broilerRate: 115,
+      culls: 1, cullsWeight: 1.5, cullsRate: 50, feed: 2, feedWeight: 2, feedRate: 25,
+      reason: 'Corrected receipt'
+    };
+    component.deliveries = [delivery];
+
+    expect(component.canEditActualDelivery).toBeTrue();
+    component.editActualDelivery(delivery);
+    expect(component.editingDeliveryId).toBe('83');
+    expect(component.activeOrderId).toBe('51');
+    expect([component.broiler, component.broilerWeight, component.broilerRate]).toEqual([8, 18, 115]);
+    expect([component.culls, component.cullsWeight, component.cullsRate]).toEqual([1, 1.5, 50]);
+    expect([component.feed, component.feedWeight, component.feedRate]).toEqual([2, 2, 25]);
+
+    component.destinations = [{ vendorDestinationId: '51', broilerRate: 100, cullsRate: 40, feedRate: 20 }];
+    await component.saveEntry();
+
+    expect(service.saveDelivery).toHaveBeenCalledWith('12', '51', jasmine.objectContaining({
+      broiler: 8, broilerWeight: 18, broilerRate: 115,
+      culls: 1, cullsWeight: 1.5, cullsRate: 50,
+      feed: 2, feedWeight: 2, feedRate: 25
+    }), [], [], '83');
   });
 
   it('shows actual supplier cost and completed seller payouts', () => {

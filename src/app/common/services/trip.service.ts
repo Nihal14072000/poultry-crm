@@ -12,6 +12,7 @@ import {
 import { DirectoryService } from './directory.service';
 import { RolePermissionService } from './role-permission.service';
 import { TripApiService } from './trip-api.service';
+import { SessionAuthService } from './session-auth.service';
 
 function isValidDateOnly(value: string): boolean {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -33,7 +34,8 @@ export class TripService {
   constructor(
     private readonly directories: DirectoryService,
     private readonly rolePermissions: RolePermissionService,
-    private readonly tripApi: TripApiService
+    private readonly tripApi: TripApiService,
+    private readonly auth: SessionAuthService
   ) {}
 
   async getTrips(): Promise<TripRecord[]> {
@@ -91,10 +93,9 @@ export class TripService {
     if (tripId && (!existingTrip || !this.rolePermissions.canAccessRecord('trips', existingTrip))) {
       throw new Error('This trip could not be found or you do not have access to it.');
     }
-    if (existingTrip && String(existingTrip['status'] ?? '') !== 'Assigned') {
-      throw new Error('Trip assignments are locked after the trip leaves Assigned status.');
+    if (existingTrip && !['Assigned', 'In transit', 'Completed'].includes(String(existingTrip['status'] ?? ''))) {
+      throw new Error('Trip assignments can only be edited while the trip is Assigned, In transit, or Completed.');
     }
-
     const vehicle = vehicles.records.find((record) => String(record['_demoId'] ?? '') === input.vehicleId);
     if (!vehicle || !this.rolePermissions.canAccessRecord('vehicles', vehicle) ||
       String(vehicle['status'] ?? '').toLowerCase() !== 'active') {
@@ -268,13 +269,21 @@ export class TripService {
     }, existing ? String(existing['_demoId'] ?? '') : undefined);
   }
 
-  async saveDelivery(tripId: string, vendorDestinationId: string, input: { broiler: number; broilerWeight: number; culls: number; cullsWeight: number; feed: number; feedWeight: number; remarks: string; reason: string }, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<string> {
+  async saveDelivery(tripId: string, vendorDestinationId: string, input: { broiler: number; broilerWeight: number; broilerRate?: number; culls: number; cullsWeight: number; cullsRate?: number; feed: number; feedWeight: number; feedRate?: number; remarks: string; reason: string }, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = [], existingDeliveryId?: string): Promise<string> {
     const data = await this.getDeliveryData(tripId, pendingSupplierPickupIds, pendingVendorDeliveryIds);
     if (data.supplierPickups.some((pickup) => !data.supplierReceipts.some((receipt) => String(receipt['vendorId'] ?? '') === pickup.vendorId))) throw new Error('Record actual receipts for every supplier before entering vendor deliveries.');
-    if (!['In transit', 'Delivery in progress'].includes(String(data.trip['status']))) throw new Error('This trip is not open for delivery entry.');
+    const isAdminEdit = !!existingDeliveryId && this.auth.currentUser?.role === 'Organization Admin' &&
+      this.rolePermissions.can('trips', 'update');
+    if (existingDeliveryId && !isAdminEdit) throw new Error('Only Organization Admins can edit actual vendor deliveries.');
+    if (!isAdminEdit && !['In transit', 'Delivery in progress'].includes(String(data.trip['status']))) throw new Error('This trip is not open for delivery entry.');
     const destination = data.destinations.find((item) => String(item['vendorDestinationId']) === vendorDestinationId);
     if (!destination) throw new Error('This delivery vendor is not assigned to the trip.');
     const prior = data.deliveries.filter((item) => String(item['vendorDestinationId']) === vendorDestinationId);
+    const existing = existingDeliveryId
+      ? data.deliveries.find((item) => String(item['_demoId'] ?? '') === existingDeliveryId &&
+        String(item['vendorDestinationId'] ?? '') === vendorDestinationId)
+      : undefined;
+    if (existingDeliveryId && !existing) throw new Error('This actual delivery could not be found for the selected vendor destination.');
     const validQuantity = (n: number) => Number.isSafeInteger(n) && n >= 0;
     if (!validQuantity(input.broiler) || !validQuantity(input.culls) || input.broiler + input.culls <= 0) throw new Error('Enter at least one positive whole bird quantity.');
     const broilerWeight = this.weight(input.broilerWeight, 'Broiler delivered weight');
@@ -288,23 +297,23 @@ export class TripService {
       (input.broiler === 0 && broilerWeight > 0) || (input.culls === 0 && cullsWeight > 0)) {
       throw new Error('Enter a positive weight for each delivered bird type and leave weight blank when quantity is zero.');
     }
-    const cumulativeBroiler = prior.reduce((sum, item) => sum + Number(item['broiler'] ?? 0), 0) + input.broiler;
-    const cumulativeCulls = prior.reduce((sum, item) => sum + Number(item['culls'] ?? 0), 0) + input.culls;
-    const orderedBroiler = Number(destination['orderedBroiler'] ?? 0);
-    const orderedCulls = Number(destination['orderedCulls'] ?? 0);
-    const plannedTotal = orderedBroiler + orderedCulls;
-    const deliveredTotal = cumulativeBroiler + cumulativeCulls;
-    if (deliveredTotal > plannedTotal) throw new Error('The backend API does not support approved excess deliveries.');
-    if (deliveredTotal < plannedTotal && !input.reason.trim()) throw new Error('Add a reason for the remaining delivery balance.');
-    const broilerRate = Number(destination['broilerRate'] ?? 0);
-    const cullsRate = Number(destination['cullsRate'] ?? 0);
-    const feedRate = Number(destination['feedRate'] ?? 0);
+    if (!isAdminEdit) {
+      const cumulativeBroiler = prior.reduce((sum, item) => sum + Number(item['broiler'] ?? 0), 0) + input.broiler;
+      const cumulativeCulls = prior.reduce((sum, item) => sum + Number(item['culls'] ?? 0), 0) + input.culls;
+      const plannedTotal = Number(destination['orderedBroiler'] ?? 0) + Number(destination['orderedCulls'] ?? 0);
+      const deliveredTotal = cumulativeBroiler + cumulativeCulls;
+      if (deliveredTotal > plannedTotal) throw new Error('The backend API does not support approved excess deliveries.');
+      if (deliveredTotal < plannedTotal && !input.reason.trim()) throw new Error('Add a reason for the remaining delivery balance.');
+    }
+    const broilerRate = input.broilerRate ?? Number(destination['broilerRate'] ?? 0);
+    const cullsRate = input.cullsRate ?? Number(destination['cullsRate'] ?? 0);
+    const feedRate = input.feedRate ?? Number(destination['feedRate'] ?? 0);
     return this.tripApi.saveVendorDelivery(vendorDestinationId, {
       broiler: input.broiler, broilerWeight, broilerRate,
       culls: input.culls, cullsWeight, cullsRate,
       feed, feedWeight, feedRate,
       note: [input.reason.trim(), input.remarks.trim()].filter(Boolean).join(' · ')
-    });
+    }, existingDeliveryId);
   }
 
   async completeTripWhenDeliveriesSubmitted(tripId: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<boolean> {

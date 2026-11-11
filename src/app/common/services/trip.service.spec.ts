@@ -61,12 +61,13 @@ describe('TripService', () => {
     };
     Object.defineProperty(auth, 'currentUser', { configurable: true, get: () => currentUser });
     tripApi = jasmine.createSpyObj<TripApiService>('TripApiService', [
-      'getTrips', 'getDeliveryData', 'linkSupplierPickups', 'linkVendorDeliveries', 'updateTripStatus', 'deleteTrip', 'saveMortality', 'deleteMortality'
+      'getTrips', 'getDeliveryData', 'linkSupplierPickups', 'linkVendorDeliveries', 'updateTripStatus', 'deleteTrip',
+      'saveMortality', 'deleteMortality', 'saveVendorDelivery'
     ]);
     tripApi.getTrips.and.resolveTo([]);
     const permissions = new RolePermissionService(auth);
     spyOn(permissions, 'canAccessRecord').and.returnValue(true);
-    service = new TripService(directories, permissions, tripApi);
+    service = new TripService(directories, permissions, tripApi, auth);
   });
 
   it('lists all non-deleted trips the current delivery user can access', async () => {
@@ -80,6 +81,40 @@ describe('TripService', () => {
 
     expect(await service.getDeliveryTrips()).toEqual([availableTrip]);
     expect(tripApi.getTrips).toHaveBeenCalled();
+  });
+
+  it('lets Organization Admin update an actual delivery on a completed trip', async () => {
+    currentUser = {
+      name: 'Admin', email: 'admin@example.com', role: 'Organization Admin', permissions: '',
+      status: 'Active', authenticatedAt: ''
+    };
+    tripApi.getDeliveryData.and.resolveTo({
+      trip: { _demoId: 'trip-12', status: 'Completed' },
+      supplierPickups: [],
+      supplierReceipts: [],
+      destinations: [{ vendorDestinationId: '51', orderedBroiler: 5, orderedCulls: 1 }],
+      deliveries: [{
+        _demoId: '83', vendorDestinationId: '51', broiler: 4, broilerWeight: 8,
+        culls: 0, cullsWeight: 0, feed: 0, feedWeight: 0
+      }],
+      mortalities: [],
+      loadedBroiler: 0, loadedCulls: 0, loadedBirds: 0
+    });
+    tripApi.saveVendorDelivery.and.resolveTo('83');
+
+    const savedId = await service.saveDelivery('trip-12', '51', {
+      broiler: 4, broilerWeight: 8, broilerRate: 120,
+      culls: 0, cullsWeight: 0, cullsRate: 45,
+      feed: 0, feedWeight: 0, feedRate: 25,
+      remarks: '', reason: 'Corrected quantity'
+    }, [], [], '83');
+
+    expect(savedId).toBe('83');
+    expect(tripApi.saveVendorDelivery).toHaveBeenCalledWith('51', jasmine.objectContaining({
+      broiler: 4, broilerWeight: 8, broilerRate: 120,
+      culls: 0, cullsWeight: 0, cullsRate: 45,
+      feed: 0, feedWeight: 0, feedRate: 25
+    }), '83');
   });
 
   it('soft deletes in-transit and completed trips even when they have operational records', async () => {
@@ -155,7 +190,7 @@ describe('TripService', () => {
     records['trips'] = [{
       _demoId: 'trips-existing',
       tripNumber: 'TR-0007',
-      status: 'Assigned',
+      status: 'Completed',
       createdBy: 'Original creator',
       createdAt: '2026-10-01T10:00:00.000Z'
     }];
@@ -165,7 +200,7 @@ describe('TripService', () => {
     expect(directories.updateRecord).toHaveBeenCalled();
     expect(updated['_demoId']).toBe('trips-existing');
     expect(updated['tripNumber']).toBe('TR-0007');
-    expect(updated['status']).toBe('Assigned');
+    expect(updated['status']).toBe('Completed');
     expect(updated['createdBy']).toBe('Original creator');
     expect(updated['createdAt']).toBe('2026-10-01T10:00:00.000Z');
     expect(updated['grandTotal']).toBe(1460);

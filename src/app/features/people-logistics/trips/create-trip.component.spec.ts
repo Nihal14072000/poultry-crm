@@ -10,7 +10,7 @@ describe('CreateTripComponent draft persistence', () => {
   const options: TripFormOptions = {
     vehicles: [],
     drivers: [],
-    labourers: [],
+    labourers: [{ _demoId: '13', name: 'Ravi Labour', status: 'Active' }],
     suppliers: [],
     supervisors: [],
     deliveryVendors: [],
@@ -83,5 +83,24 @@ describe('CreateTripComponent draft persistence', () => {
     expect(restored.deliveryStops).toEqual(first.deliveryStops);
     expect(restored.payments).toEqual(first.payments);
     expect(restored.expenses).toEqual(first.expenses);
+  });
+
+  it('selects the labour assigned to a trip when editing', async () => {
+    tripApi.getTripDetails.and.resolveTo({
+      trip: { labourId: '13' },
+      vendorPickups: [],
+      supplierReceipts: [],
+      vendorDestinations: [],
+      deliveryEntries: []
+    });
+    const editRoute = {
+      snapshot: { paramMap: { get: () => '107' } }
+    } as unknown as ActivatedRoute;
+    const editing = new CreateTripComponent(directories, tripApi, editRoute, router, permissions, auth);
+
+    await editing.ngOnInit();
+
+    expect(editing.selectedLabourId).toBe('13');
+    expect(editing.labourers).toContain(jasmine.objectContaining({ _demoId: '13', name: 'Ravi Labour' }));
   });
 });

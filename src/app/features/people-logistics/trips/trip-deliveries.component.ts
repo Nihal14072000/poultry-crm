@@ -44,12 +44,16 @@ export class TripDeliveriesComponent implements OnInit {
   routeFilter = '';
   statusFilter = '';
   activeOrderId = '';
+  editingDeliveryId = '';
   broiler = 0;
   broilerWeight = 0;
+  broilerRate = 0;
   culls = 0;
   cullsWeight = 0;
+  cullsRate = 0;
   feed = 0;
   feedWeight = 0;
+  feedRate = 0;
   remarks = '';
   reason = '';
   mortalityQuantity = 0;
@@ -171,6 +175,9 @@ export class TripDeliveriesComponent implements OnInit {
   get canEnterDelivery(): boolean { return ['In transit', 'Delivery in progress'].includes(String(this.trip?.['status'] ?? '')); }
   get canStartTrip(): boolean { return String(this.trip?.['status'] ?? '') === 'Assigned'; }
   get canUpdateTrip(): boolean { return this.rolePermissions.can('trips', 'update'); }
+  get canEditActualDelivery(): boolean {
+    return this.auth.currentUser?.role === 'Organization Admin' && this.canUpdateTrip;
+  }
   get paymentParties(): { id: string; name: string }[] {
     const destinations = this.destinations.map((party) => ({
       id: `SELLING:${String(party['vendorDestinationId'] ?? '')}`,
@@ -234,9 +241,9 @@ export class TripDeliveriesComponent implements OnInit {
   }
   changePaymentType(): void { this.paymentPartyId = ''; }
   entrySales(): number {
-    return this.number(this.broilerWeight) * this.number(this.currentDestination?.['broilerRate']) +
-      this.number(this.cullsWeight) * this.number(this.currentDestination?.['cullsRate']) +
-      this.number(this.feedWeight) * this.number(this.currentDestination?.['feedRate']);
+    return this.number(this.broilerWeight) * this.number(this.broilerRate) +
+      this.number(this.cullsWeight) * this.number(this.cullsRate) +
+      this.number(this.feedWeight) * this.number(this.feedRate);
   }
   get reconciliationHasExceptions(): boolean {
     return this.unreconciled() !== 0 || this.destinations.some((destination) => {
@@ -301,9 +308,36 @@ export class TripDeliveriesComponent implements OnInit {
     return count > 1 ? 'Partially Delivered' : 'In Progress';
   }
   open(order: TripRecord): void {
-    this.activeOrderId = this.id(order); this.broiler = 0; this.broilerWeight = 0; this.culls = 0; this.cullsWeight = 0; this.feed = 0; this.feedWeight = 0; this.remarks = ''; this.reason = ''; this.error = '';
+    this.editingDeliveryId = '';
+    this.activeOrderId = this.id(order);
+    this.broiler = 0; this.broilerWeight = 0; this.broilerRate = this.number(order['broilerRate']);
+    this.culls = 0; this.cullsWeight = 0; this.cullsRate = this.number(order['cullsRate']);
+    this.feed = 0; this.feedWeight = 0; this.feedRate = this.number(order['feedRate']);
+    this.remarks = ''; this.reason = ''; this.error = '';
   }
-  cancelEntry(): void { this.activeOrderId = ''; }
+  editActualDelivery(delivery: TripRecord): void {
+    if (!this.canEditActualDelivery) return;
+    this.editingDeliveryId = this.id(delivery);
+    this.activeOrderId = String(delivery['vendorDestinationId'] ?? '');
+    if (!this.editingDeliveryId || !this.activeOrderId) {
+      this.cancelEntry();
+      this.error = 'This actual delivery could not be opened for editing.';
+      return;
+    }
+    this.broiler = this.number(delivery['broiler']);
+    this.broilerWeight = this.number(delivery['broilerWeight']);
+    this.broilerRate = this.number(delivery['broilerRate']);
+    this.culls = this.number(delivery['culls']);
+    this.cullsWeight = this.number(delivery['cullsWeight']);
+    this.cullsRate = this.number(delivery['cullsRate']);
+    this.feed = this.number(delivery['feed']);
+    this.feedWeight = this.number(delivery['feedWeight']);
+    this.feedRate = this.number(delivery['feedRate']);
+    this.reason = String(delivery['reason'] ?? '');
+    this.remarks = '';
+    this.error = '';
+  }
+  cancelEntry(): void { this.activeOrderId = ''; this.editingDeliveryId = ''; }
   async startTrip(): Promise<void> {
     if (!this.trip || !this.canStartTrip || this.saving) return;
     this.saving = true; this.error = ''; this.success = '';
@@ -312,21 +346,28 @@ export class TripDeliveriesComponent implements OnInit {
     finally { this.saving = false; }
   }
   async saveEntry(): Promise<void> {
-    if (!this.trip || !this.activeOrderId || this.saving) return;
+    if (!this.trip || !this.activeOrderId || this.saving ||
+      (this.editingDeliveryId && !this.canEditActualDelivery)) return;
     this.saving = true; this.error = ''; this.success = '';
     let deliverySaved = false;
     try {
       const tripId = this.id(this.trip);
-      const deliveryId = await this.service.saveDelivery(tripId, this.activeOrderId, { broiler: Number(this.broiler), broilerWeight: Number(this.broilerWeight), culls: Number(this.culls), cullsWeight: Number(this.cullsWeight), feed: Number(this.feed), feedWeight: Number(this.feedWeight), remarks: this.remarks, reason: this.reason }, this.pendingPickupIds(), this.pendingDeliveryIds());
+      const editing = !!this.editingDeliveryId;
+      const deliveryId = await this.service.saveDelivery(tripId, this.activeOrderId, {
+        broiler: Number(this.broiler), broilerWeight: Number(this.broilerWeight), broilerRate: Number(this.broilerRate),
+        culls: Number(this.culls), cullsWeight: Number(this.cullsWeight), cullsRate: Number(this.cullsRate),
+        feed: Number(this.feed), feedWeight: Number(this.feedWeight), feedRate: Number(this.feedRate),
+        remarks: this.remarks, reason: this.reason
+      }, this.pendingPickupIds(), this.pendingDeliveryIds(), this.editingDeliveryId || undefined);
       deliverySaved = true;
-      if (!this.pendingVendorDeliveryIds.includes(deliveryId)) this.pendingVendorDeliveryIds.push(deliveryId);
+      if (!editing && !this.pendingVendorDeliveryIds.includes(deliveryId)) this.pendingVendorDeliveryIds.push(deliveryId);
       this.persistPendingVendorDeliveries(tripId);
-      this.activeOrderId = '';
+      this.cancelEntry();
       await this.load();
-      this.success = 'Delivery saved. Record mortality if applicable, review reconciliation, and complete the trip below.';
+      this.success = editing ? 'Actual delivery updated.' : 'Delivery saved. Record mortality if applicable, review reconciliation, and complete the trip below.';
     } catch (e) {
       if (deliverySaved && this.trip) {
-        this.activeOrderId = '';
+        this.cancelEntry();
         await this.load();
       }
       this.error = e instanceof Error ? e.message : 'Delivery could not be saved.';

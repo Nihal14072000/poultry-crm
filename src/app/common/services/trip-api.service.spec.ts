@@ -260,10 +260,10 @@ describe('TripApiService', () => {
     await expectAsync(result).toBeResolvedTo(jasmine.objectContaining({ _demoId: '107', tripDate: '2026-10-23' }));
   });
 
-  it('sends the selected labour employee when updating a trip', async () => {
+  it('updates an in-transit trip and sends the selected labour employee', async () => {
     const result = service.updateTrip('107', input, options);
     http.expectOne('http://localhost:8080/api/trips/107').flush({
-      tripId: 107, date: '2026-10-23', route: 'Nashik to Pune', status: 'Assigned'
+      tripId: 107, date: '2026-10-23', route: 'Nashik to Pune', status: 'In transit'
     });
     const request = http.expectOne('http://localhost:8080/api/trips/107/update');
 
@@ -273,11 +273,24 @@ describe('TripApiService', () => {
         id: 13, name: 'Ravi Labour', address: 'Nashik', number: '', status: 'Active',
         isActive: true, isDeleted: false
       },
-      tripId: 107
+      tripId: 107,
+      status: 'In transit'
     }));
-    request.flush({ tripId: 107, date: '2026-10-23', route: 'Nashik to Pune', status: 'Assigned' });
+    request.flush({ tripId: 107, date: '2026-10-23', route: 'Nashik to Pune', status: 'In transit' });
 
-    await expectAsync(result).toBeResolved();
+    await expectAsync(result).toBeResolvedTo(jasmine.objectContaining({ status: 'In transit' }));
+  });
+
+  it('updates a completed trip', async () => {
+    const result = service.updateTrip('107', input, options);
+    http.expectOne('http://localhost:8080/api/trips/107').flush({
+      tripId: 107, date: '2026-10-23', route: 'Nashik to Pune', status: 'Completed'
+    });
+    const request = http.expectOne('http://localhost:8080/api/trips/107/update');
+    expect(request.request.body['status']).toBe('Completed');
+    request.flush({ tripId: 107, date: '2026-10-23', route: 'Nashik to Pune', status: 'Completed' });
+
+    await expectAsync(result).toBeResolvedTo(jasmine.objectContaining({ status: 'Completed' }));
   });
 
   it('deletes a trip through the trips API', async () => {
@@ -299,6 +312,7 @@ describe('TripApiService', () => {
       status: 'In transit',
       vehicle: { id: 21, name: 'Truck', vehNumber: 'MH-12-AB-4521' },
       driver: { id: 12, name: 'Asha Patil' },
+      labour: { id: 13, name: 'Ravi Labour' },
       supervisor: { id: 41, name: 'Supervisor One' },
       buyingParties: [{
         id: 31,
@@ -362,6 +376,8 @@ describe('TripApiService', () => {
 
     const data = await result;
     expect(data.trip['_demoId']).toBe('12');
+    expect(data.trip['labourId']).toBe('13');
+    expect(data.trip['labourName']).toBe('Ravi Labour');
     expect(data.supplierReceipts[0]['broilerQuantity']).toBe(9);
     expect(data.supplierReceipts[0]['vendorId']).toBe('31');
     expect(data.destinations[0]['_demoId']).toBe('51');
@@ -450,6 +466,36 @@ describe('TripApiService', () => {
     }]);
     orders.flush([]);
     http.expectNone('http://localhost:8080/api/deliveries');
+    await expectAsync(result).toBeResolvedTo('83');
+  });
+
+  it('updates an existing vendor delivery and its actual orders', async () => {
+    const result = service.saveVendorDelivery('51', {
+      broiler: 8, broilerWeight: 18, broilerRate: 115,
+      culls: 1, cullsWeight: 1.5, cullsRate: 50,
+      feed: 2, feedWeight: 2, feedRate: 25, note: 'Corrected receipt'
+    }, '83');
+    http.expectOne('http://localhost:8080/api/order-types').flush([
+      { id: 1, name: 'Broiler', isActive: true },
+      { id: 2, name: 'Culls', isActive: true },
+      { id: 3, name: 'Feed', isActive: true }
+    ]);
+
+    const vendor = http.expectOne('http://localhost:8080/api/vendor-deliveries/83');
+    expect(vendor.request.method).toBe('PUT');
+    expect(vendor.request.body).toEqual({
+      id: 83, sellingPartyId: 51, note: 'Corrected receipt', isActive: true, isDeleted: false
+    });
+    vendor.flush(null);
+
+    const orders = http.expectOne('http://localhost:8080/api/vendor-deliveries/83/orders');
+    expect(orders.request.method).toBe('PUT');
+    expect(orders.request.body).toEqual([
+      { orderTypeId: 1, qty: 8, weight: 18, rate: 115, total: 2070, isActive: true, isDeleted: false },
+      { orderTypeId: 2, qty: 1, weight: 1.5, rate: 50, total: 75, isActive: true, isDeleted: false },
+      { orderTypeId: 3, qty: 2, weight: 2, rate: 25, total: 50, isActive: true, isDeleted: false }
+    ]);
+    orders.flush([]);
     await expectAsync(result).toBeResolvedTo('83');
   });
 

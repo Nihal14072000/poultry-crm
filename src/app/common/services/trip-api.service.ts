@@ -382,7 +382,8 @@ export class TripApiService {
 
   async saveVendorDelivery(
     vendorId: string,
-    input: { broiler: number; broilerWeight: number; broilerRate: number; culls: number; cullsWeight: number; cullsRate: number; feed: number; feedWeight: number; feedRate: number; note: string }
+    input: { broiler: number; broilerWeight: number; broilerRate: number; culls: number; cullsWeight: number; cullsRate: number; feed: number; feedWeight: number; feedRate: number; note: string },
+    existingId?: string
   ): Promise<string> {
     const sellingPartyId = this.parseId(vendorId);
     const orders = await this.actualOrders([
@@ -390,10 +391,16 @@ export class TripApiService {
       { kind: 'culls', quantity: input.culls, weight: input.cullsWeight, rate: input.cullsRate },
       { kind: 'feed', quantity: input.feed, weight: input.feedWeight, rate: input.feedRate }
     ]);
-    const vendorDelivery = await firstValueFrom(this.http.post<{ id: number }>(`${this.baseUrl}/vendor-deliveries`, {
-      sellingPartyId, note: input.note.trim(), isActive: true, isDeleted: false
-    }));
-    const vendorDeliveryId = this.parseId(String(vendorDelivery.id));
+    const vendorDeliveryId = existingId
+      ? this.parseId(existingId)
+      : this.parseId(String((await firstValueFrom(this.http.post<{ id: number }>(`${this.baseUrl}/vendor-deliveries`, {
+        sellingPartyId, note: input.note.trim(), isActive: true, isDeleted: false
+      }))).id));
+    if (existingId) {
+      await firstValueFrom(this.http.put(`${this.baseUrl}/vendor-deliveries/${vendorDeliveryId}`, {
+        id: vendorDeliveryId, sellingPartyId, note: input.note.trim(), isActive: true, isDeleted: false
+      }));
+    }
     await firstValueFrom(this.http.put(`${this.baseUrl}/vendor-deliveries/${vendorDeliveryId}/orders`, orders));
     return String(vendorDeliveryId);
   }
@@ -445,12 +452,12 @@ export class TripApiService {
   async updateTrip(id: string, input: CreateTripInput, options: TripFormOptions): Promise<TripRecord> {
     const tripId = this.parseId(id);
     const existing = await firstValueFrom(this.http.get<ApiTrip>(`${this.baseUrl}/trips/${tripId}`));
-    if (existing.status !== 'Assigned') {
-      throw new Error('Trip assignments are locked after the trip leaves Assigned status.');
+    if (!['Assigned', 'In transit', 'Completed'].includes(String(existing.status ?? ''))) {
+      throw new Error('Trip assignments can only be edited while the trip is Assigned, In transit, or Completed.');
     }
     const response = await firstValueFrom(this.http.put<ApiTrip>(
       `${this.baseUrl}/trips/${tripId}/update`,
-      { ...this.toRequest(input, options, String(tripId)), tripId }
+      { ...this.toRequest(input, options, String(tripId)), tripId, status: existing.status }
     ));
     return this.tripRecord(response, new Map(), new Map());
   }
