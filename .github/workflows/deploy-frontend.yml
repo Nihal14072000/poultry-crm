@@ -3,7 +3,7 @@ name: Deploy Poultry CRM Frontend
 on:
   push:
     branches:
-      - demo_v2
+      - v5
   workflow_dispatch:
 
 permissions:
@@ -56,7 +56,6 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
 
       - name: Copy frontend bundle to Oracle VM
-        env:
         run: |
           set -euo pipefail
           scp -i ~/.ssh/deploy_key frontend-dist.tar.gz "ubuntu@129.225.90.181:/home/ubuntu/frontend-dist.tar.gz"
