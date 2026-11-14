@@ -61,7 +61,6 @@ jobs:
           scp -i ~/.ssh/deploy_key frontend-dist.tar.gz "ubuntu@129.225.90.181:/home/ubuntu/frontend-dist.tar.gz"
 
       - name: Replace Nginx frontend files
-        env:
         run: |
           set -euo pipefail
           ssh -i ~/.ssh/deploy_key "ubuntu@129.225.90.181" 'bash -s' <<'REMOTE'
