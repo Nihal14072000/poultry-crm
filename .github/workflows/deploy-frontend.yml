@@ -57,21 +57,15 @@ jobs:
 
       - name: Copy frontend bundle to Oracle VM
         env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
         run: |
           set -euo pipefail
-          test -n "$DEPLOY_HOST" || { echo "Missing DEPLOY_HOST variable in the dev environment"; exit 1; }
-          test -n "$DEPLOY_USER" || { echo "Missing DEPLOY_USER variable in the dev environment"; exit 1; }
-          scp -i ~/.ssh/deploy_key frontend-dist.tar.gz "$DEPLOY_USER@$DEPLOY_HOST:/home/ubuntu/frontend-dist.tar.gz"
+          scp -i ~/.ssh/deploy_key frontend-dist.tar.gz "ubuntu@129.225.90.181:/home/ubuntu/frontend-dist.tar.gz"
 
       - name: Replace Nginx frontend files
         env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
         run: |
           set -euo pipefail
-          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          ssh -i ~/.ssh/deploy_key "ubuntu@129.225.90.181" 'bash -s' <<'REMOTE'
           set -euo pipefail
 
           DEPLOY_PATH="/home/ubuntu/poultry-crm"
