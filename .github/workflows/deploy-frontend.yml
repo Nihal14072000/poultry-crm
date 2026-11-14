@@ -1,0 +1,106 @@
+name: Deploy Poultry CRM Frontend
+
+on:
+  push:
+    branches:
+      - demo_v2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Angular production bundle
+        run: npm run build -- --configuration production
+
+      - name: Package browser output
+        run: |
+          set -euo pipefail
+          test -d dist/my-app/browser || {
+            echo "Expected Angular browser output at dist/my-app/browser was not found."
+            echo "Check angular.json outputPath and the build output."
+            exit 1
+          }
+          tar -czf frontend-dist.tar.gz -C dist/my-app/browser .
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_PRIVATE_KEY" || { echo "Missing SSH_PRIVATE_KEY secret in the dev environment"; exit 1; }
+          test -n "$SSH_KNOWN_HOSTS" || { echo "Missing SSH_KNOWN_HOSTS secret in the dev environment"; exit 1; }
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Copy frontend bundle to Oracle VM
+        env:
+        run: |
+          set -euo pipefail
+          scp -i ~/.ssh/deploy_key frontend-dist.tar.gz "ubuntu@129.225.90.181:/home/ubuntu/frontend-dist.tar.gz"
+
+      - name: Replace Nginx frontend files
+        env:
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key "ubuntu@129.225.90.181" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+
+          DEPLOY_PATH="/home/ubuntu/poultry-crm"
+          STAGING_PATH="/home/ubuntu/poultry-crm-staging"
+          PREVIOUS_PATH="/home/ubuntu/poultry-crm.previous"
+          ARCHIVE="/home/ubuntu/frontend-dist.tar.gz"
+
+          test -f "$ARCHIVE"
+          rm -rf "$STAGING_PATH"
+          mkdir -p "$STAGING_PATH"
+          tar -xzf "$ARCHIVE" -C "$STAGING_PATH"
+
+          # Ensure Nginx can read the deployed static files.
+          find "$STAGING_PATH" -type d -exec chmod 755 {} +
+          find "$STAGING_PATH" -type f -exec chmod 644 {} +
+
+          # Keep the currently deployed frontend as a rollback copy.
+          rm -rf "$PREVIOUS_PATH"
+          if [ -e "$DEPLOY_PATH" ]; then
+            mv "$DEPLOY_PATH" "$PREVIOUS_PATH"
+          fi
+
+          if mv "$STAGING_PATH" "$DEPLOY_PATH"; then
+            rm -f "$ARCHIVE"
+            echo "Frontend files replaced successfully at $DEPLOY_PATH"
+            echo "Previous version retained at $PREVIOUS_PATH"
+          else
+            if [ -e "$PREVIOUS_PATH" ]; then
+              mv "$PREVIOUS_PATH" "$DEPLOY_PATH"
+            fi
+            echo "Deployment failed; previous frontend restored."
+            exit 1
+          fi
+          REMOTE
+
+      - name: Remove SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
