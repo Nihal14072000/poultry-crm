@@ -66,13 +66,15 @@ jobs:
           ssh -i ~/.ssh/deploy_key "ubuntu@129.225.90.181" 'bash -s' <<'REMOTE'
           set -euo pipefail
 
-          DEPLOY_PATH="/home/ubuntu/poultry-crm"
-          STAGING_PATH="/home/ubuntu/poultry-crm-staging"
-          PREVIOUS_PATH="/home/ubuntu/poultry-crm.previous"
+          APP_PATH="/home/ubuntu/poultry-crm"
+          DEPLOY_PATH="$APP_PATH/dist"
+          STAGING_PATH="$APP_PATH/dist-staging"
+          PREVIOUS_PATH="$APP_PATH/dist.previous"
           ARCHIVE="/home/ubuntu/frontend-dist.tar.gz"
 
           test -f "$ARCHIVE"
           rm -rf "$STAGING_PATH"
+          mkdir -p "$APP_PATH"
           mkdir -p "$STAGING_PATH"
           tar -xzf "$ARCHIVE" -C "$STAGING_PATH"
 
