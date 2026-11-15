@@ -138,6 +138,7 @@ export interface PartyDirectoryRecord {
 @Injectable({ providedIn: 'root' })
 export class TripApiService {
   private readonly baseUrl = environment.apiUrl;
+  private orderTypesRequest?: Promise<ApiEntity[]>;
 
   constructor(
     private readonly http: HttpClient,
@@ -153,7 +154,7 @@ export class TripApiService {
       firstValueFrom(this.http.get<Employee[]>(`${this.baseUrl}/supervisors`)),
       firstValueFrom(this.http.get<ApiParty[]>(`${this.baseUrl}/selling-parties`)),
       firstValueFrom(this.http.get<ApiTrip[]>(`${this.baseUrl}/trips`)),
-      firstValueFrom(this.http.get<ApiEntity[]>(`${this.baseUrl}/order-types`))
+      this.getOrderTypes()
     ]);
     const orderTypeIds = this.getOrderTypeIds(orderTypes);
     const vehicleById = new Map(vehicles.filter(this.isActive).map((vehicle) => [String(vehicle.id), vehicle]));
@@ -180,6 +181,29 @@ export class TripApiService {
   async getSellingParties(): Promise<PartyDirectoryRecord[]> {
     const parties = await firstValueFrom(this.http.get<ApiParty[]>(`${this.baseUrl}/selling-parties`));
     return parties.map((party) => this.partyDirectoryRecord(party));
+  }
+
+  getPartyOrders(partyId: string, partyType: 'B' | 'S'): Promise<Record<string, unknown>[]> {
+    return Promise.all([
+      firstValueFrom(this.http.get<Record<string, unknown>[]>(`${this.baseUrl}/orders`, { params: { partyId, partyType } })),
+      this.getOrderTypes()
+    ]).then(([orders, orderTypes]) => {
+      const names = new Map(orderTypes.map((orderType) => [String(orderType.id), String(orderType.name ?? '')] as const));
+      return orders.map((order) => ({
+        ...order,
+        orderTypeName: names.get(String(order['orderTypeId'] ?? '')) ?? ''
+      }));
+    });
+  }
+
+  getOrderTypes(): Promise<ApiEntity[]> {
+    if (!this.orderTypesRequest) {
+      this.orderTypesRequest = firstValueFrom(this.http.get<ApiEntity[]>(`${this.baseUrl}/order-types`)).catch((error) => {
+        this.orderTypesRequest = undefined;
+        throw error;
+      });
+    }
+    return this.orderTypesRequest;
   }
 
   async createParty(type: 'buying' | 'selling', party: { name: string; contact: string; location: string; isActive: boolean }): Promise<void> {
@@ -220,7 +244,7 @@ export class TripApiService {
     const tripId = this.parseId(id);
     const [response, orderTypes] = await Promise.all([
       firstValueFrom(this.http.get<ApiTrip>(`${this.baseUrl}/trips/${tripId}/retrieve`)),
-      firstValueFrom(this.http.get<ApiEntity[]>(`${this.baseUrl}/order-types`))
+      this.getOrderTypes()
     ]);
     const orderNames = this.getOrderTypeNames(orderTypes);
     const vendorPickups = (response.buyingParties ?? []).filter((party) => !party.isDeleted)
@@ -248,7 +272,7 @@ export class TripApiService {
     const [details, links, orderTypes] = await Promise.all([
       this.getTripDetails(id),
       firstValueFrom(this.http.get<ApiDelivery[]>(`${this.baseUrl}/deliveries`)),
-      firstValueFrom(this.http.get<ApiEntity[]>(`${this.baseUrl}/order-types`))
+      this.getOrderTypes()
     ]);
     const orderNames = this.getOrderTypeNames(orderTypes);
     const related = links.filter((delivery) => Number(delivery.tripId) === tripId && delivery.isDeleted !== true);
@@ -702,7 +726,7 @@ export class TripApiService {
   }
 
   private async actualOrders(lines: Array<{ kind: OrderKind; quantity: number; weight: number; rate: number }>): Promise<ApiActualOrder[]> {
-    const orderTypes = await firstValueFrom(this.http.get<ApiEntity[]>(`${this.baseUrl}/order-types`));
+    const orderTypes = await this.getOrderTypes();
     const ids = this.getOrderTypeIds(orderTypes);
     for (const line of lines) {
       if (!Number.isSafeInteger(line.quantity) || line.quantity < 0 || !Number.isFinite(line.weight) || line.weight < 0 ||

@@ -9,14 +9,14 @@ describe('PartyDetailsComponent', () => {
   let component: PartyDetailsComponent;
 
   beforeEach(() => {
-    tripsApi = jasmine.createSpyObj<TripApiService>('TripApiService', ['getBuyingParties', 'getSellingParties', 'getTrips', 'getTripDetails']);
-    financeApi = jasmine.createSpyObj<FinanceApiService>('FinanceApiService', ['payments', 'receivables', 'payables']);
+    tripsApi = jasmine.createSpyObj<TripApiService>('TripApiService', ['getBuyingParties', 'getSellingParties', 'getPartyOrders', 'getTrips', 'getTripDetails']);
+    financeApi = jasmine.createSpyObj<FinanceApiService>('FinanceApiService', ['summary']);
     component = new PartyDetailsComponent({
       snapshot: { data: { partyType: 'buying' }, paramMap: { get: () => '7' } }
     } as unknown as ActivatedRoute, tripsApi, financeApi);
   });
 
-  it('shows only this party’s trips and sums received and due for the selected month', async () => {
+  it('shows finance summary totals and only this party’s trips', async () => {
     tripsApi.getBuyingParties.and.resolveTo([{
       _demoId: '7', id: 7, name: 'Supplier', contact: '', location: '',
       isActive: true, isDeleted: false, status: 'Active'
@@ -32,21 +32,51 @@ describe('PartyDetailsComponent', () => {
       vendorDestinations: [],
       deliveryEntries: []
     }));
-    financeApi.payments.and.resolveTo([
-      { partyId: 7, paymentType: 'BUYER_RECEIPT', status: 'COMPLETED', paymentDate: '2026-03-02', amount: 125 },
-      { partyId: 7, paymentType: 'BUYER_RECEIPT', status: 'PENDING', paymentDate: '2026-03-03', amount: 50 }
-    ]);
-    financeApi.receivables.and.resolveTo([
-      { dueDate: '2026-03-20', outstandingBalance: 75 },
-      { dueDate: '2026-02-20', outstandingBalance: 40 }
-    ]);
+    financeApi.summary.and.resolveTo({ totalReceived: 125, totalReceivable: 200 });
+    tripsApi.getPartyOrders.and.resolveTo([{
+      tripId: 11, orderTypeId: 1, orderTypeName: 'Broiler', qty: 5, weight: 20, rate: 100, createDate: '2026-03-10'
+    }]);
 
     await component.ngOnInit();
-    component.selectedMonth = '2026-03';
 
     expect(component.trips.map((trip) => trip['_demoId'])).toEqual(['11']);
-    expect(component.receivedTotal).toBe(125);
+    expect(component.paymentsTotal).toBe(125);
     expect(component.dueTotal).toBe(75);
-    expect(component.selectedMonthLabel).toBe('March 2026');
+    expect(component.transactionTotal).toBe(200);
+    expect(component.transactionLabel).toBe('Purchase');
+    expect(financeApi.summary).toHaveBeenCalledWith({ buyingPartyId: '7' });
+    expect(tripsApi.getPartyOrders).toHaveBeenCalledWith('7', 'B');
+    expect(component.orders[0]['tripId']).toBe(11);
+  });
+
+  it('loads all orders for a selling party using party type S', async () => {
+    component = new PartyDetailsComponent({
+      snapshot: { data: { partyType: 'selling' }, paramMap: { get: () => '12' } }
+    } as unknown as ActivatedRoute, tripsApi, financeApi);
+    tripsApi.getSellingParties.and.resolveTo([{
+      _demoId: '12', id: 12, name: 'Latif Kasab', contact: '', location: '',
+      isActive: true, isDeleted: false, status: 'Active'
+    }]);
+    tripsApi.getTrips.and.resolveTo([]);
+    tripsApi.getPartyOrders.and.resolveTo([{
+      tripId: 15, orderTypeId: 1, orderTypeName: 'Broiler', qty: 20, weight: 50, rate: 110, createDate: '2026-03-10'
+    }]);
+    financeApi.summary.and.resolveTo({ totalReceived: 121, totalReceivable: 121, totalPaid: 0, totalPayable: 0 });
+
+    await component.ngOnInit();
+
+    expect(tripsApi.getPartyOrders).toHaveBeenCalledWith('12', 'S');
+    expect(financeApi.summary).toHaveBeenCalledWith({ sellingPartyId: '12' });
+    expect(component.paymentsTotal).toBe(121);
+    expect(component.transactionTotal).toBe(121);
+    expect(component.dueTotal).toBe(0);
+    expect(component.transactionLabel).toBe('Sales');
+    expect(component.orders[0]['tripId']).toBe(15);
+    expect(component.orderColumns).toEqual(['tripId', 'orderTypeId', 'qty', 'weight', 'rate', 'sales', 'createDate']);
+    expect(component.orderValue(15, 'tripId', component.orders[0])).toBe('TR0015');
+    expect(component.orderColumnLabel('orderTypeId')).toBe('ORDER TYPE');
+    expect(component.orderValue(1, 'orderTypeId', component.orders[0])).toBe('Broiler');
+    expect(component.orderValue(undefined, 'sales', component.orders[0])).toBe('₹ 5500');
+    expect(component.orderCreatedDate(component.orders[0])).toBe('2026-03-10');
   });
 });

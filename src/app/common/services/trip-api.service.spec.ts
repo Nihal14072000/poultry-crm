@@ -125,6 +125,34 @@ describe('TripApiService', () => {
     ]);
   });
 
+  it('loads party orders with the requested party ID and type', async () => {
+    const sellingResult = service.getPartyOrders('11', 'S');
+    const sellingRequest = http.expectOne((request) =>
+      request.url === 'http://localhost:8080/api/orders' &&
+      request.params.get('partyId') === '11' &&
+      request.params.get('partyType') === 'S'
+    );
+    sellingRequest.flush([{ id: 1, orderTypeId: 1 }]);
+
+    const buyingResult = service.getPartyOrders('7', 'B');
+    const buyingRequest = http.expectOne((request) =>
+      request.url === 'http://localhost:8080/api/orders' &&
+      request.params.get('partyId') === '7' &&
+      request.params.get('partyType') === 'B'
+    );
+    buyingRequest.flush([{ id: 2, orderTypeId: 2 }]);
+    http.expectOne('http://localhost:8080/api/order-types').flush([
+      { id: 1, name: 'Broiler' },
+      { id: 2, name: 'Culls' }
+    ]);
+
+    await expectAsync(sellingResult).toBeResolvedTo([{ id: 1, orderTypeId: 1, orderTypeName: 'Broiler' }]);
+    await expectAsync(buyingResult).toBeResolvedTo([{ id: 2, orderTypeId: 2, orderTypeName: 'Culls' }]);
+
+    await service.getOrderTypes();
+    http.expectNone('http://localhost:8080/api/order-types');
+  });
+
   it('posts a buying party to the buying-parties endpoint', async () => {
     const party = { name: 'Farm supplier', contact: 'Pat', location: 'Nashik', isActive: true };
     const result = service.createParty('buying', party);
