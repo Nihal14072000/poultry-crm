@@ -69,11 +69,11 @@ export class PartyDetailsComponent implements OnInit {
   }
 
   get paymentsTotal(): number {
-    return this.money(this.financeSummary, 'totalReceived');
+    return this.money(this.financeSummary, this.partyType === 'buying' ? 'totalReceived' : 'totalPaid');
   }
 
   get transactionTotal(): number {
-    return this.money(this.financeSummary, 'totalReceivable');
+    return this.money(this.financeSummary, this.partyType === 'buying' ? 'totalReceivable' : 'totalPayable');
   }
 
   get dueTotal(): number {

@@ -61,15 +61,15 @@ describe('PartyDetailsComponent', () => {
     tripsApi.getPartyOrders.and.resolveTo([{
       tripId: 15, orderTypeId: 1, orderTypeName: 'Broiler', qty: 20, weight: 50, rate: 110, createDate: '2026-03-10'
     }]);
-    financeApi.summary.and.resolveTo({ totalReceived: 121, totalReceivable: 121, totalPaid: 0, totalPayable: 0 });
+    financeApi.summary.and.resolveTo({ totalReceived: 121, totalReceivable: 121, totalPaid: 35, totalPayable: 100 });
 
     await component.ngOnInit();
 
     expect(tripsApi.getPartyOrders).toHaveBeenCalledWith('12', 'S');
     expect(financeApi.summary).toHaveBeenCalledWith({ sellingPartyId: '12' });
-    expect(component.paymentsTotal).toBe(121);
-    expect(component.transactionTotal).toBe(121);
-    expect(component.dueTotal).toBe(0);
+    expect(component.paymentsTotal).toBe(35);
+    expect(component.transactionTotal).toBe(100);
+    expect(component.dueTotal).toBe(65);
     expect(component.transactionLabel).toBe('Sales');
     expect(component.orders[0]['tripId']).toBe(15);
     expect(component.orderColumns).toEqual(['tripId', 'orderTypeId', 'qty', 'weight', 'rate', 'sales', 'createDate']);
