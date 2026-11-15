@@ -67,14 +67,14 @@ jobs:
           set -euo pipefail
 
           APP_PATH="/home/ubuntu/poultry-crm"
-          DEPLOY_PATH="$APP_PATH/dist"
-          STAGING_PATH="$APP_PATH/dist-staging"
-          PREVIOUS_PATH="$APP_PATH/dist.previous"
+          DEPLOY_PATH="$APP_PATH/dist/my-app/browser"
+          STAGING_PATH="$APP_PATH/dist/my-app/browser-staging"
+          PREVIOUS_PATH="$APP_PATH/dist/my-app/browser.previous"
           ARCHIVE="/home/ubuntu/frontend-dist.tar.gz"
 
           test -f "$ARCHIVE"
           rm -rf "$STAGING_PATH"
-          mkdir -p "$APP_PATH"
+          mkdir -p "$APP_PATH/dist/my-app"
           mkdir -p "$STAGING_PATH"
           tar -xzf "$ARCHIVE" -C "$STAGING_PATH"
 
