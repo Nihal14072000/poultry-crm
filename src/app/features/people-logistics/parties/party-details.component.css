@@ -10,6 +10,10 @@
 .metrics article { background: #fff; border: 1px solid #e9ece7; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; min-height: 85px; padding: 15px; }
 .metrics span { color: #858f87; font-size: 9px; }
 .metrics strong { color: #334239; font-size: 17px; }
+.detail-tabs { border-bottom: 1px solid #e9ece7; display: flex; gap: 6px; margin-bottom: 12px; }
+.detail-tabs button { background: transparent; border: 0; border-bottom: 2px solid transparent; color: #657169; cursor: pointer; font-size: 11px; padding: 10px 14px; }
+.detail-tabs button.active { border-bottom-color: #527c5b; color: #334239; font-weight: 650; }
+.detail-tabs button:focus-visible { outline: 2px solid #527c5b; outline-offset: -2px; }
 .trip-card { background: #fff; border: 1px solid #e9ece7; border-radius: 9px; overflow: hidden; }
 .card-heading { align-items: center; border-bottom: 1px solid #eef0ed; display: flex; justify-content: space-between; padding: 16px 18px; }
 .card-heading h2 { color: #334239; font-size: 13px; margin: 0 0 4px; }

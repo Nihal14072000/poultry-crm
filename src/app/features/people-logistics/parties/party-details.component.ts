@@ -19,6 +19,8 @@ export class PartyDetailsComponent implements OnInit {
   party?: PartyDirectoryRecord;
   trips: TripRecord[] = [];
   orders: Record<string, unknown>[] = [];
+  payments: FinanceRecord[] = [];
+  activeTab: 'orders' | 'payments' = 'orders';
   readonly orderColumns = ['tripId', 'orderTypeId', 'qty', 'weight', 'rate', 'sales', 'createDate'];
   financeSummary: FinanceRecord = {};
   loading = true;
@@ -40,16 +42,23 @@ export class PartyDetailsComponent implements OnInit {
     }
 
     try {
-      const [parties, allTrips, financeSummary, orders] = await Promise.all([
+      const [parties, allTrips, financeSummary, orders, payments] = await Promise.all([
         this.partyType === 'buying' ? this.tripsApi.getBuyingParties() : this.tripsApi.getSellingParties(),
         this.tripsApi.getTrips(),
         this.financeApi.summary(this.partyType === 'buying' ? { buyingPartyId: partyId } : { sellingPartyId: partyId }),
-        this.tripsApi.getPartyOrders(partyId, this.partyType === 'buying' ? 'B' : 'S')
+        this.tripsApi.getPartyOrders(partyId, this.partyType === 'buying' ? 'B' : 'S'),
+        this.financeApi.payments()
       ]);
       this.party = parties.find((party) => String(party.id) === partyId);
       if (!this.party) throw new Error('This party could not be found.');
       this.orders = orders;
       this.financeSummary = financeSummary;
+      const paymentType = this.partyType === 'buying' ? 'BUYER_RECEIPT' : 'SELLER_PAYOUT';
+      this.payments = payments.filter((payment) =>
+        payment['isDeleted'] !== true &&
+        String(payment['partyId'] ?? payment['buyingPartyId'] ?? payment['sellingPartyId'] ?? '') === partyId &&
+        String(payment['paymentType'] ?? payment['type'] ?? '') === paymentType
+      );
 
       const tripDetails = await Promise.all(allTrips.map((trip) =>
         this.tripsApi.getTripDetails(String(trip['_demoId']))
@@ -119,6 +128,23 @@ export class PartyDetailsComponent implements OnInit {
   orderCreatedDate(order: Record<string, unknown>): string | null {
     const value = order['createDate'] ?? order['createdDate'] ?? order['createdAt'];
     return value == null || value === '' ? null : String(value);
+  }
+
+  paymentText(payment: FinanceRecord, ...keys: string[]): string {
+    for (const key of keys) {
+      const value = payment[key];
+      if (value != null && value !== '') return String(value);
+    }
+    return '—';
+  }
+
+  paymentDate(payment: FinanceRecord): string | null {
+    const value = payment['paymentDate'] ?? payment['date'] ?? payment['createdAt'];
+    return value == null || value === '' ? null : String(value);
+  }
+
+  paymentAmount(payment: FinanceRecord): number {
+    return this.money(payment, 'amount');
   }
 
   private money(record: FinanceRecord, ...keys: string[]): number {

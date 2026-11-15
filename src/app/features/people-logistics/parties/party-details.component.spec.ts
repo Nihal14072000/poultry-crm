@@ -10,7 +10,7 @@ describe('PartyDetailsComponent', () => {
 
   beforeEach(() => {
     tripsApi = jasmine.createSpyObj<TripApiService>('TripApiService', ['getBuyingParties', 'getSellingParties', 'getPartyOrders', 'getTrips', 'getTripDetails']);
-    financeApi = jasmine.createSpyObj<FinanceApiService>('FinanceApiService', ['summary']);
+    financeApi = jasmine.createSpyObj<FinanceApiService>('FinanceApiService', ['summary', 'payments']);
     component = new PartyDetailsComponent({
       snapshot: { data: { partyType: 'buying' }, paramMap: { get: () => '7' } }
     } as unknown as ActivatedRoute, tripsApi, financeApi);
@@ -33,6 +33,13 @@ describe('PartyDetailsComponent', () => {
       deliveryEntries: []
     }));
     financeApi.summary.and.resolveTo({ totalReceived: 125, totalReceivable: 200 });
+    financeApi.payments.and.resolveTo([
+      { id: 1, partyId: 7, paymentType: 'BUYER_RECEIPT', amount: 125, status: 'COMPLETED', paymentDate: '2026-03-02' },
+      { id: 2, partyId: 7, paymentType: 'BUYER_RECEIPT', amount: 50, status: 'PENDING', paymentDate: '2026-03-03' },
+      { id: 3, partyId: 8, paymentType: 'BUYER_RECEIPT', amount: 25, status: 'COMPLETED' },
+      { id: 4, partyId: 7, paymentType: 'SELLER_PAYOUT', amount: 20, status: 'COMPLETED' },
+      { id: 5, partyId: 7, paymentType: 'BUYER_RECEIPT', amount: 10, status: 'COMPLETED', isDeleted: true }
+    ]);
     tripsApi.getPartyOrders.and.resolveTo([{
       tripId: 11, orderTypeId: 1, orderTypeName: 'Broiler', qty: 5, weight: 20, rate: 100, createDate: '2026-03-10'
     }]);
@@ -44,6 +51,7 @@ describe('PartyDetailsComponent', () => {
     expect(component.dueTotal).toBe(75);
     expect(component.transactionTotal).toBe(200);
     expect(component.transactionLabel).toBe('Purchase');
+    expect(component.payments.map((payment) => payment['id'])).toEqual([1, 2]);
     expect(financeApi.summary).toHaveBeenCalledWith({ buyingPartyId: '7' });
     expect(tripsApi.getPartyOrders).toHaveBeenCalledWith('7', 'B');
     expect(component.orders[0]['tripId']).toBe(11);
@@ -62,6 +70,10 @@ describe('PartyDetailsComponent', () => {
       tripId: 15, orderTypeId: 1, orderTypeName: 'Broiler', qty: 20, weight: 50, rate: 110, createDate: '2026-03-10'
     }]);
     financeApi.summary.and.resolveTo({ totalReceived: 121, totalReceivable: 121, totalPaid: 35, totalPayable: 100 });
+    financeApi.payments.and.resolveTo([
+      { id: 6, partyId: 12, paymentType: 'SELLER_PAYOUT', amount: 35, status: 'COMPLETED' },
+      { id: 7, partyId: 12, paymentType: 'BUYER_RECEIPT', amount: 10, status: 'COMPLETED' }
+    ]);
 
     await component.ngOnInit();
 
@@ -71,6 +83,7 @@ describe('PartyDetailsComponent', () => {
     expect(component.transactionTotal).toBe(100);
     expect(component.dueTotal).toBe(65);
     expect(component.transactionLabel).toBe('Sales');
+    expect(component.payments.map((payment) => payment['id'])).toEqual([6]);
     expect(component.orders[0]['tripId']).toBe(15);
     expect(component.orderColumns).toEqual(['tripId', 'orderTypeId', 'qty', 'weight', 'rate', 'sales', 'createDate']);
     expect(component.orderValue(15, 'tripId', component.orders[0])).toBe('TR0015');

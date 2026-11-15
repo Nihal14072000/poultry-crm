@@ -19,29 +19,59 @@
       <article><span>Dues</span><strong>{{ dueTotal | currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong></article>
     </section>
 
-    <section class="trip-card">
-      <div class="card-heading"><div><h2>All orders</h2><p>Orders for {{ party.name }}.</p></div><strong>{{ orders.length }} orders</strong></div>
-      <div class="table-scroll">
-        <table>
-          <thead><tr>@for (column of orderColumns; track column) { <th>{{ orderColumnLabel(column) }}</th> }</tr></thead>
-          <tbody>
-            @for (order of orders; track $index) {
-              <tr>@for (column of orderColumns; track column) {
-                <td>
-                  @if (column === 'createDate') {
-                    @if (orderCreatedDate(order); as createdDate) { {{ createdDate | date:'dd/MM/yyyy':'UTC' }} } @else { — }
-                  } @else {
-                    {{ orderValue(order[column], column, order) }}
-                  }
-                </td>
-              }</tr>
-            } @empty {
-              <tr><td [attr.colspan]="orderColumns.length || 1" class="empty">No orders have been recorded for this party.</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <div class="detail-tabs" role="tablist" aria-label="Party records">
+      <button type="button" role="tab" id="orders-tab" aria-controls="orders-panel" [attr.aria-selected]="activeTab === 'orders'" [class.active]="activeTab === 'orders'" (click)="activeTab = 'orders'">Orders</button>
+      <button type="button" role="tab" id="payments-tab" aria-controls="payments-panel" [attr.aria-selected]="activeTab === 'payments'" [class.active]="activeTab === 'payments'" (click)="activeTab = 'payments'">Payments</button>
+    </div>
+
+    @if (activeTab === 'orders') {
+      <section class="trip-card" role="tabpanel" id="orders-panel" aria-labelledby="orders-tab">
+        <div class="card-heading"><div><h2>All orders</h2><p>Orders for {{ party.name }}.</p></div><strong>{{ orders.length }} orders</strong></div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr>@for (column of orderColumns; track column) { <th>{{ orderColumnLabel(column) }}</th> }</tr></thead>
+            <tbody>
+              @for (order of orders; track $index) {
+                <tr>@for (column of orderColumns; track column) {
+                  <td>
+                    @if (column === 'createDate') {
+                      @if (orderCreatedDate(order); as createdDate) { {{ createdDate | date:'dd/MM/yyyy':'UTC' }} } @else { — }
+                    } @else {
+                      {{ orderValue(order[column], column, order) }}
+                    }
+                  </td>
+                }</tr>
+              } @empty {
+                <tr><td [attr.colspan]="orderColumns.length || 1" class="empty">No orders have been recorded for this party.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    } @else {
+      <section class="trip-card" role="tabpanel" id="payments-panel" aria-labelledby="payments-tab">
+        <div class="card-heading"><div><h2>All payments</h2><p>Payment transactions for {{ party.name }}.</p></div><strong>{{ payments.length }} payments</strong></div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>DATE</th><th>AMOUNT</th><th>METHOD</th><th>REFERENCE</th><th>STATUS</th><th>TRIP ID</th></tr></thead>
+            <tbody>
+              @for (payment of payments; track $index) {
+                <tr>
+                  <td>@if (paymentDate(payment); as date) { {{ date | date:'dd/MM/yyyy':'UTC' }} } @else { — }</td>
+                  <td>{{ paymentAmount(payment) | currency:'INR':'symbol':'1.2-2':'en-IN' }}</td>
+                  <td>{{ paymentText(payment, 'paymentMethod', 'method') }}</td>
+                  <td>{{ paymentText(payment, 'reference', 'externalReference', 'paymentReference') }}</td>
+                  <td>{{ paymentText(payment, 'status') }}</td>
+                  <td>{{ paymentText(payment, 'tripId') }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="6" class="empty">No payments have been recorded for this party.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
 
     <!-- <section class="trip-card">
       <div class="card-heading"><div><h2>Trips covered till now</h2><p>All trips associated with {{ party.name }}.</p></div><strong>{{ trips.length }} trips</strong></div>
