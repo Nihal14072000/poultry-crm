@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TripRecord, TripVendorPickup } from '../../../common/models/trip.model';
@@ -90,8 +91,8 @@ export class TripDeliveriesComponent implements OnInit {
         const [data, payments, suppliersDirectory, deliveryVendorsDirectory] = await Promise.all([
           this.service.getDeliveryData(tripId, this.pendingPickupIds(), this.pendingDeliveryIds()),
           this.finance.payments(),
-          this.directories.getDirectory('suppliers').toPromise(),
-          this.directories.getDirectory('vendor-destinations').toPromise()
+          firstValueFrom(this.directories.getDirectory('suppliers')),
+          firstValueFrom(this.directories.getDirectory('vendor-destinations'))
         ]);
         this.trip = data.trip; this.destinations = data.destinations; this.deliveries = data.deliveries; this.mortalities = data.mortalities;
         this.supplierPickups = data.supplierPickups; this.supplierReceipts = data.supplierReceipts;
