@@ -5,11 +5,13 @@ import { SessionAuthService } from '../../../common/services/session-auth.servic
 import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { TripService } from '../../../common/services/trip.service';
 import { TripDeliveriesComponent } from './trip-deliveries.component';
+import { TripApiService } from '../../../common/services/trip-api.service';
 
 describe('TripDeliveriesComponent payments', () => {
   let component: TripDeliveriesComponent;
   let service: jasmine.SpyObj<TripService>;
   let finance: jasmine.SpyObj<FinanceApiService>;
+  let tripApi: jasmine.SpyObj<TripApiService>;
 
   beforeEach(() => {
     const route = { snapshot: { paramMap: { get: () => '12' } } } as unknown as ActivatedRoute;
@@ -30,6 +32,17 @@ describe('TripDeliveriesComponent payments', () => {
       loadedBirds: 0
     } satisfies TripDeliveryData);
     finance = jasmine.createSpyObj<FinanceApiService>('FinanceApiService', ['payments', 'createPayment', 'updatePayment']);
+    tripApi = jasmine.createSpyObj<TripApiService>('TripApiService', ['getBuyingParties', 'getSellingParties']);
+    tripApi.getBuyingParties.and.resolveTo([
+      { _demoId: '31', id: 31, name: 'Supplier', contact: '', location: '', isActive: true, isDeleted: false, status: 'Active' },
+      { _demoId: '32', id: 32, name: 'Other Supplier', contact: '', location: '', isActive: true, isDeleted: false, status: 'Active' },
+      { _demoId: '33', id: 33, name: 'Inactive supplier', contact: '', location: '', isActive: false, isDeleted: false, status: 'Inactive' }
+    ]);
+    tripApi.getSellingParties.and.resolveTo([
+      { _demoId: '51', id: 51, name: 'Delivery vendor', contact: '', location: '', isActive: true, isDeleted: false, status: 'Active' },
+      { _demoId: '52', id: 52, name: 'Other vendor', contact: '', location: '', isActive: true, isDeleted: false, status: 'Active' },
+      { _demoId: '53', id: 53, name: 'Pending vendor', contact: '', location: '', isActive: false, isDeleted: false, status: 'Inactive' }
+    ]);
     finance.payments.and.resolveTo([
       { id: 21, tripId: 12, amount: 25 },
       { id: 22, tripId: 13, amount: 50 }
@@ -37,6 +50,7 @@ describe('TripDeliveriesComponent payments', () => {
     component = new TripDeliveriesComponent(
       service,
       finance,
+      tripApi,
       route,
       router,
       jasmine.createSpyObj<SessionAuthService>('SessionAuthService', []),
@@ -93,10 +107,11 @@ describe('TripDeliveriesComponent payments', () => {
 
   it('calculates received payments, supplier payouts, and outstanding supplier balance separately', () => {
     component.supplierReceipts = [{ total: 700 }];
+    component.supplierPickups = [{ vendorId: '31', vendorName: 'Supplier', broiler: { quantity: 1, rate: 1, total: 1 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 1 }];
     component.tripPayments = [
-      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', status: 'COMPLETED', amount: 200 },
-      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', status: 'COMPLETED', amount: 500, isDeleted: true },
-      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', status: 'PENDING', amount: 100 },
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', partyId: '31', status: 'COMPLETED', amount: 200 },
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', partyId: '31', status: 'COMPLETED', amount: 500, isDeleted: true },
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', partyId: '31', status: 'PENDING', amount: 100 },
       { paymentType: 'SELLER_PAYOUT', partyRole: 'SELLING', status: 'COMPLETED', amount: 75 },
       { paymentType: 'BUYER_RECEIPT', partyRole: 'SELLING', status: 'COMPLETED', amount: 450 },
       { paymentType: 'BUYER_RECEIPT', partyRole: 'SELLING', status: 'PENDING', amount: 50 }
@@ -107,10 +122,23 @@ describe('TripDeliveriesComponent payments', () => {
     expect(component.paymentsToBeDone()).toBe(500);
   });
 
+  it('does not reduce trip supplier outstanding for a payout to a supplier outside the trip', () => {
+    component.supplierReceipts = [{ total: 700 }];
+    component.supplierPickups = [{ vendorId: '31', vendorName: 'Trip supplier', broiler: { quantity: 1, rate: 1, total: 1 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 1 }];
+    component.tripPayments = [
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', partyId: '32', status: 'COMPLETED', amount: 250, tripId: 12 },
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', partyId: '31', status: 'COMPLETED', amount: 100, tripId: 12 }
+    ];
+
+    expect(component.totalSupplierPaymentsMade()).toBe(100);
+    expect(component.paymentsToBeDone()).toBe(600);
+  });
+
   it('does not show a negative outstanding supplier balance after overpayment', () => {
     component.supplierReceipts = [{ total: 700 }];
+    component.supplierPickups = [{ vendorId: '31', vendorName: 'Supplier', broiler: { quantity: 1, rate: 1, total: 1 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 1 }];
     component.tripPayments = [
-      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', status: 'COMPLETED', amount: 800 }
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', partyId: '31', status: 'COMPLETED', amount: 800 }
     ];
 
     expect(component.paymentsToBeDone()).toBe(0);
@@ -126,21 +154,18 @@ describe('TripDeliveriesComponent payments', () => {
     expect(component.unreconciled()).toBe(5);
   });
 
-  it('offers supplier and delivery vendors as seller payout parties', () => {
+  it('offers all active suppliers for payouts and all active delivery vendors for receipts', async () => {
+    await component.ngOnInit();
     component.paymentType = 'SELLER_PAYOUT';
-    component.supplierPickups = [{
-      vendorId: '31',
-      vendorName: 'Supplier',
-      broiler: { quantity: 1, rate: 1, total: 1 },
-      culls: { quantity: 0, rate: 0, total: 0 },
-      feed: { quantity: 0, rate: 0, total: 0 },
-      total: 1
-    }];
-    component.destinations = [{ vendorDestinationId: '51', vendorName: 'Delivery vendor' }];
-
     expect(component.paymentParties).toEqual([
       { id: 'BUYING:31', name: 'Supplier · Supplier' },
-      { id: 'SELLING:51', name: 'Delivery vendor · Delivery vendor' }
+      { id: 'BUYING:32', name: 'Supplier · Other Supplier' }
+    ]);
+
+    component.paymentType = 'BUYER_RECEIPT';
+    expect(component.paymentParties).toEqual([
+      { id: 'SELLING:51', name: 'Vendor · Delivery vendor' },
+      { id: 'SELLING:52', name: 'Vendor · Other vendor' }
     ]);
   });
 

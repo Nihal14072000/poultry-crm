@@ -8,6 +8,7 @@ import { SessionAuthService } from '../../../common/services/session-auth.servic
 import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { FinanceApiService, FinanceRecord, PaymentMethod, PaymentType } from '../../../common/services/finance-api.service';
 import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
+import { TripApiService } from '../../../common/services/trip-api.service';
 
 interface SupplierReceiptForm {
   vendorId: string; vendorName: string;
@@ -29,6 +30,8 @@ export class TripDeliveriesComponent implements OnInit {
   supplierReceipts: TripRecord[] = [];
   supplierReceiptForms: SupplierReceiptForm[] = [];
   tripPayments: FinanceRecord[] = [];
+  allSuppliers: TripRecord[] = [];
+  allDeliveryVendors: TripRecord[] = [];
   private pendingSupplierPickupIds: Record<string, string> = {};
   private pendingVendorDeliveryIds: string[] = [];
   activePickupVendorId = '';
@@ -69,7 +72,7 @@ export class TripDeliveriesComponent implements OnInit {
   showPaymentForm = false;
   editingPaymentId = '';
 
-  constructor(private readonly service: TripService, private readonly finance: FinanceApiService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService, readonly rolePermissions: RolePermissionService) {}
+  constructor(private readonly service: TripService, private readonly finance: FinanceApiService, private readonly tripApi: TripApiService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService, readonly rolePermissions: RolePermissionService) {}
 
   async ngOnInit(): Promise<void> {
     const state = this.router.getCurrentNavigation()?.extras.state as { successMessage?: string } | undefined;
@@ -84,13 +87,17 @@ export class TripDeliveriesComponent implements OnInit {
       if (tripId) {
         this.readPendingSupplierPickups(tripId);
         this.readPendingVendorDeliveries(tripId);
-        const [data, payments] = await Promise.all([
+        const [data, payments, suppliersDirectory, deliveryVendorsDirectory] = await Promise.all([
           this.service.getDeliveryData(tripId, this.pendingPickupIds(), this.pendingDeliveryIds()),
-          this.finance.payments()
+          this.finance.payments(),
+          this.tripApi.getBuyingParties(),
+          this.tripApi.getSellingParties()
         ]);
         this.trip = data.trip; this.destinations = data.destinations; this.deliveries = data.deliveries; this.mortalities = data.mortalities;
         this.supplierPickups = data.supplierPickups; this.supplierReceipts = data.supplierReceipts;
         this.tripPayments = payments.filter((payment) => String(payment['tripId'] ?? '') === tripId);
+        this.allSuppliers = suppliersDirectory.filter((party) => this.isAvailablePaymentParty(party)) as TripRecord[];
+        this.allDeliveryVendors = deliveryVendorsDirectory.filter((party) => this.isAvailablePaymentParty(party)) as TripRecord[];
         this.supplierReceiptForms = data.supplierPickups.map((pickup) => {
           const receipt = data.supplierReceipts.find((record) => String(record['vendorId'] ?? '') === pickup.vendorId);
           return {
@@ -179,23 +186,40 @@ export class TripDeliveriesComponent implements OnInit {
     return this.auth.currentUser?.role === 'Organization Admin' && this.canUpdateTrip;
   }
   get paymentParties(): { id: string; name: string }[] {
-    const destinations = this.destinations.map((party) => ({
-      id: `SELLING:${String(party['vendorDestinationId'] ?? '')}`,
-      name: this.paymentType === 'SELLER_PAYOUT' ? `Delivery vendor · ${String(party['vendorName'] ?? '')}` : String(party['vendorName'] ?? '')
-    }));
-    if (this.paymentType === 'BUYER_RECEIPT') return destinations;
-    return [
-      ...this.supplierPickups.map((party) => ({ id: `BUYING:${party.vendorId}`, name: `Supplier · ${party.vendorName}` })),
-      ...destinations
-    ];
+    if (this.paymentType === 'BUYER_RECEIPT') {
+      return this.allDeliveryVendors.map((party) => ({
+        id: `SELLING:${this.directoryPartyId(party)}`,
+        name: `Vendor · ${String(party['name'] ?? party['vendorName'] ?? 'Unnamed vendor')}`
+      })).filter((party) => party.id !== 'SELLING:');
+    }
+    return this.allSuppliers.map((party) => ({
+      id: `BUYING:${this.directoryPartyId(party)}`,
+      name: `Supplier · ${String(party['name'] ?? party['vendorName'] ?? 'Unnamed supplier')}`
+    })).filter((party) => party.id !== 'BUYING:');
+  }
+  private directoryPartyId(party: TripRecord): string {
+    return String(party['_demoId'] ?? party['id'] ?? party['vendorId'] ?? party['supplierId'] ?? party['vendorDestinationId'] ?? '');
+  }
+  private isAvailablePaymentParty(party: Record<string, unknown>): boolean {
+    const status = String(party['status'] ?? '').trim().toLowerCase();
+    return party['isDeleted'] !== true && party['isActive'] !== false &&
+      (!status || status === 'active');
+  }
+  private paymentPartyRole(payment: FinanceRecord): 'BUYING' | 'SELLING' {
+    if (payment['partyRole'] === 'BUYING' || payment['buyingPartyId'] != null) return 'BUYING';
+    if (payment['partyRole'] === 'SELLING' || payment['sellingPartyId'] != null) return 'SELLING';
+    return payment['paymentType'] === 'SELLER_PAYOUT' ? 'BUYING' : 'SELLING';
   }
   paymentPartyName(payment: FinanceRecord): string {
     const partyId = String(payment['partyId'] ?? payment['buyingPartyId'] ?? payment['sellingPartyId'] ?? '');
-    const partyRole = payment['partyRole'] ?? (payment['buyingPartyId'] != null ? 'BUYING' : payment['sellingPartyId'] != null ? 'SELLING' : payment['paymentType'] === 'BUYER_RECEIPT' ? 'BUYING' : 'SELLING');
-    const name = partyRole === 'BUYING'
-      ? this.supplierPickups.find((party) => party.vendorId === partyId)?.vendorName
-      : this.destinations.find((party) => String(party['vendorDestinationId'] ?? '') === partyId)?.['vendorName'];
-    return String(name ?? payment['partyName'] ?? payment['buyingPartyName'] ?? payment['sellingPartyName'] ?? partyId ?? '—');
+    const partyRole = this.paymentPartyRole(payment);
+    const directory = partyRole === 'BUYING' ? this.allSuppliers : this.allDeliveryVendors;
+    const tripParties = partyRole === 'BUYING' ? this.supplierPickups : this.destinations;
+    const directoryName = directory.find((party) => this.directoryPartyId(party) === partyId)?.['name'];
+    const tripName = partyRole === 'BUYING'
+      ? (tripParties as TripVendorPickup[]).find((party) => party.vendorId === partyId)?.vendorName
+      : (tripParties as TripRecord[]).find((party) => String(party['vendorDestinationId'] ?? '') === partyId)?.['vendorName'];
+    return String(directoryName ?? tripName ?? payment['partyName'] ?? payment['buyingPartyName'] ?? payment['sellingPartyName'] ?? partyId ?? '—');
   }
   togglePaymentForm(): void {
     if (this.showPaymentForm) this.cancelPaymentEdit();
@@ -209,7 +233,7 @@ export class TripDeliveriesComponent implements OnInit {
     this.editingPaymentId = String(payment['id'] ?? payment['paymentId'] ?? '');
     if (!this.editingPaymentId) return;
     this.paymentType = payment['paymentType'] === 'SELLER_PAYOUT' ? 'SELLER_PAYOUT' : 'BUYER_RECEIPT';
-    const partyRole = payment['partyRole'] ?? (payment['buyingPartyId'] != null ? 'BUYING' : payment['sellingPartyId'] != null ? 'SELLING' : payment['paymentType'] === 'BUYER_RECEIPT' ? 'BUYING' : 'SELLING');
+    const partyRole = this.paymentPartyRole(payment);
     this.paymentPartyId = `${partyRole}:${String(payment['partyId'] ?? payment['buyingPartyId'] ?? payment['sellingPartyId'] ?? '')}`;
     this.paymentAmount = this.number(payment['amount']);
     this.paymentDate = String(payment['paymentDate'] ?? '').slice(0, 10);
@@ -291,8 +315,13 @@ export class TripDeliveriesComponent implements OnInit {
       .reduce((sum, payment) => sum + this.number(payment['amount']), 0);
   }
   totalSupplierPaymentsMade(): number {
+    const currentTripSupplierIds = new Set(this.supplierPickups.map((pickup) => String(pickup.vendorId)));
     return this.tripPayments
-      .filter((payment) => payment['paymentType'] === 'SELLER_PAYOUT' && payment['partyRole'] === 'BUYING' && payment['status'] === 'COMPLETED' && payment['isDeleted'] !== true)
+      .filter((payment) => {
+        const partyId = String(payment['partyId'] ?? payment['buyingPartyId'] ?? payment['sellingPartyId'] ?? '');
+        return payment['paymentType'] === 'SELLER_PAYOUT' && this.paymentPartyRole(payment) === 'BUYING' &&
+          currentTripSupplierIds.has(partyId) && payment['status'] === 'COMPLETED' && payment['isDeleted'] !== true;
+      })
       .reduce((sum, payment) => sum + this.number(payment['amount']), 0);
   }
   paymentsToBeDone(): number {

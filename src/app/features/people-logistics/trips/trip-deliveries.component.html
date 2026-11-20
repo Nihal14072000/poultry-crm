@@ -121,17 +121,18 @@
       }
     </section>
     <section class="panel payment-panel">
-      <div class="section-heading"><div><span class="step">VENDOR PAYMENT</span><h2>Trip payments</h2></div><button class="button button-secondary" type="button" (click)="togglePaymentForm()" [disabled]="saving">{{ showPaymentForm ? 'Cancel' : tripPayments.length ? 'Add another payment' : 'Add payment' }}</button></div>
+      <div class="section-heading"><div><span class="step">TRIP PAYMENTS</span><h2>Trip payments</h2></div><button class="button button-secondary" type="button" (click)="togglePaymentForm()" [disabled]="saving">{{ showPaymentForm ? 'Cancel' : tripPayments.length ? 'Add another payment' : 'Add payment' }}</button></div>
+      <p class="readonly">Select from all active vendors for payments received or all active suppliers for payments made. Every entry is tracked against this trip; only payouts to suppliers assigned to this trip reduce its outstanding supplier balance.</p>
       @if (tripPayments.length) {
         <div class="table-wrap"><table><thead><tr><th>TYPE</th><th>PARTY</th><th>AMOUNT</th><th>DATE</th><th>METHOD</th><th>REFERENCE</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody>
           @for (payment of tripPayments; track $index) {
-            <tr><td>{{ payment['paymentType'] === 'BUYER_RECEIPT' ? 'Payment received' : 'Vendor payment made' }}</td><td>{{ paymentPartyName(payment) }}</td><td>{{ number(payment['amount']) | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ payment['paymentDate'] }}</td><td>{{ payment['paymentMethod'] }}</td><td>{{ payment['reference'] || payment['externalReference'] || '—' }}</td><td>{{ payment['isDeleted'] === true ? 'Deleted' : payment['status'] }}</td><td>@if (trip['status'] !== 'Completed' && payment['isDeleted'] !== true) { <button class="link-button" type="button" (click)="editPayment(payment)">Edit</button><button class="link-button" type="button" (click)="deletePayment(payment)" [disabled]="saving">Delete</button> } @else { <span>—</span> }</td></tr>
+            <tr><td>{{ payment['paymentType'] === 'BUYER_RECEIPT' ? 'Payment received' : 'Supplier payment made' }}</td><td>{{ paymentPartyName(payment) }}</td><td>{{ number(payment['amount']) | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ payment['paymentDate'] }}</td><td>{{ payment['paymentMethod'] }}</td><td>{{ payment['reference'] || payment['externalReference'] || '—' }}</td><td>{{ payment['isDeleted'] === true ? 'Deleted' : payment['status'] }}</td><td>@if (trip['status'] !== 'Completed' && payment['isDeleted'] !== true) { <button class="link-button" type="button" (click)="editPayment(payment)">Edit</button><button class="link-button" type="button" (click)="deletePayment(payment)" [disabled]="saving">Delete</button> } @else { <span>—</span> }</td></tr>
           }
         </tbody></table></div>
       } @else { <p class="empty">No payments have been recorded for this trip.</p> }
       @if (showPaymentForm) {
         <div class="form-grid">
-          <label>Type<select name="paymentType" [(ngModel)]="paymentType" (ngModelChange)="changePaymentType()"><option value="BUYER_RECEIPT">Payment received</option><option value="SELLER_PAYOUT">Vendor payment made</option></select></label>
+          <label>Type<select name="paymentType" [(ngModel)]="paymentType" (ngModelChange)="changePaymentType()"><option value="BUYER_RECEIPT">Payment received</option><option value="SELLER_PAYOUT">Supplier payment made</option></select></label>
           <label>Party<select name="paymentParty" [(ngModel)]="paymentPartyId"><option value="">Select party</option>@for (party of paymentParties; track party.id) { <option [value]="party.id">{{ party.name }}</option> }</select></label>
           <label>Amount<input name="paymentAmount" type="number" min="0.01" step="0.01" [(ngModel)]="paymentAmount"></label>
           <label>Date<input name="paymentDate" type="date" [(ngModel)]="paymentDate"></label>
