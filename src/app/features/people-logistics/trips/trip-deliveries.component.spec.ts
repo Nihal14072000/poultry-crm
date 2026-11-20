@@ -125,7 +125,22 @@ describe('TripDeliveriesComponent payments', () => {
     expect(component.feedProgress()).toBe(50);
   });
 
-  it('caps category progress at 100 percent and returns zero when no quantity was planned', () => {
+  it('hides culls and feed progress when their planned quantities are zero', () => {
+    component.destinations = [{ _demoId: '51', orderedBroiler: 10, orderedCulls: 0, orderedFeed: 0 }];
+    component.deliveries = [{ vendorDestinationId: '51', broiler: 12, culls: 0, feed: 5 }];
+    expect(component.hasPlannedCulls()).toBeFalse();
+    expect(component.hasPlannedFeed()).toBeFalse();
+    expect(component.cullsProgress()).toBe(0);
+    expect(component.feedProgress()).toBe(0);
+  });
+
+  it('shows culls and feed progress when their planned quantities are greater than zero', () => {
+    component.destinations = [{ _demoId: '51', orderedBroiler: 10, orderedCulls: 2, orderedFeed: 5 }];
+    expect(component.hasPlannedCulls()).toBeTrue();
+    expect(component.hasPlannedFeed()).toBeTrue();
+  });
+
+  it('caps category progress at 100 percent', () => {
     component.destinations = [{ _demoId: '51', orderedBroiler: 10, orderedCulls: 0, orderedFeed: 0 }];
     component.deliveries = [{ vendorDestinationId: '51', broiler: 12, culls: 0, feed: 5 }];
     expect(component.broilerProgress()).toBe(100);
