@@ -1,0 +1,64 @@
+<div class="party-skeleton" role="status" [attr.aria-label]="variant === 'details' ? 'Loading party details' : 'Loading parties'">
+  <span class="visually-hidden">Loading…</span>
+
+  @if (variant === 'details') {
+    <div class="detail-heading">
+      <div class="shimmer eyebrow"></div>
+      <div class="shimmer title"></div>
+      <div class="shimmer subtitle"></div>
+    </div>
+
+    <div class="metrics">
+      @for (item of [1, 2, 3]; track item) {
+        <div class="metric-card">
+          <div class="shimmer metric-label"></div>
+          <div class="shimmer metric-value"></div>
+        </div>
+      }
+    </div>
+
+    <div class="tabs">
+      <div class="shimmer tab"></div>
+      <div class="shimmer tab short"></div>
+    </div>
+
+    <section class="table-card">
+      <div class="table-heading">
+        <div>
+          <div class="shimmer section-title"></div>
+          <div class="shimmer section-subtitle"></div>
+        </div>
+        <div class="shimmer count"></div>
+      </div>
+      <div class="table-scroll">
+        <div class="table-row detail-row header-row">
+          @for (column of detailColumns; track column) {
+            <div class="shimmer cell"></div>
+          }
+        </div>
+        @for (row of rows; track row) {
+          <div class="table-row detail-row">
+            @for (column of detailColumns; track column) {
+              <div class="shimmer cell" [class.cell-short]="column % 3 === 0"></div>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  } @else {
+    <div class="table-scroll directory-table">
+      <div class="table-row directory-row header-row">
+        @for (column of directoryColumns; track column) {
+          <div class="shimmer cell"></div>
+        }
+      </div>
+      @for (row of rows; track row) {
+        <div class="table-row directory-row">
+          @for (column of directoryColumns; track column) {
+            <div class="shimmer cell" [class.cell-short]="column % 3 === 0"></div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
