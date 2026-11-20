@@ -31,7 +31,7 @@ describe('TripDeliveriesComponent payments', () => {
       loadedCulls: 0,
       loadedBirds: 0
     } satisfies TripDeliveryData);
-    finance = jasmine.createSpyObj<FinanceApiService>('FinanceApiService', ['payments', 'createPayment', 'updatePayment']);
+    finance = jasmine.createSpyObj<FinanceApiService>('FinanceApiService', ['payments', 'paymentsForTrip', 'createPayment', 'updatePayment']);
     tripApi = jasmine.createSpyObj<TripApiService>('TripApiService', ['getBuyingParties', 'getSellingParties']);
     tripApi.getBuyingParties.and.resolveTo([
       { _demoId: '31', id: 31, name: 'Supplier', contact: '', location: '', isActive: true, isDeleted: false, status: 'Active' },
@@ -43,7 +43,7 @@ describe('TripDeliveriesComponent payments', () => {
       { _demoId: '52', id: 52, name: 'Other vendor', contact: '', location: '', isActive: true, isDeleted: false, status: 'Active' },
       { _demoId: '53', id: 53, name: 'Pending vendor', contact: '', location: '', isActive: false, isDeleted: false, status: 'Inactive' }
     ]);
-    finance.payments.and.resolveTo([
+    finance.paymentsForTrip.and.resolveTo([
       { id: 21, tripId: 12, amount: 25 },
       { id: 22, tripId: 13, amount: 50 }
     ]);
@@ -61,6 +61,7 @@ describe('TripDeliveriesComponent payments', () => {
   it('loads only payments belonging to the selected trip', async () => {
     await component.ngOnInit();
 
+    expect(finance.paymentsForTrip).toHaveBeenCalledWith('12');
     expect(component.tripPayments).toEqual([{ id: 21, tripId: 12, amount: 25 }]);
   });
 
