@@ -16,22 +16,11 @@ describe('PartyDetailsComponent', () => {
     } as unknown as ActivatedRoute, tripsApi, financeApi);
   });
 
-  it('shows finance summary totals and only this party’s trips', async () => {
+  it('loads party details without fetching unused trip data', async () => {
     tripsApi.getBuyingParties.and.resolveTo([{
       _demoId: '7', id: 7, name: 'Supplier', contact: '', location: '',
       isActive: true, isDeleted: false, status: 'Active'
     }]);
-    tripsApi.getTrips.and.resolveTo([
-      { _demoId: '11', tripNumber: 'TR-0011', tripDate: '2026-03-10', route: 'A to B' },
-      { _demoId: '12', tripNumber: 'TR-0012', tripDate: '2026-03-12', route: 'C to D' }
-    ]);
-    tripsApi.getTripDetails.and.callFake(async (id) => ({
-      trip: {},
-      vendorPickups: [{ vendorId: id === '11' ? '7' : '8', vendorName: 'Supplier', broiler: { quantity: 1, rate: 1, total: 1 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 1 }],
-      supplierReceipts: [],
-      vendorDestinations: [],
-      deliveryEntries: []
-    }));
     financeApi.summary.and.resolveTo({ totalReceived: 125, totalReceivable: 200 });
     financeApi.payments.and.resolveTo([
       { id: 1, partyId: 7, paymentType: 'BUYER_RECEIPT', amount: 125, status: 'COMPLETED', paymentDate: '2026-03-02' },
@@ -46,7 +35,8 @@ describe('PartyDetailsComponent', () => {
 
     await component.ngOnInit();
 
-    expect(component.trips.map((trip) => trip['_demoId'])).toEqual(['11']);
+    expect(tripsApi.getTrips).not.toHaveBeenCalled();
+    expect(tripsApi.getTripDetails).not.toHaveBeenCalled();
     expect(component.paymentsTotal).toBe(125);
     expect(component.dueTotal).toBe(75);
     expect(component.transactionTotal).toBe(200);
@@ -65,7 +55,6 @@ describe('PartyDetailsComponent', () => {
       _demoId: '12', id: 12, name: 'Latif Kasab', contact: '', location: '',
       isActive: true, isDeleted: false, status: 'Active'
     }]);
-    tripsApi.getTrips.and.resolveTo([]);
     tripsApi.getPartyOrders.and.resolveTo([{
       tripId: 15, orderTypeId: 1, orderTypeName: 'Broiler', qty: 20, weight: 50, rate: 110, createDate: '2026-03-10'
     }]);
@@ -78,6 +67,8 @@ describe('PartyDetailsComponent', () => {
     await component.ngOnInit();
 
     expect(tripsApi.getPartyOrders).toHaveBeenCalledWith('12', 'S');
+    expect(tripsApi.getTrips).not.toHaveBeenCalled();
+    expect(tripsApi.getTripDetails).not.toHaveBeenCalled();
     expect(financeApi.summary).toHaveBeenCalledWith({ sellingPartyId: '12' });
     expect(component.paymentsTotal).toBe(35);
     expect(component.transactionTotal).toBe(100);
