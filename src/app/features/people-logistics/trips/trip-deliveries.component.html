@@ -149,15 +149,22 @@
         <p>Supplier pickups: {{ loadedBroiler }} broiler + {{ loadedCulls }} culls = {{ totalLoaded() }} birds loaded.</p>
         <p>Vendor handoffs: {{ deliveredBroilerTotal() }} broiler + {{ deliveredCullsTotal() }} culls = {{ totalDelivered() }} birds delivered.</p>
         <p>Unreconciled = {{ totalLoaded() }} loaded − {{ totalDelivered() }} delivered − {{ totalMortality() }} mortality.</p>
-        @if (reconciliationHasExceptions) {
+        @if (hasReconciliationMismatch) {
           @if (auth.currentUser?.role === 'Organization Admin') {
-            <p class="feedback warning">Review discrepancy above. As Organization Admin, you can approve and finalize this trip.</p>
+            <p class="feedback warning">Review the bird-count discrepancy. As Organization Admin, you can approve and finalize this trip.</p>
           } @else {
-            <p class="readonly">Discrepant trips must be submitted for Organization Admin review and approval.</p>
+            <p class="readonly">A bird-count discrepancy was detected. Submit this trip for Organization Admin reconciliation approval.</p>
           }
         }
+        @if (hasMissingDestinationDeliveries) {
+          <p class="feedback error">Record an actual delivery for every vendor destination before completing the trip.</p>
+        }
       </div>
-      <button class="button button-primary" (click)="complete()" [disabled]="saving || !allSupplierReceiptsSaved() || trip['status'] === 'Completed' || (reconciliationHasExceptions && trip['status'] === 'Pending reconciliation' && auth.currentUser?.role !== 'Organization Admin')">{{ trip['status'] === 'Completed' ? 'Trip completed' : (trip['status'] === 'Pending reconciliation' ? (auth.currentUser?.role === 'Organization Admin' ? 'Approve & complete trip' : 'Awaiting admin approval') : (reconciliationHasExceptions ? (auth.currentUser?.role === 'Organization Admin' ? 'Approve & complete trip' : 'Submit for reconciliation') : 'Complete trip')) }}</button>
+      @if (hasReconciliationMismatch) {
+        <button class="button button-primary" (click)="complete()" [disabled]="saving || !allSupplierReceiptsSaved() || hasMissingDestinationDeliveries || trip['status'] === 'Completed' || (trip['status'] === 'Pending reconciliation' && auth.currentUser?.role !== 'Organization Admin')">{{ trip['status'] === 'Completed' ? 'Trip completed' : (trip['status'] === 'Pending reconciliation' ? (auth.currentUser?.role === 'Organization Admin' ? 'Approve & complete trip' : 'Awaiting admin approval') : (auth.currentUser?.role === 'Organization Admin' ? 'Approve & complete trip' : 'Submit for reconciliation')) }}</button>
+      } @else {
+        <button class="button button-primary" (click)="complete()" [disabled]="saving || !allSupplierReceiptsSaved() || hasMissingDestinationDeliveries || trip['status'] === 'Completed'">{{ trip['status'] === 'Completed' ? 'Trip completed' : 'Complete trip' }}</button>
+      }
     </section>
   }
 </main>
