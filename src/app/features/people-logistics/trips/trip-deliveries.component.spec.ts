@@ -95,6 +95,8 @@ describe('TripDeliveriesComponent payments', () => {
     expect([component.broiler, component.broilerWeight, component.broilerRate]).toEqual([8, 18, 115]);
     expect([component.culls, component.cullsWeight, component.cullsRate]).toEqual([1, 1.5, 50]);
     expect([component.feed, component.feedWeight, component.feedRate]).toEqual([2, 2, 25]);
+    expect(component.reason).toBe('');
+    expect(component.remarks).toBe('Corrected receipt');
 
     component.destinations = [{ vendorDestinationId: '51', broilerRate: 100, cullsRate: 40, feedRate: 20 }];
     await component.saveEntry();
@@ -104,6 +106,31 @@ describe('TripDeliveriesComponent payments', () => {
       culls: 1, cullsWeight: 1.5, cullsRate: 50,
       feed: 2, feedWeight: 2, feedRate: 25
     }), [], [], '83');
+  });
+
+  it('calculates broiler, culls, and feed delivery progress independently', () => {
+    component.destinations = [
+      { _demoId: '51', orderedBroiler: 80, orderedCulls: 20, orderedFeed: 50 },
+      { _demoId: '52', orderedBroiler: 20, orderedCulls: 10, orderedFeed: 50 }
+    ];
+    component.deliveries = [
+      { vendorDestinationId: '51', broiler: 40, culls: 10, feed: 20 },
+      { vendorDestinationId: '52', broiler: 10, culls: 5, feed: 30 }
+    ];
+    expect(component.plannedBroilerTotal()).toBe(100);
+    expect(component.plannedCullsTotal()).toBe(30);
+    expect(component.plannedFeedTotal()).toBe(100);
+    expect(component.broilerProgress()).toBe(50);
+    expect(component.cullsProgress()).toBe(50);
+    expect(component.feedProgress()).toBe(50);
+  });
+
+  it('caps category progress at 100 percent and returns zero when no quantity was planned', () => {
+    component.destinations = [{ _demoId: '51', orderedBroiler: 10, orderedCulls: 0, orderedFeed: 0 }];
+    component.deliveries = [{ vendorDestinationId: '51', broiler: 12, culls: 0, feed: 5 }];
+    expect(component.broilerProgress()).toBe(100);
+    expect(component.cullsProgress()).toBe(0);
+    expect(component.feedProgress()).toBe(0);
   });
 
   it('calculates received payments, supplier payouts, and outstanding supplier balance separately', () => {
