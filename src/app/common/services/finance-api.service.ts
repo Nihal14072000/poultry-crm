@@ -95,9 +95,9 @@ export class FinanceApiService {
       ...value,
       ...(paymentType ? { paymentType } : {}),
       ...(status ? { status } : {}),
-      tripId: value['tripId'] ?? value['trip'] && typeof value['trip'] === 'object'
-        ? (value['tripId'] ?? (value['trip'] as FinanceRecord)['id'])
-        : value['tripId'],
+      tripId: value['tripId'] ?? (value['trip'] && typeof value['trip'] === 'object'
+        ? (value['trip'] as FinanceRecord)['id']
+        : undefined),
       reference: value['externalReference'] ?? value['reference'],
       partyId: value['partyId'] ?? buyingPartyId ?? sellingPartyId,
       ...(buyingPartyId != null || sellingPartyId != null
