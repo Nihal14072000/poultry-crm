@@ -28,6 +28,9 @@ export class FinanceApiService {
   constructor(private readonly http: HttpClient) {}
 
   payments(): Promise<FinanceRecord[]> { return this.getList(`${this.baseUrl}/payments/retrieve`).then(rows => rows.map(row => this.paymentRow(row))); }
+  paymentsForTrip(tripId: string): Promise<FinanceRecord[]> {
+    return this.getList(`${this.baseUrl}/payments/trip/${encodeURIComponent(tripId)}/retrieve`).then(rows => rows.map(row => this.paymentRow(row)));
+  }
   payment(id: string): Promise<FinanceRecord> { return firstValueFrom(this.http.get<FinanceRecord>(`${this.baseUrl}/payments/${encodeURIComponent(id)}/retrieve`)); }
   createPayment(input: PaymentInput): Promise<FinanceRecord> {
     const { partyId, partyRole, reference, ...payment } = input;
