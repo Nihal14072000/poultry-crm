@@ -5,14 +5,13 @@ import { SessionAuthService } from '../../../common/services/session-auth.servic
 import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { TripService } from '../../../common/services/trip.service';
 import { TripDeliveriesComponent } from './trip-deliveries.component';
-import { DirectoryService } from '../../../common/services/directory.service';
-import { of } from 'rxjs';
+import { TripApiService } from '../../../common/services/trip-api.service';
 
 describe('TripDeliveriesComponent payments', () => {
   let component: TripDeliveriesComponent;
   let service: jasmine.SpyObj<TripService>;
   let finance: jasmine.SpyObj<FinanceApiService>;
-  let directories: jasmine.SpyObj<DirectoryService>;
+  let tripApi: jasmine.SpyObj<TripApiService>;
 
   beforeEach(() => {
     const route = { snapshot: { paramMap: { get: () => '12' } } } as unknown as ActivatedRoute;
@@ -33,10 +32,17 @@ describe('TripDeliveriesComponent payments', () => {
       loadedBirds: 0
     } satisfies TripDeliveryData);
     finance = jasmine.createSpyObj<FinanceApiService>('FinanceApiService', ['payments', 'createPayment', 'updatePayment']);
-    directories = jasmine.createSpyObj<DirectoryService>('DirectoryService', ['getDirectory']);
-    directories.getDirectory.and.callFake((resource: string) => of({ records: resource === 'suppliers'
-      ? [{ _demoId: '31', name: 'Supplier', status: 'Active' }, { _demoId: '32', name: 'Other Supplier', status: 'Active' }, { _demoId: '33', name: 'Inactive supplier', status: 'Inactive' }]
-      : [{ _demoId: '51', name: 'Delivery vendor', status: 'Active' }, { _demoId: '52', name: 'Other vendor', status: 'Active' }, { _demoId: '53', name: 'Pending vendor', status: 'Pending Verification' }] }));
+    tripApi = jasmine.createSpyObj<TripApiService>('TripApiService', ['getBuyingParties', 'getSellingParties']);
+    tripApi.getBuyingParties.and.resolveTo([
+      { _demoId: '31', id: 31, name: 'Supplier', contact: '', location: '', isActive: true, isDeleted: false, status: 'Active' },
+      { _demoId: '32', id: 32, name: 'Other Supplier', contact: '', location: '', isActive: true, isDeleted: false, status: 'Active' },
+      { _demoId: '33', id: 33, name: 'Inactive supplier', contact: '', location: '', isActive: false, isDeleted: false, status: 'Inactive' }
+    ]);
+    tripApi.getSellingParties.and.resolveTo([
+      { _demoId: '51', id: 51, name: 'Delivery vendor', contact: '', location: '', isActive: true, isDeleted: false, status: 'Active' },
+      { _demoId: '52', id: 52, name: 'Other vendor', contact: '', location: '', isActive: true, isDeleted: false, status: 'Active' },
+      { _demoId: '53', id: 53, name: 'Pending vendor', contact: '', location: '', isActive: false, isDeleted: false, status: 'Inactive' }
+    ]);
     finance.payments.and.resolveTo([
       { id: 21, tripId: 12, amount: 25 },
       { id: 22, tripId: 13, amount: 50 }
@@ -44,7 +50,7 @@ describe('TripDeliveriesComponent payments', () => {
     component = new TripDeliveriesComponent(
       service,
       finance,
-      directories,
+      tripApi,
       route,
       router,
       jasmine.createSpyObj<SessionAuthService>('SessionAuthService', []),
