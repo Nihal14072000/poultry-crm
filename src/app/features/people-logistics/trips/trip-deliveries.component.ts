@@ -204,7 +204,7 @@ export class TripDeliveriesComponent implements OnInit {
   private isAvailablePaymentParty(party: Record<string, unknown>): boolean {
     const status = String(party['status'] ?? '').trim().toLowerCase();
     return party['isDeleted'] !== true && party['isActive'] !== false &&
-      status !== 'inactive' && status !== 'deleted' && status !== 'rejected';
+      (!status || status === 'active');
   }
   private paymentPartyRole(payment: FinanceRecord): 'BUYING' | 'SELLING' {
     if (payment['partyRole'] === 'BUYING' || payment['buyingPartyId'] != null) return 'BUYING';
