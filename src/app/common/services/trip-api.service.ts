@@ -269,19 +269,17 @@ export class TripApiService {
 
   async getDeliveryData(id: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<TripDeliveryData> {
     const tripId = this.parseId(id);
-    const [details, links, orderTypes] = await Promise.all([
+    const [details, links, mortalities, orderTypes] = await Promise.all([
       this.getTripDetails(id),
-      firstValueFrom(this.http.get<ApiDelivery[]>(`${this.baseUrl}/deliveries`)),
+      firstValueFrom(this.http.get<ApiDelivery[]>(`${this.baseUrl}/deliveries/trip/${tripId}/retrieve`)),
+      firstValueFrom(this.http.get<ApiMortality[]>(`${this.baseUrl}/mortalities/trip/${tripId}`)),
       this.getOrderTypes()
     ]);
     const orderNames = this.getOrderTypeNames(orderTypes);
-    const related = links.filter((delivery) => Number(delivery.tripId) === tripId && delivery.isDeleted !== true);
-    const [deliveryDetails, mortalities] = await Promise.all([
-      Promise.all(related.map((delivery) =>
-        firstValueFrom(this.http.get<ApiDeliveryDetails>(`${this.baseUrl}/deliveries/${this.parseId(String(delivery.id))}/retrieve`))
-      )),
-      firstValueFrom(this.http.get<ApiMortality[]>(`${this.baseUrl}/mortalities`))
-    ]);
+    const related = links.filter((delivery) => delivery.isDeleted !== true);
+    const deliveryDetails = await Promise.all(related.map((delivery) =>
+      firstValueFrom(this.http.get<ApiDeliveryDetails>(`${this.baseUrl}/deliveries/${this.parseId(String(delivery.id))}/retrieve`))
+    ));
     const linkedSupplierPickupIds = deliveryDetails
       .map((delivery) => delivery.supplierPickup?.id)
       .filter((pickupId): pickupId is number => Number.isSafeInteger(pickupId) && Number(pickupId) > 0);
@@ -324,7 +322,7 @@ export class TripApiService {
       }, orderNames));
     }
     const deliveries = [...deliveriesById.values()];
-    const tripMortalities = mortalities.filter((item) => Number(item.tripId) === tripId && item.isDeleted !== true);
+    const tripMortalities = mortalities.filter((item) => item.isDeleted !== true);
     const mortalityRecords = tripMortalities.map((record) => ({
       _demoId: String(record.id ?? ''),
       quantity: Number(record.combinedMortality ?? 0),
