@@ -18,8 +18,8 @@
     <div class="directory-toolbar">
       <div class="record-count"><strong>{{ records.length }}</strong> records <span>·</span> Updated just now</div>
     </div>
-    @if (loading) {
-      <div class="state-panel" role="status"><span class="spinner"></span>Loading {{ title.toLowerCase() }}...</div>
+    @if (loading && !records.length) {
+      <app-party-loading-skeleton variant="directory" />
     } @else if (errorMessage) {
       <div class="state-panel error" role="alert"><strong>Unable to load data</strong>{{ errorMessage }}</div>
     } @else if (!records.length) {

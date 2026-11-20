@@ -4,13 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PartyDirectoryRecord, TripApiService } from '../../../common/services/trip-api.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
+import { PartyLoadingSkeletonComponent } from './party-loading-skeleton.component';
 
 type PartyType = 'buying' | 'selling';
 
 @Component({
   selector: 'app-party-directory',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, PartyLoadingSkeletonComponent],
   templateUrl: './party-directory.component.html',
   styleUrl: './party-directory.component.css'
 })

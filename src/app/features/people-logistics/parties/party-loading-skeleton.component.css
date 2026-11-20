@@ -1,0 +1,44 @@
+:host { display: block; width: 100%; }
+
+.party-skeleton { color: #89948c; width: 100%; }
+.shimmer {
+  animation: shimmer 1.35s ease-in-out infinite;
+  background: linear-gradient(90deg, #edf0ec 25%, #f7f8f6 50%, #edf0ec 75%);
+  background-size: 200% 100%;
+  border-radius: 5px;
+}
+.table-scroll { overflow-x: auto; width: 100%; }
+.table-row { align-items: center; border-bottom: 1px solid #f0f2ef; display: grid; gap: 16px; min-width: 700px; padding: 13px 16px; }
+.table-row:last-child { border-bottom: 0; }
+.directory-row { grid-template-columns: .7fr 1.4fr 1fr 1.2fr .8fr .7fr; }
+.detail-row { grid-template-columns: repeat(7,minmax(65px,1fr)); min-width: 760px; }
+.header-row { background: #fcfdfa; border-bottom-color: #eef0ed; padding-bottom: 12px; padding-top: 12px; }
+.cell { height: 10px; max-width: 100%; width: 78%; }
+.header-row .cell { height: 8px; width: 65%; }
+.cell-short { width: 48%; }
+
+.detail-heading { margin: 2px 0 20px; }
+.eyebrow { height: 9px; margin-bottom: 12px; width: 145px; }
+.title { height: 27px; margin-bottom: 9px; width: min(260px,65%); }
+.subtitle { height: 11px; width: min(320px,85%); }
+.metrics { display: grid; gap: 12px; grid-template-columns: repeat(3,minmax(0,1fr)); margin-bottom: 16px; }
+.metric-card { background: #fff; border: 1px solid #e9ece7; border-radius: 8px; display: flex; flex-direction: column; gap: 13px; min-height: 85px; padding: 15px; }
+.metric-label { height: 9px; width: 35%; }
+.metric-value { height: 19px; width: 62%; }
+.tabs { align-items: center; border-bottom: 1px solid #e9ece7; display: flex; gap: 18px; margin-bottom: 12px; padding: 0 14px 10px; }
+.tab { height: 10px; width: 54px; }
+.tab.short { width: 65px; }
+.table-card { background: #fff; border: 1px solid #e9ece7; border-radius: 9px; overflow: hidden; }
+.table-heading { align-items: center; border-bottom: 1px solid #eef0ed; display: flex; justify-content: space-between; padding: 16px 18px; }
+.section-title { height: 12px; margin-bottom: 8px; width: 95px; }
+.section-subtitle { height: 9px; width: 175px; }
+.count { height: 10px; width: 60px; }
+
+@keyframes shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .shimmer { animation: none; }
+}
+@media (max-width: 640px) {
+  .metrics { grid-template-columns: 1fr; }
+  .metric-card { min-height: 70px; }
+}

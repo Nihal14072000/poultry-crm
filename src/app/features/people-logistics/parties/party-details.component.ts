@@ -3,13 +3,14 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FinanceApiService, FinanceRecord } from '../../../common/services/finance-api.service';
 import { PartyDirectoryRecord, TripApiService } from '../../../common/services/trip-api.service';
+import { PartyLoadingSkeletonComponent } from './party-loading-skeleton.component';
 
 type PartyType = 'buying' | 'selling';
 
 @Component({
   selector: 'app-party-details',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe, RouterLink],
+  imports: [CommonModule, CurrencyPipe, DatePipe, RouterLink, PartyLoadingSkeletonComponent],
   templateUrl: './party-details.component.html',
   styleUrl: './party-details.component.css'
 })
