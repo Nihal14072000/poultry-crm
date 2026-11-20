@@ -103,9 +103,9 @@ describe('TripDeliveriesComponent payments', () => {
     component.supplierReceipts = [{ total: 700 }];
     component.supplierPickups = [{ vendorId: '31', vendorName: 'Supplier', broiler: { quantity: 1, rate: 1, total: 1 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 1 }];
     component.tripPayments = [
-      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', status: 'COMPLETED', amount: 200 },
-      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', status: 'COMPLETED', amount: 500, isDeleted: true },
-      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', status: 'PENDING', amount: 100 },
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', partyId: '31', status: 'COMPLETED', amount: 200 },
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', partyId: '31', status: 'COMPLETED', amount: 500, isDeleted: true },
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', partyId: '31', status: 'PENDING', amount: 100 },
       { paymentType: 'SELLER_PAYOUT', partyRole: 'SELLING', status: 'COMPLETED', amount: 75 },
       { paymentType: 'BUYER_RECEIPT', partyRole: 'SELLING', status: 'COMPLETED', amount: 450 },
       { paymentType: 'BUYER_RECEIPT', partyRole: 'SELLING', status: 'PENDING', amount: 50 }
@@ -130,8 +130,9 @@ describe('TripDeliveriesComponent payments', () => {
 
   it('does not show a negative outstanding supplier balance after overpayment', () => {
     component.supplierReceipts = [{ total: 700 }];
+    component.supplierPickups = [{ vendorId: '31', vendorName: 'Supplier', broiler: { quantity: 1, rate: 1, total: 1 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 1 }];
     component.tripPayments = [
-      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', status: 'COMPLETED', amount: 800 }
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', partyId: '31', status: 'COMPLETED', amount: 800 }
     ];
 
     expect(component.paymentsToBeDone()).toBe(0);
