@@ -17,6 +17,34 @@ describe('FinanceApiService', () => {
 
   afterEach(() => http.verify());
 
+  it('normalizes snake_case payment fields for trip payment summaries', async () => {
+    const payments = service.payments();
+    const request = http.expectOne('http://localhost:8080/api/payments/retrieve');
+    request.flush([{
+      id: 41,
+      trip_id: 12,
+      type: 'buyer_receipt',
+      amount: 250,
+      status: 'completed',
+      is_deleted: false,
+      selling_party_id: 51,
+      external_reference: 'RCPT-41'
+    }]);
+
+    await expectAsync(payments).toBeResolvedTo([jasmine.objectContaining({
+      id: 41,
+      tripId: 12,
+      paymentType: 'BUYER_RECEIPT',
+      amount: 250,
+      status: 'COMPLETED',
+      isDeleted: false,
+      sellingPartyId: 51,
+      partyId: 51,
+      partyRole: 'SELLING',
+      reference: 'RCPT-41'
+    })]);
+  });
+
   it('maps editable payment fields to the payment update API contract', async () => {
     const updated = service.updatePayment('12', {
       paymentType: 'BUYER_RECEIPT',
