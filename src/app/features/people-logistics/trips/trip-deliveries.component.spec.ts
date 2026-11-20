@@ -91,18 +91,29 @@ describe('TripDeliveriesComponent payments', () => {
     }), [], [], '83');
   });
 
-  it('shows actual supplier cost and completed seller payouts', () => {
+  it('calculates received payments, supplier payouts, and outstanding supplier balance separately', () => {
     component.supplierReceipts = [{ total: 700 }];
     component.tripPayments = [
-      { paymentType: 'SELLER_PAYOUT', status: 'COMPLETED', amount: 200 },
-      { paymentType: 'SELLER_PAYOUT', status: 'COMPLETED', amount: 500, isDeleted: true },
-      { paymentType: 'SELLER_PAYOUT', status: 'PENDING', amount: 100 },
-      { paymentType: 'BUYER_RECEIPT', status: 'COMPLETED', amount: 450 },
-      { paymentType: 'BUYER_RECEIPT', status: 'PENDING', amount: 50 }
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', status: 'COMPLETED', amount: 200 },
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', status: 'COMPLETED', amount: 500, isDeleted: true },
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', status: 'PENDING', amount: 100 },
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'SELLING', status: 'COMPLETED', amount: 75 },
+      { paymentType: 'BUYER_RECEIPT', partyRole: 'SELLING', status: 'COMPLETED', amount: 450 },
+      { paymentType: 'BUYER_RECEIPT', partyRole: 'SELLING', status: 'PENDING', amount: 50 }
     ];
 
-    expect(component.paymentsToBeDone()).toBe(700);
-    expect(component.totalPaymentReceived()).toBe(200);
+    expect(component.totalPaymentReceived()).toBe(450);
+    expect(component.totalSupplierPaymentsMade()).toBe(200);
+    expect(component.paymentsToBeDone()).toBe(500);
+  });
+
+  it('does not show a negative outstanding supplier balance after overpayment', () => {
+    component.supplierReceipts = [{ total: 700 }];
+    component.tripPayments = [
+      { paymentType: 'SELLER_PAYOUT', partyRole: 'BUYING', status: 'COMPLETED', amount: 800 }
+    ];
+
+    expect(component.paymentsToBeDone()).toBe(0);
   });
 
   it('totals multiple mortality records for reconciliation', () => {
