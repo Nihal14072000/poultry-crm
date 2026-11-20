@@ -35,8 +35,8 @@ describe('TripDeliveriesComponent payments', () => {
     finance = jasmine.createSpyObj<FinanceApiService>('FinanceApiService', ['payments', 'createPayment', 'updatePayment']);
     directories = jasmine.createSpyObj<DirectoryService>('DirectoryService', ['getDirectory']);
     directories.getDirectory.and.callFake((resource: string) => of({ records: resource === 'suppliers'
-      ? [{ _demoId: '31', name: 'Supplier', status: 'Active' }, { _demoId: '32', name: 'Other Supplier', status: 'Active' }]
-      : [{ _demoId: '51', name: 'Delivery vendor', status: 'Active' }, { _demoId: '52', name: 'Other vendor', status: 'Active' }] }));
+      ? [{ _demoId: '31', name: 'Supplier', status: 'Active' }, { _demoId: '32', name: 'Other Supplier', status: 'Active' }, { _demoId: '33', name: 'Inactive supplier', status: 'Inactive' }]
+      : [{ _demoId: '51', name: 'Delivery vendor', status: 'Active' }, { _demoId: '52', name: 'Other vendor', status: 'Active' }, { _demoId: '53', name: 'Pending vendor', status: 'Pending Verification' }] }));
     finance.payments.and.resolveTo([
       { id: 21, tripId: 12, amount: 25 },
       { id: 22, tripId: 13, amount: 50 }
