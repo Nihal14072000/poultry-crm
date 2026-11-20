@@ -45,6 +45,21 @@ describe('FinanceApiService', () => {
     })]);
   });
 
+  it('retrieves payments using the trip-scoped endpoint and normalizes the response', async () => {
+    const payments = service.paymentsForTrip('12');
+    const request = http.expectOne('http://localhost:8080/api/payments/trip/12/retrieve');
+    expect(request.request.method).toBe('GET');
+    request.flush([{
+      id: 42, trip_id: 12, type: 'seller_payout', amount: 90,
+      status: 'completed', buying_party_id: 31, external_reference: 'PAY-42'
+    }]);
+
+    await expectAsync(payments).toBeResolvedTo([jasmine.objectContaining({
+      id: 42, tripId: 12, paymentType: 'SELLER_PAYOUT', amount: 90,
+      status: 'COMPLETED', partyId: 31, partyRole: 'BUYING', reference: 'PAY-42'
+    })]);
+  });
+
   it('maps editable payment fields to the payment update API contract', async () => {
     const updated = service.updatePayment('12', {
       paymentType: 'BUYER_RECEIPT',
