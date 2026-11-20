@@ -285,11 +285,18 @@ export class TripDeliveriesComponent implements OnInit {
   actualSalesTotal(): number { return this.deliveries.reduce((sum, entry) => sum + this.number(entry['deliveryTotal']), 0); }
   proposedSupplierCost(): number { return this.number(this.trip?.['grandTotal']); }
   actualSupplierCost(): number { return this.supplierReceipts.reduce((sum, receipt) => sum + this.number(receipt['total']), 0); }
-  paymentsToBeDone(): number { return this.actualSupplierCost(); }
   totalPaymentReceived(): number {
     return this.tripPayments
-      .filter((payment) => payment['paymentType'] === 'SELLER_PAYOUT' && payment['status'] === 'COMPLETED' && payment['isDeleted'] !== true)
+      .filter((payment) => payment['paymentType'] === 'BUYER_RECEIPT' && payment['status'] === 'COMPLETED' && payment['isDeleted'] !== true)
       .reduce((sum, payment) => sum + this.number(payment['amount']), 0);
+  }
+  totalSupplierPaymentsMade(): number {
+    return this.tripPayments
+      .filter((payment) => payment['paymentType'] === 'SELLER_PAYOUT' && payment['partyRole'] === 'BUYING' && payment['status'] === 'COMPLETED' && payment['isDeleted'] !== true)
+      .reduce((sum, payment) => sum + this.number(payment['amount']), 0);
+  }
+  paymentsToBeDone(): number {
+    return Math.max(0, this.actualSupplierCost() - this.totalSupplierPaymentsMade());
   }
   supplierReceiptEntryCost(form: SupplierReceiptForm): number {
     const planned = this.plannedSupplier(form.vendorId);
