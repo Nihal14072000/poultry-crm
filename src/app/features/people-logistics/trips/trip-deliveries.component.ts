@@ -341,6 +341,8 @@ export class TripDeliveriesComponent implements OnInit {
   broilerProgress(): number { return this.categoryProgress(this.deliveredBroilerTotal(), this.plannedBroilerTotal()); }
   cullsProgress(): number { return this.categoryProgress(this.deliveredCullsTotal(), this.plannedCullsTotal()); }
   feedProgress(): number { return this.categoryProgress(this.deliveredFeedTotal(), this.plannedFeedTotal()); }
+  hasPlannedCulls(): boolean { return this.plannedCullsTotal() > 0; }
+  hasPlannedFeed(): boolean { return this.plannedFeedTotal() > 0; }
   destinationStatus(destination: TripRecord): string {
     const id = this.id(destination); const destinationEntries = this.entries(id); const count = destinationEntries.length;
     if (!count) return 'Pending';
