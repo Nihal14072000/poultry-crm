@@ -434,6 +434,11 @@ export class TripDeliveriesComponent implements OnInit {
     } catch (e) { this.error = e instanceof Error ? e.message : 'Mortality record could not be deleted.'; }
     finally { this.saving = false; }
   }
+  private async refreshTripPayments(): Promise<void> {
+    if (!this.trip) return;
+    this.tripPayments = await this.finance.paymentsForTrip(this.id(this.trip));
+  }
+
   async savePayment(): Promise<void> {
     if (!this.trip || this.saving || !this.paymentPartyId || !this.paymentAmount || this.paymentAmount <= 0) {
       this.error = 'Select a party and enter a positive payment amount.';
@@ -456,15 +461,16 @@ export class TripDeliveriesComponent implements OnInit {
         paymentDate: this.paymentDate, paymentMethod: this.paymentMethod, reference: this.paymentReference,
         status: editing ? status : 'COMPLETED', tripId: Number(this.id(this.trip))
       };
-      const saved = editing
-        ? await this.finance.updatePayment(this.editingPaymentId, input)
-        : await this.finance.createPayment(input);
-      const payment = { ...saved, ...input, ...(editing ? { id: this.editingPaymentId } : {}), reference: this.paymentReference };
-      this.tripPayments = editing
-        ? this.tripPayments.map((item) => String(item['id'] ?? item['paymentId'] ?? '') === this.editingPaymentId ? payment : item)
-        : [payment, ...this.tripPayments];
+      if (editing) await this.finance.updatePayment(this.editingPaymentId, input);
+      else await this.finance.createPayment(input);
       this.cancelPaymentEdit();
       this.success = editing ? 'Payment updated.' : 'Payment recorded.';
+      try {
+        await this.refreshTripPayments();
+      } catch (refreshError) {
+        const detail = refreshError instanceof Error ? ` ${refreshError.message}` : '';
+        this.error = `Payment was saved, but payment history could not be refreshed.${detail}`;
+      }
     } catch (e) { this.error = e instanceof Error ? e.message : 'Payment could not be recorded.'; }
     finally { this.saving = false; }
   }
@@ -475,11 +481,14 @@ export class TripDeliveriesComponent implements OnInit {
     this.saving = true; this.error = ''; this.success = '';
     try {
       await this.finance.updatePayment(paymentId, { isDeleted: true, isActive: false });
-      this.tripPayments = this.tripPayments.map((item) =>
-        String(item['id'] ?? item['paymentId'] ?? '') === paymentId ? { ...item, isDeleted: true, isActive: false } : item
-      );
       if (this.editingPaymentId === paymentId) this.cancelPaymentEdit();
       this.success = 'Payment deleted.';
+      try {
+        await this.refreshTripPayments();
+      } catch (refreshError) {
+        const detail = refreshError instanceof Error ? ` ${refreshError.message}` : '';
+        this.error = `Payment was deleted, but payment history could not be refreshed.${detail}`;
+      }
     } catch (e) { this.error = e instanceof Error ? e.message : 'Payment could not be deleted.'; }
     finally { this.saving = false; }
   }
