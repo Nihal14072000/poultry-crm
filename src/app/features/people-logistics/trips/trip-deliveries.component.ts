@@ -89,13 +89,13 @@ export class TripDeliveriesComponent implements OnInit {
         this.readPendingVendorDeliveries(tripId);
         const [data, payments, suppliersDirectory, deliveryVendorsDirectory] = await Promise.all([
           this.service.getDeliveryData(tripId, this.pendingPickupIds(), this.pendingDeliveryIds()),
-          this.finance.payments(),
+          this.finance.paymentsForTrip(tripId),
           this.tripApi.getBuyingParties(),
           this.tripApi.getSellingParties()
         ]);
         this.trip = data.trip; this.destinations = data.destinations; this.deliveries = data.deliveries; this.mortalities = data.mortalities;
         this.supplierPickups = data.supplierPickups; this.supplierReceipts = data.supplierReceipts;
-        this.tripPayments = payments.filter((payment) => String(payment['tripId'] ?? '') === tripId);
+        this.tripPayments = payments;
         this.allSuppliers = suppliersDirectory.filter((party) => this.isAvailablePaymentParty(party)) as TripRecord[];
         this.allDeliveryVendors = deliveryVendorsDirectory.filter((party) => this.isAvailablePaymentParty(party)) as TripRecord[];
         this.supplierReceiptForms = data.supplierPickups.map((pickup) => {
