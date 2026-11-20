@@ -155,6 +155,39 @@ describe('TripDeliveriesComponent payments', () => {
     expect(component.unreconciled()).toBe(5);
   });
 
+  it('shows reconciliation only when actual received birds do not match delivery plus mortality', () => {
+    component.loadedBroiler = 100;
+    component.loadedCulls = 0;
+    component.deliveries = [{ broiler: 90, culls: 0 }];
+    component.mortalities = [{ quantity: 10 }];
+
+    expect(component.unreconciled()).toBe(0);
+    expect(component.hasReconciliationMismatch).toBeFalse();
+
+    component.deliveries = [{ broiler: 85, culls: 0 }];
+    expect(component.unreconciled()).toBe(5);
+    expect(component.hasReconciliationMismatch).toBeTrue();
+
+    component.deliveries = [{ broiler: 95, culls: 0 }];
+    expect(component.unreconciled()).toBe(-5);
+    expect(component.hasReconciliationMismatch).toBeTrue();
+  });
+
+  it('does not treat a missing destination delivery as a bird-count reconciliation mismatch', () => {
+    component.loadedBroiler = 100;
+    component.loadedCulls = 0;
+    component.destinations = [{ vendorDestinationId: '51' }];
+    component.deliveries = [];
+    component.mortalities = [];
+
+    expect(component.hasReconciliationMismatch).toBeTrue();
+    expect(component.hasMissingDestinationDeliveries).toBeTrue();
+
+    component.deliveries = [{ vendorDestinationId: '51', broiler: 100, culls: 0 }];
+    expect(component.hasReconciliationMismatch).toBeFalse();
+    expect(component.hasMissingDestinationDeliveries).toBeFalse();
+  });
+
   it('offers all active suppliers for payouts and all active delivery vendors for receipts', async () => {
     await component.ngOnInit();
     component.paymentType = 'SELLER_PAYOUT';
