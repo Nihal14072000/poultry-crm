@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TripRecord, TripVendorPickup } from '../../../common/models/trip.model';
@@ -9,7 +8,7 @@ import { SessionAuthService } from '../../../common/services/session-auth.servic
 import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { FinanceApiService, FinanceRecord, PaymentMethod, PaymentType } from '../../../common/services/finance-api.service';
 import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
-import { DirectoryService } from '../../../common/services/directory.service';
+import { TripApiService } from '../../../common/services/trip-api.service';
 
 interface SupplierReceiptForm {
   vendorId: string; vendorName: string;
@@ -73,7 +72,7 @@ export class TripDeliveriesComponent implements OnInit {
   showPaymentForm = false;
   editingPaymentId = '';
 
-  constructor(private readonly service: TripService, private readonly finance: FinanceApiService, private readonly directories: DirectoryService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService, readonly rolePermissions: RolePermissionService) {}
+  constructor(private readonly service: TripService, private readonly finance: FinanceApiService, private readonly tripApi: TripApiService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService, readonly rolePermissions: RolePermissionService) {}
 
   async ngOnInit(): Promise<void> {
     const state = this.router.getCurrentNavigation()?.extras.state as { successMessage?: string } | undefined;
@@ -91,14 +90,14 @@ export class TripDeliveriesComponent implements OnInit {
         const [data, payments, suppliersDirectory, deliveryVendorsDirectory] = await Promise.all([
           this.service.getDeliveryData(tripId, this.pendingPickupIds(), this.pendingDeliveryIds()),
           this.finance.payments(),
-          firstValueFrom(this.directories.getDirectory('suppliers')),
-          firstValueFrom(this.directories.getDirectory('vendor-destinations'))
+          this.tripApi.getBuyingParties(),
+          this.tripApi.getSellingParties()
         ]);
         this.trip = data.trip; this.destinations = data.destinations; this.deliveries = data.deliveries; this.mortalities = data.mortalities;
         this.supplierPickups = data.supplierPickups; this.supplierReceipts = data.supplierReceipts;
         this.tripPayments = payments.filter((payment) => String(payment['tripId'] ?? '') === tripId);
-        this.allSuppliers = (suppliersDirectory?.records ?? []).filter((party) => this.isAvailablePaymentParty(party)) as TripRecord[];
-        this.allDeliveryVendors = (deliveryVendorsDirectory?.records ?? []).filter((party) => this.isAvailablePaymentParty(party)) as TripRecord[];
+        this.allSuppliers = suppliersDirectory.filter((party) => this.isAvailablePaymentParty(party)) as TripRecord[];
+        this.allDeliveryVendors = deliveryVendorsDirectory.filter((party) => this.isAvailablePaymentParty(party)) as TripRecord[];
         this.supplierReceiptForms = data.supplierPickups.map((pickup) => {
           const receipt = data.supplierReceipts.find((record) => String(record['vendorId'] ?? '') === pickup.vendorId);
           return {
