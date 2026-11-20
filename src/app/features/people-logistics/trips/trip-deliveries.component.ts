@@ -269,11 +269,9 @@ export class TripDeliveriesComponent implements OnInit {
       this.number(this.cullsWeight) * this.number(this.cullsRate) +
       this.number(this.feedWeight) * this.number(this.feedRate);
   }
-  get reconciliationHasExceptions(): boolean {
-    return this.unreconciled() !== 0 || this.destinations.some((destination) => {
-      const destinationEntries = this.entries(this.id(destination));
-      return !destinationEntries.length;
-    });
+  get hasReconciliationMismatch(): boolean { return this.unreconciled() !== 0; }
+  get hasMissingDestinationDeliveries(): boolean {
+    return this.destinations.some((destination) => !this.entries(this.id(destination)).length);
   }
   entries(destinationId: string): TripRecord[] { return this.deliveries.filter((item) => String(item['vendorDestinationId']) === destinationId); }
   delivered(destinationId: string, kind: 'broiler' | 'culls' | 'feed'): number { return this.entries(destinationId).reduce((sum, item) => sum + Number(item[kind] ?? 0), 0); }
