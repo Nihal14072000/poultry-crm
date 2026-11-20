@@ -84,12 +84,24 @@ export class FinanceApiService {
   }
 
   private paymentRow(row: FinanceRecord): FinanceRecord {
+    // Payment endpoints have returned both camelCase and snake_case fields.
+    // Normalize the row before the delivery and payment screens apply filters.
+    const value = this.camelCaseRow(row);
+    const paymentType = String(value['paymentType'] ?? value['type'] ?? '').trim().toUpperCase();
+    const status = String(value['status'] ?? '').trim().toUpperCase();
+    const buyingPartyId = value['buyingPartyId'];
+    const sellingPartyId = value['sellingPartyId'];
     return {
-      ...row,
-      reference: row['externalReference'],
-      partyId: row['buyingPartyId'] ?? row['sellingPartyId'],
-      ...(row['buyingPartyId'] != null || row['sellingPartyId'] != null
-        ? { partyRole: row['buyingPartyId'] != null ? 'BUYING' : 'SELLING' }
+      ...value,
+      ...(paymentType ? { paymentType } : {}),
+      ...(status ? { status } : {}),
+      tripId: value['tripId'] ?? value['trip'] && typeof value['trip'] === 'object'
+        ? (value['tripId'] ?? (value['trip'] as FinanceRecord)['id'])
+        : value['tripId'],
+      reference: value['externalReference'] ?? value['reference'],
+      partyId: value['partyId'] ?? buyingPartyId ?? sellingPartyId,
+      ...(buyingPartyId != null || sellingPartyId != null
+        ? { partyRole: buyingPartyId != null ? 'BUYING' : 'SELLING' }
         : {})
     };
   }
