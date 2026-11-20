@@ -205,6 +205,7 @@ describe('TripDeliveriesComponent payments', () => {
 
   it('adds a saved payment to the trip history and allows another entry', async () => {
     finance.createPayment.and.resolveTo({ id: 23 });
+    finance.paymentsForTrip.and.resolveTo([{ id: 23, tripId: 12, amount: 100, reference: 'REF-23', normalizedByServer: true }]);
     component.trip = { _demoId: '12' };
     component.paymentPartyId = 'SELLING:7';
     component.paymentAmount = 100;
@@ -221,12 +222,10 @@ describe('TripDeliveriesComponent payments', () => {
       tripId: 12,
       status: 'COMPLETED'
     }));
-    expect(component.tripPayments[0]).toEqual(jasmine.objectContaining({
-      id: 23,
-      tripId: 12,
-      amount: 100,
-      reference: 'REF-23'
-    }));
+    expect(finance.paymentsForTrip).toHaveBeenCalledWith('12');
+    expect(component.tripPayments).toEqual([
+      jasmine.objectContaining({ id: 23, tripId: 12, amount: 100, reference: 'REF-23', normalizedByServer: true })
+    ]);
     expect(component.showPaymentForm).toBeFalse();
 
     component.togglePaymentForm();
@@ -235,6 +234,7 @@ describe('TripDeliveriesComponent payments', () => {
 
   it('updates an existing payment', async () => {
     finance.updatePayment.and.resolveTo({ id: 21 });
+    finance.paymentsForTrip.and.resolveTo([{ id: 21, tripId: 12, amount: 95, paymentMethod: 'BANK_TRANSFER', normalizedByServer: true }]);
     component.trip = { _demoId: '12' };
     component.tripPayments = [{ id: 21, paymentType: 'SELLER_PAYOUT', partyId: 31, buyingPartyId: 31, partyRole: 'BUYING', amount: 80, paymentDate: '2026-11-02', paymentMethod: 'CASH' }];
     component.editPayment(component.tripPayments[0]);
@@ -249,7 +249,10 @@ describe('TripDeliveriesComponent payments', () => {
       amount: 95,
       tripId: 12
     }));
-    expect(component.tripPayments[0]['amount']).toBe(95);
+    expect(finance.paymentsForTrip).toHaveBeenCalledWith('12');
+    expect(component.tripPayments).toEqual([
+      jasmine.objectContaining({ id: 21, tripId: 12, amount: 95, paymentMethod: 'BANK_TRANSFER', normalizedByServer: true })
+    ]);
     expect(component.editingPaymentId).toBe('');
   });
 
@@ -280,6 +283,7 @@ describe('TripDeliveriesComponent payments', () => {
   it('marks a payment deleted after confirmation', async () => {
     spyOn(window, 'confirm').and.returnValue(true);
     finance.updatePayment.and.resolveTo({ id: 21, isDeleted: true, isActive: false });
+    finance.paymentsForTrip.and.resolveTo([{ id: 22, tripId: 12, amount: 40 }]);
     component.trip = { _demoId: '12', status: 'In transit' };
     const payment = { id: 21, status: 'COMPLETED', amount: 80 };
     component.tripPayments = [payment];
@@ -287,7 +291,7 @@ describe('TripDeliveriesComponent payments', () => {
     await component.deletePayment(payment);
 
     expect(finance.updatePayment).toHaveBeenCalledWith('21', { isDeleted: true, isActive: false });
-    expect(component.tripPayments[0]['isDeleted']).toBeTrue();
-    expect(component.tripPayments[0]['isActive']).toBeFalse();
+    expect(finance.paymentsForTrip).toHaveBeenCalledWith('12');
+    expect(component.tripPayments).toEqual([{ id: 22, tripId: 12, amount: 40 }]);
   });
 });
