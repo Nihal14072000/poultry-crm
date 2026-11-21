@@ -29,7 +29,7 @@
         <option value="">All statuses</option>@for (status of statuses; track status) { <option [value]="status">{{
           status }}</option> }
       </select></label> }</div> }
-  @if (loading) { <section class="state">Loading finance data…</section> } @else if (view === 'overview') {
+  @if (loading) { <app-loading-skeleton variant="finance" /> } @else if (view === 'overview') {
   <section class="metrics">@for (metric of metrics; track metric.label) { <article><span>{{ metric.label
         }}</span><strong>{{ metric.value | currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong></article> }</section>
   <section class="finance-charts" aria-label="Finance charts">
