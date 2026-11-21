@@ -1,3 +1,4 @@
+import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -12,7 +13,7 @@ import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 @Component({
   selector: 'app-daily-operations',
   standalone: true,
-  imports: [CommonModule, NgSelectModule, ReactiveFormsModule, StatusPillPipe],
+  imports: [CommonModule, LoadingSkeletonComponent, NgSelectModule, ReactiveFormsModule, StatusPillPipe],
   templateUrl: './daily-operations.component.html',
   styleUrl: './daily-operations.component.css'
 })

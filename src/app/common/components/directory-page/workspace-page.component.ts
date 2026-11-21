@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { LoadingSkeletonComponent } from '../loading-skeleton/loading-skeleton.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -21,7 +22,7 @@ import { VehicleDirectoryService } from '../../services/vehicle-directory.servic
 @Component({
   selector: 'app-workspace-page',
   standalone: true,
-  imports: [CommonModule, DataGridComponent, FormsModule, NgSelectModule, RouterLink],
+  imports: [CommonModule, LoadingSkeletonComponent, DataGridComponent, FormsModule, NgSelectModule, RouterLink],
   templateUrl: './workspace-page.component.html',
   styleUrl: './workspace-page.component.css'
 })

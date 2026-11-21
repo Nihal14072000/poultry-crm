@@ -10,6 +10,9 @@
   @if (outOfSequenceEntry) { <div class="validation-message" role="alert">Entries for a batch must be recorded in date order. Select a date after the latest saved entry.</div> }
   @if (errorMessage) { <div class="validation-message" role="alert">{{ errorMessage }}</div> }
 
+  @if (loadingMasterData) {
+    <app-loading-skeleton variant="form" />
+  } @else {
   <form [formGroup]="form" (ngSubmit)="save()">
     <div class="form-layout">
       <div class="form-column">
@@ -74,6 +77,7 @@
         }
       </div>
     </section>
+  }
   }
   <p class="demo-note"><span>●</span> Demo workspace · Sample flock data</p>
 </section>

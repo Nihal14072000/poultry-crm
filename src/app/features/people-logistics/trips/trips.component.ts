@@ -1,3 +1,4 @@
+import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
@@ -10,7 +11,7 @@ import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 @Component({
   selector: 'app-trips',
   standalone: true,
-  imports: [CommonModule, RouterLink, StatusPillPipe],
+  imports: [CommonModule, LoadingSkeletonComponent, RouterLink, StatusPillPipe],
   templateUrl: './trips.component.html',
   styleUrl: './trips.component.css'
 })

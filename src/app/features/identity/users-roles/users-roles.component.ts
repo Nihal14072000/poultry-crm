@@ -1,3 +1,4 @@
+import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -14,7 +15,7 @@ import { forkJoin } from 'rxjs';
 @Component({
   selector: 'app-users-roles',
   standalone: true,
-  imports: [CommonModule, DataGridComponent, FormsModule, NgSelectModule],
+  imports: [CommonModule, LoadingSkeletonComponent, DataGridComponent, FormsModule, NgSelectModule],
   templateUrl: './users-roles.component.html',
   styleUrl: './users-roles.component.css'
 })

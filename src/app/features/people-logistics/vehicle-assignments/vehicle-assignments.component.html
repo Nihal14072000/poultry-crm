@@ -12,7 +12,7 @@
   @if (errorMessage) { <p class="feedback error" role="alert">{{ errorMessage }}</p> }
 
   @if (loading) {
-    <section class="state">Loading vehicles, drivers, and assignments…</section>
+    <app-loading-skeleton variant="form" />
   } @else {
     <section class="panel assignment-panel">
       <div class="panel-heading">

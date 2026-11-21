@@ -1,3 +1,4 @@
+import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -21,7 +22,7 @@ function localDateString(): string {
 @Component({
   selector: 'app-vehicle-assignments',
   standalone: true,
-  imports: [CommonModule, DataGridComponent, FormsModule, NgSelectModule],
+  imports: [CommonModule, LoadingSkeletonComponent, DataGridComponent, FormsModule, NgSelectModule],
   templateUrl: './vehicle-assignments.component.html',
   styleUrl: './vehicle-assignments.component.css'
 })

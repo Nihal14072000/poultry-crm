@@ -9,7 +9,7 @@
   </header>
 
   @if (loading) {
-    <section class="panel state">Loading trip details…</section>
+    <app-loading-skeleton variant="detail" />
   } @else if (errorMessage) {
     <p class="feedback error" role="alert">{{ errorMessage }}</p>
     <a class="button button-secondary" routerLink="/people-logistics/trips">Return to trips</a>

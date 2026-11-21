@@ -17,7 +17,7 @@
         <button class="save-button" type="submit" [disabled]="savingId === 'new-user'">{{ savingId === 'new-user' ? 'Creating…' : 'Create user' }}</button>
       </form>
     }
-    @if (loading) { <div class="state">Loading users…</div> }
+    @if (loading) { <app-loading-skeleton variant="table" /> }
     @else if (!users.length) { <div class="state">No user accounts are configured.</div> }
     @else {
       <app-data-grid [columnDefs]="userGridColumns" [rowData]="users" />

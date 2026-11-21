@@ -1,7 +1,7 @@
 <main class="detail-page">
   <a class="back-link" routerLink="/farm-operations/farms">← All farms</a>
   @if (loading) {
-    <div class="state-panel">Loading farm and shed details…</div>
+    <app-loading-skeleton variant="detail" />
   } @else if (error || !farm) {
     <div class="state-panel error" role="alert">{{ error }}</div>
   } @else {

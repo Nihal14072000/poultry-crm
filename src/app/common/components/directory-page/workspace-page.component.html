@@ -42,7 +42,7 @@
       </div>
     </div>
     @if (loading) {
-      <div class="state-panel"><span class="spinner"></span>Loading {{ title.toLowerCase() }}...</div>
+      <app-loading-skeleton variant="table" />
     } @else if (errorMessage) {
       <div class="state-panel error" role="alert"><strong>Unable to load data</strong>{{ errorMessage }}</div>
     } @else if (!filteredRecords.length) {

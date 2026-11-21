@@ -11,7 +11,7 @@
   @if (errorMessage) { <p class="feedback error" role="alert">{{ errorMessage }}</p> }
 
   @if (loading) {
-    <section class="panel state">Loading vehicles, drivers, vendors and feed units…</section>
+    <app-loading-skeleton variant="form" />
   } @else if (!canSave) {
     <p class="feedback error" role="alert">Only Organization Admins and Sales Managers can create or edit trips.</p>
   } @else {

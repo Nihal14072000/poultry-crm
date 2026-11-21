@@ -81,6 +81,9 @@
     </div>
   }
 
+  @if (loadingCounts) {
+    <app-loading-skeleton variant="form" />
+  } @else {
   <form (ngSubmit)="submitOnboarding(false)" novalidate>
 
     <!-- SECTION 01: Business Identity & Contact Details -->
@@ -517,5 +520,6 @@
         </button>
       </div>
     </div>
-  </form>
+    </form>
+  }
 </main>

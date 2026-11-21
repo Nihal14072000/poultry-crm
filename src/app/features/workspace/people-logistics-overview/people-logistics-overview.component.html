@@ -1,6 +1,6 @@
 <div class="overview-page">
   @if (loading) {
-    <div class="state" role="status">Loading people and logistics data…</div>
+    <app-loading-skeleton variant="overview" />
   } @else if (errorMessage) {
     <div class="state error" role="alert">{{ errorMessage }}</div>
   } @else {

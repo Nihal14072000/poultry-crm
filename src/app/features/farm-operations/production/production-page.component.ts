@@ -1,3 +1,4 @@
+import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -10,7 +11,7 @@ import { ProductionRecordsComponent } from './components/production-records/prod
 @Component({
   selector: 'app-production-page',
   standalone: true,
-  imports: [CommonModule, ProductionPerformanceViewComponent, ProductionRecordsComponent],
+  imports: [CommonModule, LoadingSkeletonComponent, ProductionPerformanceViewComponent, ProductionRecordsComponent],
   templateUrl: './production-page.component.html',
   styleUrl: './production-page.component.css'
 })
