@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -22,7 +23,7 @@ function localDateString(): string {
 @Component({
   selector: 'app-batch-360',
   standalone: true,
-  imports: [CommonModule, DataGridComponent, FormsModule, NgSelectModule, RouterLink],
+  imports: [CommonModule, LoadingSkeletonComponent, DataGridComponent, FormsModule, NgSelectModule, RouterLink],
   templateUrl: './batch-360.component.html',
   styleUrl: './batch-360.component.css'
 })
