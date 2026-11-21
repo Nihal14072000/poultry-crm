@@ -1,0 +1,98 @@
+<div class="loading-skeleton" role="status" [attr.aria-label]="'Loading ' + variant + ' content'">
+  <span class="visually-hidden">Loading…</span>
+
+  @if (variant === 'dashboard' || variant === 'overview' || variant === 'finance') {
+    <div class="skeleton-metrics" [class.finance-metrics]="variant === 'finance'">
+      @for (card of cards; track card) {
+        <article class="skeleton-card metric-card">
+          <div class="shimmer label"></div>
+          <div class="shimmer metric-value"></div>
+          <div class="shimmer detail-line"></div>
+        </article>
+      }
+    </div>
+    @if (variant === 'dashboard' || variant === 'finance') {
+      <div class="skeleton-two-column">
+        <section class="skeleton-card chart-card">
+          <div class="shimmer section-title"></div>
+          <div class="shimmer section-subtitle"></div>
+          <div class="shimmer chart-placeholder"></div>
+        </section>
+        <section class="skeleton-card side-card">
+          <div class="shimmer section-title"></div>
+          @for (row of rows.slice(0, 4); track row) {
+            <div class="skeleton-list-row"><div class="shimmer avatar"></div><div class="skeleton-list-copy"><div class="shimmer line"></div><div class="shimmer line short"></div></div></div>
+          }
+        </section>
+      </div>
+    }
+    <section class="skeleton-card table-card">
+      <div class="skeleton-card-heading"><div class="shimmer section-title"></div><div class="shimmer count"></div></div>
+      <div class="table-scroll">
+        <div class="skeleton-row header-row">
+          @for (column of columns; track column) { <div class="shimmer cell"></div> }
+        </div>
+        @for (row of rows; track row) {
+          <div class="skeleton-row">
+            @for (column of columns; track column) { <div class="shimmer cell" [class.cell-short]="column % 3 === 0"></div> }
+          </div>
+        }
+      </div>
+    </section>
+  } @else if (variant === 'detail') {
+    <div class="shimmer eyebrow"></div>
+    <div class="shimmer page-title"></div>
+    <div class="shimmer subtitle"></div>
+    <div class="skeleton-metrics">
+      @for (card of cards; track card) { <article class="skeleton-card metric-card"><div class="shimmer label"></div><div class="shimmer metric-value"></div><div class="shimmer detail-line"></div></article> }
+    </div>
+    @for (section of [1, 2, 3]; track section) {
+      <section class="skeleton-card detail-section">
+        <div class="shimmer section-title"></div>
+        <div class="skeleton-detail-grid">
+          @for (item of rows; track item) { <div><div class="shimmer label"></div><div class="shimmer line"></div></div> }
+        </div>
+        @if (section > 1) {
+          <div class="table-scroll">
+            @for (row of rows.slice(0, 3); track row) { <div class="skeleton-row"><div class="shimmer cell"></div><div class="shimmer cell"></div><div class="shimmer cell"></div><div class="shimmer cell"></div></div> }
+          </div>
+        }
+      </section>
+    }
+  } @else if (variant === 'form') {
+    <div class="shimmer eyebrow"></div>
+    <div class="shimmer page-title"></div>
+    <div class="shimmer subtitle"></div>
+    <div class="skeleton-form-layout">
+      <div>
+        @for (section of [1, 2, 3]; track section) {
+          <section class="skeleton-card form-section">
+            <div class="shimmer section-title"></div>
+            <div class="skeleton-fields">
+              @for (field of rows; track field) { <div><div class="shimmer label"></div><div class="shimmer input"></div></div> }
+            </div>
+          </section>
+        }
+      </div>
+      <aside class="skeleton-card form-summary">
+        <div class="shimmer section-title"></div>
+        @for (row of rows; track row) { <div class="skeleton-summary-row"><div class="shimmer line"></div><div class="shimmer value"></div></div> }
+        <div class="shimmer action-button"></div>
+      </aside>
+    </div>
+  } @else {
+    <section class="skeleton-card table-card">
+      <div class="skeleton-card-heading"><div class="shimmer section-title"></div><div class="shimmer count"></div></div>
+      <div class="table-scroll">
+        <div class="skeleton-row header-row">
+          @for (column of columns; track column) { <div class="shimmer cell"></div> }
+        </div>
+        @for (row of rows; track row) {
+          <div class="skeleton-row">
+            @for (column of columns; track column) { <div class="shimmer cell" [class.cell-short]="column % 3 === 0"></div> }
+          </div>
+        }
+      </div>
+    </section>
+  }
+</div>
