@@ -24,7 +24,7 @@
       <div><span class="step">TRIP REGISTER</span><h2>Vehicle trips</h2><p>Trip assignments and proposed supplier and vendor orders are saved together.</p></div>
     </div>
     @if (loading) {
-      <p class="state">Loading trips…</p>
+      <app-loading-skeleton variant="table" />
     } @else if (errorMessage) {
       <p class="empty">Trip records could not be displayed.</p>
     } @else if (!trips.length) {
