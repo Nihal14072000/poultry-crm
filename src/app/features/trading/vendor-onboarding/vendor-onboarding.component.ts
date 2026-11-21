@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -108,7 +109,7 @@ function emptyOnboardingForm(type: OnboardingVendorType = 'SUPPLIER'): VendorOnb
 @Component({
   selector: 'app-vendor-onboarding',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, StatusPillPipe],
+  imports: [CommonModule, LoadingSkeletonComponent, FormsModule, RouterLink, StatusPillPipe],
   templateUrl: './vendor-onboarding.component.html',
   styleUrl: './vendor-onboarding.component.css'
 })
@@ -178,6 +179,7 @@ export class VendorOnboardingComponent implements OnInit {
   ];
 
   readonly cities = ['Nashik', 'Pune', 'Sangamner', 'Ahmednagar', 'Dhule', 'Malegaon', 'Mumbai', 'Thane', 'Kolhapur', 'Solapur', 'Other'];
+  loadingCounts = true;
   existingSuppliersCount = 0;
   existingDeliveryVendorsCount = 0;
 
@@ -201,6 +203,7 @@ export class VendorOnboardingComponent implements OnInit {
   }
 
   async loadExistingCounts(): Promise<void> {
+    this.loadingCounts = true;
     try {
       const [suppliersData, deliveryData] = await Promise.all([
         firstValueFrom(this.directories.getDirectory('suppliers').pipe(catchError(() => of({ records: [] })))),
@@ -210,6 +213,8 @@ export class VendorOnboardingComponent implements OnInit {
       this.existingDeliveryVendorsCount = deliveryData.records?.length ?? 0;
     } catch {
       // Non-blocking fallback
+    } finally {
+      this.loadingCounts = false;
     }
   }
 
