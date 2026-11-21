@@ -486,7 +486,7 @@ export class TripDeliveriesComponent implements OnInit {
   }
   async deletePayment(payment: FinanceRecord): Promise<void> {
     const paymentId = String(payment['id'] ?? payment['paymentId'] ?? '');
-    if (!paymentId || this.saving || String(this.trip?.['status']) === 'Completed' || payment['isDeleted'] === true) return;
+    if (!paymentId || this.saving || payment['isDeleted'] === true) return;
     if (!window.confirm('Delete this payment? It will remain in the system for audit history.')) return;
     this.saving = true; this.error = ''; this.success = '';
     try {
