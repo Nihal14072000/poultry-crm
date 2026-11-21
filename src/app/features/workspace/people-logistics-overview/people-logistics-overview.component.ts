@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -14,7 +15,7 @@ type OverviewRecord = Record<string, string | number>;
 @Component({
   selector: 'app-people-logistics-overview',
   standalone: true,
-  imports: [CommonModule, RouterLink, StatusPillPipe],
+  imports: [CommonModule, LoadingSkeletonComponent, RouterLink, StatusPillPipe],
   templateUrl: './people-logistics-overview.component.html',
   styleUrl: './people-logistics-overview.component.css'
 })
