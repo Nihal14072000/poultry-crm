@@ -22,6 +22,7 @@ export class PaymentCenterComponent implements OnInit {
   readonly methods: PaymentMethod[] = ['BANK_TRANSFER', 'CASH', 'CHEQUE', 'UPI', 'CARD', 'OTHER'];
   readonly statuses: PaymentStatus[] = ['PENDING', 'COMPLETED', 'FAILED', 'VOID'];
   form: FormValue = this.newForm();
+  amountInputDisplay = '0';
   constructor(private readonly route: ActivatedRoute, private readonly router: Router, private readonly api: FinanceApiService, private readonly tripsApi: TripApiService, readonly permissions: RolePermissionService) {}
   async ngOnInit(): Promise<void> { this.view = this.route.snapshot.routeConfig?.path as View || 'overview'; this.tripId = this.route.snapshot.queryParamMap.get('tripId') ?? ''; await this.load(); }
   async load(): Promise<void> {
@@ -147,7 +148,22 @@ export class PaymentCenterComponent implements OnInit {
       note: this.text(payment, 'note'),
       tripId: Number(this.text(payment, 'tripId')) || undefined
     };
+    this.amountInputDisplay = String(this.form.amount);
     await this.loadPartyOptions();
+  }
+  onPaymentAmountInput(value: string): void {
+    this.amountInputDisplay = value;
+    const normalized = value.replace(/,/g, '').trim();
+    this.form.amount = normalized === '' ? 0 : Number(normalized);
+  }
+  showExactPaymentAmountInput(): void {
+    this.amountInputDisplay = String(this.form.amount ?? '');
+  }
+  formatPaymentAmountInput(): void {
+    const amount = Number(this.form.amount);
+    this.amountInputDisplay = Number.isFinite(amount)
+      ? new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(amount)
+      : this.amountInputDisplay;
   }
   closePaymentEditor(): void {
     if (this.saving) return;
@@ -166,6 +182,7 @@ export class PaymentCenterComponent implements OnInit {
         await this.api.createPayment(this.form as PaymentInput);
         this.success = 'Payment recorded.';
         this.form = this.newForm();
+        this.amountInputDisplay = '0';
       }
     } catch (e) { this.error = e instanceof Error ? e.message : 'Payment could not be saved.'; }
     finally { this.saving = false; }
