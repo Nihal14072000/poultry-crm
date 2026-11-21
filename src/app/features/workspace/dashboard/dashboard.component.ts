@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -12,7 +13,7 @@ import { DashboardService } from '../../../common/services/dashboard.service';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, DataGridComponent, FormsModule, NgSelectModule, RouterLink],
+  imports: [CommonModule, LoadingSkeletonComponent, DataGridComponent, FormsModule, NgSelectModule, RouterLink],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
