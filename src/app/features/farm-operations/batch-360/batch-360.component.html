@@ -1,7 +1,7 @@
 <main class="detail-page">
   <a class="back-link" routerLink="/farm-operations/batches">← All batches</a>
   @if (loading) {
-    <div class="state-panel">Loading batch 360 view…</div>
+    <app-loading-skeleton variant="detail" />
   } @else if (error || !batch) {
     <div class="state-panel error" role="alert">{{ error }}</div>
   } @else {
