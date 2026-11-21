@@ -1,5 +1,5 @@
 @if (loading) {
-  <div class="loading-panel"><span class="spinner"></span><span>Loading your workspace...</span></div>
+  <app-loading-skeleton variant="dashboard" />
 } @else if (errorMessage) {
   <div class="error-panel" role="alert"><strong>Dashboard unavailable</strong><span>{{ errorMessage }}</span></div>
 } @else {
