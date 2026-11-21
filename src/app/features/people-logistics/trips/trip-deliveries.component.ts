@@ -309,6 +309,21 @@ export class TripDeliveriesComponent implements OnInit {
   actualSalesTotal(): number { return this.deliveries.reduce((sum, entry) => sum + this.number(entry['deliveryTotal']), 0); }
   proposedSupplierCost(): number { return this.number(this.trip?.['grandTotal']); }
   actualSupplierCost(): number { return this.supplierReceipts.reduce((sum, receipt) => sum + this.number(receipt['total']), 0); }
+  paymentMethodBreakdown(): { method: string; label: string; amount: number }[] {
+    const totals = new Map<string, number>();
+    for (const payment of this.tripPayments) {
+      if (payment['paymentType'] !== 'BUYER_RECEIPT' || payment['status'] !== 'COMPLETED' || payment['isDeleted'] === true) continue;
+      const method = String(payment['paymentMethod'] ?? 'OTHER').toUpperCase();
+      totals.set(method, (totals.get(method) ?? 0) + this.number(payment['amount']));
+    }
+    const labels: Record<string, string> = {
+      BANK_TRANSFER: 'Bank Transfer', CASH: 'Cash', CHEQUE: 'Cheque', UPI: 'UPI', CARD: 'Card', OTHER: 'Other'
+    };
+    return [...totals.entries()]
+      .filter(([, amount]) => amount > 0)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([method, amount]) => ({ method, label: labels[method] ?? method.replace(/_/g, ' '), amount }));
+  }
   totalPaymentReceived(): number {
     return this.tripPayments
       .filter((payment) => payment['paymentType'] === 'BUYER_RECEIPT' && payment['status'] === 'COMPLETED' && payment['isDeleted'] !== true)

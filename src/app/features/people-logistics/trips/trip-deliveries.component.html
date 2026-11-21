@@ -135,6 +135,16 @@
           }
         </tbody></table></div>
       } @else { <p class="empty">No payments have been recorded for this trip.</p> }
+      @if (paymentMethodBreakdown().length) {
+        <div class="payment-method-breakdown">
+          <h3>Payment received by method</h3>
+          <div class="payment-method-grid">
+            @for (item of paymentMethodBreakdown(); track item.method) {
+              <article><span>{{ item.label }}</span><strong>{{ item.amount | currency:'INR':'symbol':'1.0-0':'en-IN' }}</strong></article>
+            }
+          </div>
+        </div>
+      }
       @if (showPaymentForm) {
         <div class="form-grid">
           <label>Type<select name="paymentType" [(ngModel)]="paymentType" (ngModelChange)="changePaymentType()"><option value="BUYER_RECEIPT">Payment received</option><option value="SELLER_PAYOUT">Supplier payment made</option></select></label>
