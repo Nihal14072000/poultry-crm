@@ -78,3 +78,10 @@ td small { color:#879289; margin-top:3px; }
 @keyframes arrive { from { opacity:.7; transform:translateY(2px); } to { opacity:1; transform:translateY(0); } }
 @media(max-width:800px) { .details-grid,.summary-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .category-progress { grid-template-columns:1fr; } .filters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:560px) { .page-heading,.trip-card,.reconcile { align-items:stretch; flex-direction:column; } .trip-card-actions { align-items:flex-start; } .panel { padding:14px 12px; } .details-grid,.summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .category-progress { grid-template-columns:1fr; } .filters,.form-grid,.payment-entry,.pickup-entry-grid { grid-template-columns:1fr; } .payment-summary,.pickup-receipt-heading { align-items:stretch; flex-direction:column; } .destination-edit-row { align-items:stretch; grid-template-columns:1fr; } .form-grid .wide,.pickup-entry-grid .wide { grid-column:auto; } .button { min-height:44px; } }
+
+.payment-method-breakdown { border-top:1px solid #e8ede6; margin-top:16px; padding-top:14px; }
+.payment-method-breakdown h3 { color:#536157; font-size:12px; font-weight:700; margin:0 0 10px; }
+.payment-method-grid { display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); }
+.payment-method-grid article { background:#f8faf7; border:1px solid #e8ede6; border-radius:8px; display:flex; flex-direction:column; gap:5px; padding:11px 12px; }
+.payment-method-grid span { color:#78847a; font-size:10px; }
+.payment-method-grid strong { color:#34443a; font-size:16px; }
