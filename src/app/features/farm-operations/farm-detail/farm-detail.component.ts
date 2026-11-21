@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FarmOperationsData, FarmOperationsService } from '../../../common/services/farm-operations.service';
@@ -8,7 +9,7 @@ import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 @Component({
   selector: 'app-farm-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, StatusPillPipe],
+  imports: [CommonModule, LoadingSkeletonComponent, RouterLink, StatusPillPipe],
   templateUrl: './farm-detail.component.html',
   styleUrl: './farm-detail.component.css'
 })
