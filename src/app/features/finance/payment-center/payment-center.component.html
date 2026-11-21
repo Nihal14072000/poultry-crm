@@ -113,7 +113,7 @@
         <div class="form-grid">
           <label>Payment type<select [(ngModel)]="form.paymentType" (ngModelChange)="setPaymentType($event)" [disabled]="saving"><option value="BUYER_RECEIPT">Buyer receipt</option><option value="SELLER_PAYOUT">Seller payout</option></select></label>
           <label>Party<select [(ngModel)]="form.partyId" [disabled]="saving" required><option [ngValue]="null">Select party</option>@for (party of parties; track party['_demoId']) { <option [ngValue]="+party['_demoId']">{{ party['name'] }}</option> }</select></label>
-          <label>Amount<input type="number" min="0.01" step="0.01" [(ngModel)]="form.amount" [disabled]="saving"></label>
+          <label>Amount<input type="text" inputmode="decimal" [ngModel]="amountInputDisplay" (ngModelChange)="onPaymentAmountInput($event)" (focus)="showExactPaymentAmountInput()" (blur)="formatPaymentAmountInput()" [disabled]="saving"></label>
           <label>Payment date<input type="date" [(ngModel)]="form.paymentDate" [disabled]="saving"></label>
           <label>Method<select [(ngModel)]="form.paymentMethod" [disabled]="saving">@for (method of methods; track method) { <option [value]="method">{{ method }}</option> }</select></label>
           <label>Status<select [(ngModel)]="form.status" [disabled]="saving">@for (status of statuses; track status) { <option [value]="status">{{ status }}</option> }</select></label>
@@ -145,7 +145,7 @@
             <option [ngValue]="null">Select {{ form.paymentType === 'BUYER_RECEIPT' ? 'buyer' : 'seller' }}</option>@for
             (party of parties; track party['_demoId']) { <option [ngValue]="+party['_demoId']">{{ party['name'] }}
             </option> }
-          </select></label><label>Amount<input type="number" min="0.01" step="0.01" [(ngModel)]="form.amount"
+          </select></label><label>Amount<input type="text" inputmode="decimal" [ngModel]="amountInputDisplay" (ngModelChange)="onPaymentAmountInput($event)" (focus)="showExactPaymentAmountInput()" (blur)="formatPaymentAmountInput()"
             name="amount" required></label><label>Payment date<input type="date" [(ngModel)]="form.paymentDate"
             name="paymentDate" required></label><label>Method<select [(ngModel)]="form.paymentMethod"
             name="paymentMethod">@for (method of methods; track method) { <option [value]="method">{{ method }}</option>
