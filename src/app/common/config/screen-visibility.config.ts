@@ -18,7 +18,7 @@ interface RoleVisibility {
 }
 
 export const enabledFeatures = [
-  'employees', 'fleet', 'vehicles', 'trips', 'finance',
+  'employees', 'fleet', 'vehicles', 'vehicle-assignments', 'trips', 'finance',
   'payments', 'expenses', 'reports', 'analytics', 'notifications',
   'organization', 'users-roles', 'documents', 'audit', 'administration' , 'deliveries'
 ] as const;
