@@ -19,7 +19,7 @@
   </div>
 
   @if (loading) {
-    <div class="state-panel"><span class="spinner"></span>Loading {{ title.toLowerCase() }} data...</div>
+    <app-loading-skeleton variant="table" />
   } @else if (errorMessage) {
     <div class="state-panel error" role="alert"><strong>Couldn’t load this view</strong><span>{{ errorMessage }}</span></div>
   } @else if (selectedTab === 'performance') {
