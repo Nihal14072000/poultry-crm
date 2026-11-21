@@ -23,7 +23,7 @@
   </nav>
 
   @if (loading) {
-    <section class="state">Loading trading records…</section>
+    <app-loading-skeleton variant="table" />
   } @else {
     @if (data; as desk) {
     @if (activeView === 'quotes') {
