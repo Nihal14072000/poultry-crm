@@ -37,6 +37,17 @@ describe('PaymentCenterComponent payment actions', () => {
     component = new PaymentCenterComponent(route, jasmine.createSpyObj<Router>('Router', ['navigate']), api, tripsApi, permissions);
   });
 
+  it('formats the payment amount to zero decimals without changing the submitted value', () => {
+    component.onPaymentAmountInput('1250.50');
+    component.formatPaymentAmountInput();
+
+    expect(component.amountInputDisplay).toBe('1,251');
+    expect(component.form.amount).toBe(1250.5);
+
+    component.showExactPaymentAmountInput();
+    expect(component.amountInputDisplay).toBe('1250.5');
+  });
+
   it('updates payment details and replaces the row after a successful edit', async () => {
     const payment: FinanceRecord = { id: 12, amount: 125, status: 'PENDING' };
     api.updatePayment.and.resolveTo({ amount: 150 });
