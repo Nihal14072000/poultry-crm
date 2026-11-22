@@ -72,6 +72,9 @@
             <label>Location
               <input name="location" maxlength="200" [(ngModel)]="partyForm.location" placeholder="Address or location">
             </label>
+            <label>Outstanding
+              <input name="outstanding" type="number" step="0.01" [(ngModel)]="partyForm.outstanding" placeholder="Enter outstanding amount">
+            </label>
             <label class="active-field"><input name="isActive" type="checkbox" [(ngModel)]="partyForm.isActive"> Active</label>
           </div>
           @if (formError) { <p class="dialog-error" role="alert">{{ formError }}</p> }

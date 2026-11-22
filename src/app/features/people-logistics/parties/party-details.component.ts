@@ -73,7 +73,7 @@ export class PartyDetailsComponent implements OnInit {
   }
 
   get dueTotal(): number {
-    return this.transactionTotal - this.paymentsTotal;
+    return (this.party?.outstanding ?? 0) + this.transactionTotal - this.paymentsTotal;
   }
 
   get transactionLabel(): string {

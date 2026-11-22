@@ -100,15 +100,15 @@ describe('TripApiService', () => {
   it('returns every buying party, including inactive and deleted records', async () => {
     const result = service.getBuyingParties();
     http.expectOne('http://localhost:8080/api/buying-parties').flush([
-      { id: 31, name: 'Active supplier', isActive: true, isDeleted: false },
+      { id: 31, name: 'Active supplier', outstanding: 125, isActive: true, isDeleted: false },
       { id: 32, name: 'Inactive supplier', isActive: false, isDeleted: false },
-      { id: 33, name: 'Deleted supplier', isActive: true, isDeleted: true }
+      { id: 33, name: 'Deleted supplier', outstanding: null, isActive: true, isDeleted: true }
     ]);
 
     await expectAsync(result).toBeResolvedTo([
-      jasmine.objectContaining({ _demoId: '31', name: 'Active supplier', status: 'Active' }),
+      jasmine.objectContaining({ _demoId: '31', name: 'Active supplier', outstanding: 125, status: 'Active' }),
       jasmine.objectContaining({ _demoId: '32', name: 'Inactive supplier', status: 'Inactive' }),
-      jasmine.objectContaining({ _demoId: '33', name: 'Deleted supplier', status: 'Deleted' })
+      jasmine.objectContaining({ _demoId: '33', name: 'Deleted supplier', outstanding: null, status: 'Deleted' })
     ]);
   });
 
@@ -173,7 +173,7 @@ describe('TripApiService', () => {
   });
 
   it('posts a buying party to the buying-parties endpoint', async () => {
-    const party = { name: 'Farm supplier', contact: 'Pat', location: 'Nashik', isActive: true };
+    const party = { name: 'Farm supplier', contact: 'Pat', location: 'Nashik', outstanding: 275.5, isActive: true };
     const result = service.createParty('buying', party);
     const request = http.expectOne('http://localhost:8080/api/buying-parties');
 
@@ -185,7 +185,7 @@ describe('TripApiService', () => {
   });
 
   it('posts a selling party to the selling-parties endpoint', async () => {
-    const party = { name: 'Market buyer', contact: 'Receiving', location: 'Pune', isActive: false };
+    const party = { name: 'Market buyer', contact: 'Receiving', location: 'Pune', outstanding: 0, isActive: false };
     const result = service.createParty('selling', party);
     const request = http.expectOne('http://localhost:8080/api/selling-parties');
 
@@ -197,7 +197,7 @@ describe('TripApiService', () => {
   });
 
   it('updates a party through its matching endpoint with the party ID', async () => {
-    const party = { name: 'Farm supplier', contact: 'Pat', location: 'Nashik', isActive: true, isDeleted: false };
+    const party = { name: 'Farm supplier', contact: 'Pat', location: 'Nashik', outstanding: 275.5, isActive: true, isDeleted: false };
     const result = service.updateParty('buying', '33', party);
     const request = http.expectOne('http://localhost:8080/api/buying-parties/33');
 
@@ -209,7 +209,7 @@ describe('TripApiService', () => {
   });
 
   it('soft-deletes a selling party using the update endpoint', async () => {
-    const party = { name: 'Market buyer', contact: 'Receiving', location: 'Pune', isActive: false, isDeleted: true };
+    const party = { name: 'Market buyer', contact: 'Receiving', location: 'Pune', outstanding: 0, isActive: false, isDeleted: true };
     const result = service.updateParty('selling', '54', party);
     const request = http.expectOne('http://localhost:8080/api/selling-parties/54');
 

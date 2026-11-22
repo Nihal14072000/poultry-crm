@@ -29,7 +29,7 @@ export class PartyDirectoryComponent implements OnInit {
   successMessage = '';
   actionError = '';
   formError = '';
-  partyForm = { name: '', contact: '', location: '', isActive: true };
+  partyForm = { name: '', contact: '', location: '', outstanding: 0, isActive: true };
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -63,7 +63,7 @@ export class PartyDirectoryComponent implements OnInit {
     if (!this.canCreate) return;
     this.editorMode = 'create';
     this.editingParty = undefined;
-    this.partyForm = { name: '', contact: '', location: '', isActive: true };
+    this.partyForm = { name: '', contact: '', location: '', outstanding: 0, isActive: true };
     this.formError = '';
     this.editorOpen = true;
   }
@@ -76,6 +76,7 @@ export class PartyDirectoryComponent implements OnInit {
       name: String(party['name'] ?? ''),
       contact: String(party['contact'] ?? ''),
       location: String(party['location'] ?? ''),
+      outstanding: party['outstanding'] ?? 0,
       isActive: party['isActive'] === true
     };
     this.formError = '';
@@ -97,6 +98,7 @@ export class PartyDirectoryComponent implements OnInit {
       name: this.partyForm.name.trim(),
       contact: this.partyForm.contact.trim(),
       location: this.partyForm.location.trim(),
+      outstanding: this.partyForm.outstanding,
       isActive: this.partyForm.isActive
     };
     if (!party.name) {
@@ -154,6 +156,7 @@ export class PartyDirectoryComponent implements OnInit {
         name: String(party['name'] ?? ''),
         contact: String(party['contact'] ?? ''),
         location: String(party['location'] ?? ''),
+        outstanding: party['outstanding'] ?? 0,
         isActive: false,
         isDeleted: true
       });

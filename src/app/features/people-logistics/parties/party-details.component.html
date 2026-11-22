@@ -14,6 +14,7 @@
     </header>
 
     <section class="metrics" aria-label="Party financial summary">
+      <article><span>Outstanding</span><strong>{{ (party.outstanding ?? 0) | currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong></article>
       <article><span>{{ transactionLabel }}</span><strong>{{ transactionTotal | currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong></article>
       <article><span>Payments</span><strong>{{ paymentsTotal | currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong></article>
       <article><span>Dues</span><strong>{{ dueTotal | currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong></article>

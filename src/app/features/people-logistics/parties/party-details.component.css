@@ -6,7 +6,7 @@
 .eyebrow span { color: #c1c9c1; padding: 0 5px; }
 .page-heading h1 { color: #26372d; font-family: Calibri,Arial,sans-serif; font-size: 25px; letter-spacing: -.6px; margin: 8px 0 4px; }
 .page-heading p,.card-heading p { color: #858f87; font-size: 11px; margin: 0; }
-.metrics { display: grid; gap: 12px; grid-template-columns: repeat(3,minmax(0,1fr)); margin-bottom: 16px; }
+.metrics { display: grid; gap: 12px; grid-template-columns: repeat(4,minmax(0,1fr)); margin-bottom: 16px; }
 .metrics article { background: #fff; border: 1px solid #e9ece7; border-radius: 8px; display: flex; flex-direction: column; gap: 10px; min-height: 85px; padding: 15px; }
 .metrics span { color: #858f87; font-size: 9px; }
 .metrics strong { color: #334239; font-size: 17px; }

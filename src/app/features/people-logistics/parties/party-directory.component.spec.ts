@@ -51,12 +51,12 @@ describe('PartyDirectoryComponent', () => {
     tripApi.getBuyingParties.and.resolveTo([]);
     component.partyType = 'buying';
     component.title = 'Buying parties';
-    component.partyForm = { name: '  Farm supplier  ', contact: '  Pat  ', location: '  Nashik  ', isActive: true };
+    component.partyForm = { name: '  Farm supplier  ', contact: '  Pat  ', location: '  Nashik  ', outstanding: 275.5, isActive: true };
 
     await component.createParty();
 
     expect(tripApi.createParty).toHaveBeenCalledWith('buying', {
-      name: 'Farm supplier', contact: 'Pat', location: 'Nashik', isActive: true
+      name: 'Farm supplier', contact: 'Pat', location: 'Nashik', outstanding: 275.5, isActive: true
     });
     expect(tripApi.getBuyingParties).toHaveBeenCalled();
     expect(component.successMessage).toBe('Buying party added successfully.');
@@ -77,7 +77,7 @@ describe('PartyDirectoryComponent', () => {
     component.partyType = 'buying';
     component.title = 'Buying parties';
     const party: PartyDirectoryRecord = {
-      _demoId: '31', id: 31, name: 'Old name', contact: 'Pat', location: 'Nashik', isActive: true, isDeleted: false, status: 'Active'
+      _demoId: '31', id: 31, name: 'Old name', contact: 'Pat', location: 'Nashik', outstanding: 250, isActive: true, isDeleted: false, status: 'Active'
     };
     component.openEdit(party);
     component.partyForm.name = 'New name';
@@ -85,7 +85,7 @@ describe('PartyDirectoryComponent', () => {
     await component.createParty();
 
     expect(tripApi.updateParty).toHaveBeenCalledWith('buying', '31', {
-      name: 'New name', contact: 'Pat', location: 'Nashik', isActive: true, isDeleted: false
+      name: 'New name', contact: 'Pat', location: 'Nashik', outstanding: 250, isActive: true, isDeleted: false
     });
     expect(component.successMessage).toBe('Buying party updated successfully.');
   });
@@ -94,13 +94,13 @@ describe('PartyDirectoryComponent', () => {
     tripApi.getSellingParties.and.resolveTo([]);
     component.partyType = 'selling';
     component.deleteCandidate = {
-      _demoId: '52', id: 52, name: 'Market buyer', contact: 'Desk', location: 'Pune', isActive: true, isDeleted: false, status: 'Active'
+      _demoId: '52', id: 52, name: 'Market buyer', contact: 'Desk', location: 'Pune', outstanding: 100, isActive: true, isDeleted: false, status: 'Active'
     };
 
     await component.deleteParty();
 
     expect(tripApi.updateParty).toHaveBeenCalledWith('selling', '52', {
-      name: 'Market buyer', contact: 'Desk', location: 'Pune', isActive: false, isDeleted: true
+      name: 'Market buyer', contact: 'Desk', location: 'Pune', outstanding: 100, isActive: false, isDeleted: true
     });
     expect(component.deleteCandidate).toBeUndefined();
   });

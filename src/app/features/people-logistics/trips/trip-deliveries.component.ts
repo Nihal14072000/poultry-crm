@@ -350,15 +350,6 @@ export class TripDeliveriesComponent implements OnInit {
   }
   completedDestinations(): number { return this.destinations.filter((destination) => this.destinationStatus(destination) === 'Delivered').length; }
   progress(): number { return this.destinations.length ? Math.round(this.completedDestinations() * 100 / this.destinations.length) : 0; }
-  plannedBroilerTotal(): number { return this.destinations.reduce((sum, destination) => sum + this.number(destination['orderedBroiler']), 0); }
-  plannedCullsTotal(): number { return this.destinations.reduce((sum, destination) => sum + this.number(destination['orderedCulls']), 0); }
-  plannedFeedTotal(): number { return this.destinations.reduce((sum, destination) => sum + this.number(destination['orderedFeed']), 0); }
-  private categoryProgress(delivered: number, planned: number): number { return planned > 0 ? Math.min(100, Math.round(delivered * 100 / planned)) : 0; }
-  broilerProgress(): number { return this.categoryProgress(this.deliveredBroilerTotal(), this.plannedBroilerTotal()); }
-  cullsProgress(): number { return this.categoryProgress(this.deliveredCullsTotal(), this.plannedCullsTotal()); }
-  feedProgress(): number { return this.categoryProgress(this.deliveredFeedTotal(), this.plannedFeedTotal()); }
-  hasPlannedCulls(): boolean { return this.plannedCullsTotal() > 0; }
-  hasPlannedFeed(): boolean { return this.plannedFeedTotal() > 0; }
   destinationStatus(destination: TripRecord): string {
     const id = this.id(destination); const destinationEntries = this.entries(id); const count = destinationEntries.length;
     if (!count) return 'Pending';

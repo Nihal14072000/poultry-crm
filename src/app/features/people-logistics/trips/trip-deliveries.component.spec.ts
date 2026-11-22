@@ -108,46 +108,6 @@ describe('TripDeliveriesComponent payments', () => {
     }), [], [], '83');
   });
 
-  it('calculates broiler, culls, and feed delivery progress independently', () => {
-    component.destinations = [
-      { _demoId: '51', orderedBroiler: 80, orderedCulls: 20, orderedFeed: 50 },
-      { _demoId: '52', orderedBroiler: 20, orderedCulls: 10, orderedFeed: 50 }
-    ];
-    component.deliveries = [
-      { vendorDestinationId: '51', broiler: 40, culls: 10, feed: 20 },
-      { vendorDestinationId: '52', broiler: 10, culls: 5, feed: 30 }
-    ];
-    expect(component.plannedBroilerTotal()).toBe(100);
-    expect(component.plannedCullsTotal()).toBe(30);
-    expect(component.plannedFeedTotal()).toBe(100);
-    expect(component.broilerProgress()).toBe(50);
-    expect(component.cullsProgress()).toBe(50);
-    expect(component.feedProgress()).toBe(50);
-  });
-
-  it('hides culls and feed progress when their planned quantities are zero', () => {
-    component.destinations = [{ _demoId: '51', orderedBroiler: 10, orderedCulls: 0, orderedFeed: 0 }];
-    component.deliveries = [{ vendorDestinationId: '51', broiler: 12, culls: 0, feed: 5 }];
-    expect(component.hasPlannedCulls()).toBeFalse();
-    expect(component.hasPlannedFeed()).toBeFalse();
-    expect(component.cullsProgress()).toBe(0);
-    expect(component.feedProgress()).toBe(0);
-  });
-
-  it('shows culls and feed progress when their planned quantities are greater than zero', () => {
-    component.destinations = [{ _demoId: '51', orderedBroiler: 10, orderedCulls: 2, orderedFeed: 5 }];
-    expect(component.hasPlannedCulls()).toBeTrue();
-    expect(component.hasPlannedFeed()).toBeTrue();
-  });
-
-  it('caps category progress at 100 percent', () => {
-    component.destinations = [{ _demoId: '51', orderedBroiler: 10, orderedCulls: 0, orderedFeed: 0 }];
-    component.deliveries = [{ vendorDestinationId: '51', broiler: 12, culls: 0, feed: 5 }];
-    expect(component.broilerProgress()).toBe(100);
-    expect(component.cullsProgress()).toBe(0);
-    expect(component.feedProgress()).toBe(0);
-  });
-
   it('calculates received payments, supplier payouts, and outstanding supplier balance separately', () => {
     component.supplierReceipts = [{ total: 700 }];
     component.supplierPickups = [{ vendorId: '31', vendorName: 'Supplier', broiler: { quantity: 1, rate: 1, total: 1 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 1 }];
