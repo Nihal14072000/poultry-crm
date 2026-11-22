@@ -35,6 +35,12 @@ describe('TripDetailsComponent', () => {
 
   afterEach(() => window.sessionStorage.clear());
 
+  it('calculates profit as actual sales minus actual supplier cost', () => {
+    component.supplierReceipts = [{ total: 1000 }];
+
+    expect(component.grossProfit()).toBe(250);
+  });
+
   it('includes pending actual deliveries in trip details', async () => {
     window.sessionStorage.setItem('trip-delivery-vendor-deliveries:12', JSON.stringify(['84']));
 

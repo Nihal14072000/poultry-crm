@@ -128,7 +128,7 @@
         <div><span>Total Feed</span><strong>{{ (trip['totalFeed'] || 0) | number:'1.0-2' }}</strong><small>{{ trip['feedUnit'] || '' }}</small></div>
         <div><span>Proposed vendor sales</span><strong>{{ plannedSalesTotal() | currency:'INR':'symbol':'1.2-2' }}</strong><small>planned weight × rate</small></div>
         <div><span>Actual vendor sales</span><strong>{{ actualSalesTotal() | currency:'INR':'symbol':'1.2-2' }}</strong><small>delivered weight × rate</small></div>
-        <div><span>Profit</span><strong>{{ grossProfit() | currency:'INR':'symbol':'1.2-2' }}</strong><small>actual supplier cost − actual vendor sales</small></div>
+        <div><span>Profit</span><strong>{{ grossProfit() | currency:'INR':'symbol':'1.2-2' }}</strong><small>actual vendor sales − actual supplier cost</small></div>
         <div><span>Proposed supplier cost</span><strong>{{ (trip['grandTotal'] || 0) | currency:'INR':'symbol':'1.2-2' }}</strong></div>
         <div><span>Actual supplier cost</span><strong>{{ actualSupplierCostTotal() | currency:'INR':'symbol':'1.2-2' }}</strong><small>{{ supplierReceipts.length ? 'from actual receipts' : 'not recorded yet' }}</small></div>
       </div>

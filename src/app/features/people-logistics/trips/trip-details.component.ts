@@ -111,7 +111,7 @@ export class TripDetailsComponent implements OnInit {
   }
 
   grossProfit(): number {
-    return this.actualSupplierCostTotal() - this.actualSalesTotal();
+    return this.actualSalesTotal() - this.actualSupplierCostTotal();
   }
 
   actualPickupTotal(vendorId: string): number {
