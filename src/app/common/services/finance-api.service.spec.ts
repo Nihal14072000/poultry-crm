@@ -60,6 +60,31 @@ describe('FinanceApiService', () => {
     })]);
   });
 
+  it('retrieves payments for a specific party using party type', async () => {
+    const payments = service.paymentsForParty('25', 'S');
+    const request = http.expectOne((req) =>
+      req.url === 'http://localhost:8080/api/payments/retrieve' &&
+      req.params.get('partyId') === '25' && req.params.get('partyTyp') === 'S'
+    );
+    expect(request.request.method).toBe('GET');
+    request.flush([{ id: 43, party_id: 25, type: 'seller_payout', amount: 75, status: 'completed' }]);
+
+    await expectAsync(payments).toBeResolvedTo([jasmine.objectContaining({
+      id: 43, partyId: 25, paymentType: 'SELLER_PAYOUT', amount: 75, status: 'COMPLETED'
+    })]);
+  });
+
+  it('retrieves the completed payment sum for a party', async () => {
+    const total = service.sumCompletedPaymentsByParty('25', 'S');
+    const request = http.expectOne((req) =>
+      req.url === 'http://localhost:8080/api/payments/party/sum' &&
+      req.params.get('partyId') === '25' && req.params.get('partyType') === 'S'
+    );
+    request.flush({ totalAmount: '1250.50' });
+
+    await expectAsync(total).toBeResolvedTo(1250.5);
+  });
+
   it('maps editable payment fields to the payment update API contract', async () => {
     const updated = service.updatePayment('12', {
       paymentType: 'BUYER_RECEIPT',
@@ -133,15 +158,15 @@ describe('FinanceApiService', () => {
     await expectAsync(updated).toBeResolvedTo(jasmine.objectContaining({ partyRole: 'SELLING', partyId: 51 }));
   });
 
-  it('marks a payment deleted without sending a status', async () => {
-    const updated = service.updatePayment('23', { isDeleted: true, isActive: false });
+  it('deletes a payment using the payment DELETE endpoint', async () => {
+    const deleted = service.deletePayment('23');
     const request = http.expectOne('http://localhost:8080/api/payments/23');
 
-    expect(request.request.method).toBe('PUT');
-    expect(request.request.body).toEqual({ isDeleted: true, isActive: false });
-    request.flush({ id: 23, isDeleted: true, isActive: false });
+    expect(request.request.method).toBe('DELETE');
+    expect(request.request.body).toBeNull();
+    request.flush(null);
 
-    await expectAsync(updated).toBeResolvedTo(jasmine.objectContaining({ id: 23, isDeleted: true, isActive: false }));
+    await expectAsync(deleted).toBeResolved();
   });
 
   it('loads the finance summary with optional party filters', async () => {

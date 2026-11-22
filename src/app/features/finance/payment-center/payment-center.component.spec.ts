@@ -11,7 +11,7 @@ describe('PaymentCenterComponent payment actions', () => {
   let permissions: jasmine.SpyObj<RolePermissionService>;
 
   beforeEach(() => {
-    api = jasmine.createSpyObj<FinanceApiService>('FinanceApiService', ['updatePayment', 'createPayment', 'payments', 'summary', 'receivables', 'payables']);
+    api = jasmine.createSpyObj<FinanceApiService>('FinanceApiService', ['updatePayment', 'deletePayment', 'createPayment', 'payments', 'summary', 'receivables', 'payables']);
     api.updatePayment.and.resolveTo({});
     api.payments.and.resolveTo([]);
     api.summary.and.resolveTo({});
@@ -72,13 +72,24 @@ describe('PaymentCenterComponent payment actions', () => {
   });
 
   it('marks a payment deleted through the update endpoint after confirmation', async () => {
-    const payment: FinanceRecord = { id: 12, status: 'COMPLETED' };
+    const payment: FinanceRecord = {
+      id: 12,
+      paymentType: 'BUYER_RECEIPT',
+      partyId: 7,
+      amount: 125,
+      paymentDate: '2026-11-05',
+      paymentMethod: 'BANK_TRANSFER',
+      status: 'COMPLETED',
+      reference: 'REF-12',
+      note: 'Invoice payment',
+      tripId: 4
+    };
     component.requestDeletePayment(payment);
     expect(component.deleteCandidate).toBe(payment);
 
     await component.deletePayment();
 
-    expect(api.updatePayment).toHaveBeenCalledWith('12', { isDeleted: true, isActive: false });
+    expect(api.deletePayment).toHaveBeenCalledWith('12');
     expect(payment['isDeleted']).toBeTrue();
     expect(payment['isActive']).toBeFalse();
     expect(component.deleteCandidate).toBeUndefined();

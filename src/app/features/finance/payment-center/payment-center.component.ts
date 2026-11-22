@@ -208,7 +208,7 @@ export class PaymentCenterComponent implements OnInit {
     this.saving = true;
     this.error = '';
     try {
-      await this.api.updatePayment(id, { isDeleted: true, isActive: false });
+      await this.api.deletePayment(id);
       payment['isDeleted'] = true;
       payment['isActive'] = false;
       this.success = 'Payment deleted.';
