@@ -21,7 +21,8 @@ export class PartyDetailsComponent implements OnInit {
   payments: FinanceRecord[] = [];
   activeTab: 'orders' | 'payments' = 'orders';
   readonly orderColumns = ['tripId', 'orderTypeId', 'qty', 'weight', 'rate', 'sales', 'createDate'];
-  financeSummary: FinanceRecord = {};
+  partyOrderTotal = 0;
+  partyPaymentTotal = 0;
   loading = true;
   errorMessage = '';
 
@@ -41,22 +42,20 @@ export class PartyDetailsComponent implements OnInit {
     }
 
     try {
-      const [parties, financeSummary, orders, payments] = await Promise.all([
+      const partyTypeCode = this.partyType === 'buying' ? 'B' : 'S';
+      const [parties, partyOrderTotal, partyPaymentTotal, orders, payments] = await Promise.all([
         this.partyType === 'buying' ? this.tripsApi.getBuyingParties() : this.tripsApi.getSellingParties(),
-        this.financeApi.summary(this.partyType === 'buying' ? { buyingPartyId: partyId } : { sellingPartyId: partyId }),
-        this.tripsApi.getPartyOrders(partyId, this.partyType === 'buying' ? 'B' : 'S'),
-        this.financeApi.payments()
+        this.tripsApi.getPartyOrderTotal(partyId, partyTypeCode),
+        this.financeApi.sumCompletedPaymentsByParty(partyId, partyTypeCode),
+        this.tripsApi.getPartyOrders(partyId, partyTypeCode),
+        this.financeApi.paymentsForParty(partyId, partyTypeCode)
       ]);
       this.party = parties.find((party) => String(party.id) === partyId);
       if (!this.party) throw new Error('This party could not be found.');
       this.orders = orders;
-      this.financeSummary = financeSummary;
-      const paymentType = this.partyType === 'buying' ? 'BUYER_RECEIPT' : 'SELLER_PAYOUT';
-      this.payments = payments.filter((payment) =>
-        payment['isDeleted'] !== true &&
-        String(payment['partyId'] ?? payment['buyingPartyId'] ?? payment['sellingPartyId'] ?? '') === partyId &&
-        String(payment['paymentType'] ?? payment['type'] ?? '') === paymentType
-      );
+      this.partyOrderTotal = partyOrderTotal;
+      this.partyPaymentTotal = partyPaymentTotal;
+      this.payments = payments.filter((payment) => payment['isDeleted'] !== true);
 
     } catch (error) {
       this.errorMessage = error instanceof Error ? error.message : 'Party details could not be loaded.';
@@ -66,11 +65,11 @@ export class PartyDetailsComponent implements OnInit {
   }
 
   get paymentsTotal(): number {
-    return this.money(this.financeSummary, this.partyType === 'buying' ? 'totalReceived' : 'totalPaid');
+    return this.partyPaymentTotal;
   }
 
   get transactionTotal(): number {
-    return this.money(this.financeSummary, this.partyType === 'buying' ? 'totalReceivable' : 'totalPayable');
+    return this.partyOrderTotal;
   }
 
   get dueTotal(): number {
@@ -102,7 +101,7 @@ export class PartyDetailsComponent implements OnInit {
       const rate = Number(order['rate']);
       return order['weight'] != null && order['weight'] !== '' &&
         order['rate'] != null && order['rate'] !== '' && Number.isFinite(weight * rate)
-        ? `₹ ${weight * rate}`
+        ? `₹ ${Math.round(weight * rate)}`
         : '—';
     }
     if (value == null || value === '') return '—';

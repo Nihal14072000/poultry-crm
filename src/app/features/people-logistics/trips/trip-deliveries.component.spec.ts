@@ -31,7 +31,7 @@ describe('TripDeliveriesComponent payments', () => {
       loadedCulls: 0,
       loadedBirds: 0
     } satisfies TripDeliveryData);
-    finance = jasmine.createSpyObj<FinanceApiService>('FinanceApiService', ['payments', 'paymentsForTrip', 'createPayment', 'updatePayment']);
+    finance = jasmine.createSpyObj<FinanceApiService>('FinanceApiService', ['payments', 'paymentsForTrip', 'createPayment', 'updatePayment', 'deletePayment']);
     tripApi = jasmine.createSpyObj<TripApiService>('TripApiService', ['getBuyingParties', 'getSellingParties']);
     tripApi.getBuyingParties.and.resolveTo([
       { _demoId: '31', id: 31, name: 'Supplier', contact: '', location: '', isActive: true, isDeleted: false, status: 'Active' },
@@ -328,17 +328,29 @@ describe('TripDeliveriesComponent payments', () => {
 
   it('marks a payment deleted after confirmation', async () => {
     spyOn(window, 'confirm').and.returnValue(true);
-    finance.updatePayment.and.resolveTo({ id: 21, isDeleted: true, isActive: false });
+    finance.deletePayment.and.resolveTo();
     finance.paymentsForTrip.and.resolveTo([
       { id: 21, isDeleted: true, isActive: false, serverUpdated: true }
     ]);
     component.trip = { _demoId: '12', status: 'In transit' };
-    const payment = { id: 21, status: 'COMPLETED', amount: 80 };
+    const payment = {
+      id: 21,
+      paymentType: 'BUYER_RECEIPT',
+      partyId: 7,
+      partyRole: 'BUYING' as const,
+      amount: 80,
+      paymentDate: '2026-11-05',
+      paymentMethod: 'BANK_TRANSFER',
+      status: 'COMPLETED',
+      reference: 'REF-21',
+      note: 'Invoice payment',
+      tripId: 12
+    };
     component.tripPayments = [payment];
 
     await component.deletePayment(payment);
 
-    expect(finance.updatePayment).toHaveBeenCalledWith('21', { isDeleted: true, isActive: false });
+    expect(finance.deletePayment).toHaveBeenCalledWith('21');
     expect(finance.paymentsForTrip).toHaveBeenCalledWith('12');
     expect(component.tripPayments).toEqual([
       jasmine.objectContaining({ isDeleted: true, isActive: false, serverUpdated: true })

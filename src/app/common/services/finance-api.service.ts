@@ -28,6 +28,20 @@ export class FinanceApiService {
   constructor(private readonly http: HttpClient) {}
 
   payments(): Promise<FinanceRecord[]> { return this.getList(`${this.baseUrl}/payments/retrieve`).then(rows => rows.map(row => this.paymentRow(row))); }
+  paymentsForParty(partyId: string, partyTyp: 'B' | 'S'): Promise<FinanceRecord[]> {
+    return this.getList(`${this.baseUrl}/payments/retrieve`, { partyId, partyTyp }).then(rows => rows.map(row => this.paymentRow(row)));
+  }
+  sumCompletedPaymentsByParty(partyId: string, partyType: 'B' | 'S'): Promise<number> {
+    return firstValueFrom(this.http.get<number | string | FinanceRecord>(`${this.baseUrl}/payments/party/sum`, {
+      params: this.params({ partyId, partyType })
+    })).then((response) => {
+      if (typeof response === 'number' || typeof response === 'string') return Number(response) || 0;
+      const row = this.camelCaseRow(response);
+      const value = row['completedAmount'] ?? row['totalAmount'] ?? row['total'] ?? row['sum'] ?? row['amount'];
+      const total = Number(value);
+      return Number.isFinite(total) ? total : 0;
+    });
+  }
   paymentsForTrip(tripId: string): Promise<FinanceRecord[]> {
     return this.getList(`${this.baseUrl}/payments/trip/${encodeURIComponent(tripId)}/retrieve`).then(rows => rows.map(row => this.paymentRow(row)));
   }
@@ -49,6 +63,9 @@ export class FinanceApiService {
         : {}),
       ...(reference !== undefined ? { externalReference: reference } : {})
     })).then(row => this.paymentRow(row));
+  }
+  deletePayment(id: string): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/payments/${encodeURIComponent(id)}`));
   }
   settlements(tripId?: string): Promise<FinanceRecord[]> {
     const path = tripId ? `${this.baseUrl}/finance/trips/${encodeURIComponent(tripId)}/settlements` : `${this.baseUrl}/finance/settlements`;

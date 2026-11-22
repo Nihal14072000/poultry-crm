@@ -183,6 +183,14 @@ export class TripApiService {
     return parties.map((party) => this.partyDirectoryRecord(party));
   }
 
+  getPartyOrderTotal(partyId: string, partyType: 'B' | 'S'): Promise<number> {
+    return firstValueFrom(this.http.get<number | string>(`${this.baseUrl}/orders/total`, { params: { partyId, partyType } }))
+      .then((value) => {
+        const total = Number(value);
+        return Number.isFinite(total) ? total : 0;
+      });
+  }
+
   getPartyOrders(partyId: string, partyType: 'B' | 'S'): Promise<Record<string, unknown>[]> {
     return Promise.all([
       firstValueFrom(this.http.get<Record<string, unknown>[]>(`${this.baseUrl}/orders`, { params: { partyId, partyType } })),

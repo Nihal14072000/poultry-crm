@@ -505,7 +505,7 @@ export class TripDeliveriesComponent implements OnInit {
     if (!window.confirm('Delete this payment? It will remain in the system for audit history.')) return;
     this.saving = true; this.error = ''; this.success = '';
     try {
-      await this.finance.updatePayment(paymentId, { isDeleted: true, isActive: false });
+      await this.finance.deletePayment(paymentId);
       if (this.editingPaymentId === paymentId) this.cancelPaymentEdit();
       this.success = 'Payment deleted.';
       try {

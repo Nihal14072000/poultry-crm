@@ -153,6 +153,25 @@ describe('TripApiService', () => {
     http.expectNone('http://localhost:8080/api/order-types');
   });
 
+  it('loads a party order total for sales and purchases', async () => {
+    const sellingResult = service.getPartyOrderTotal('11', 'S');
+    http.expectOne((request) =>
+      request.url === 'http://localhost:8080/api/orders/total' &&
+      request.params.get('partyId') === '11' &&
+      request.params.get('partyType') === 'S'
+    ).flush(5500);
+
+    const buyingResult = service.getPartyOrderTotal('7', 'B');
+    http.expectOne((request) =>
+      request.url === 'http://localhost:8080/api/orders/total' &&
+      request.params.get('partyId') === '7' &&
+      request.params.get('partyType') === 'B'
+    ).flush('3200.50');
+
+    await expectAsync(sellingResult).toBeResolvedTo(5500);
+    await expectAsync(buyingResult).toBeResolvedTo(3200.5);
+  });
+
   it('posts a buying party to the buying-parties endpoint', async () => {
     const party = { name: 'Farm supplier', contact: 'Pat', location: 'Nashik', isActive: true };
     const result = service.createParty('buying', party);
