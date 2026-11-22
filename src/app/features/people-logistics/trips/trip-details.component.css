@@ -6,6 +6,8 @@
 .eyebrow span { color: #c1c9c1; padding: 0 5px; }
 .button { align-items: center; border-radius: 6px; display: inline-flex; font-size: 10px; font-weight: 600; height: 35px; padding: 0 12px; text-decoration: none; }
 .button-secondary { background: #fff; border: 1px solid #e2e7e0; color: #536157; }
+.button-primary { background: #315f45; border: 1px solid #315f45; color: #fff; }
+.page-actions { display: flex; gap: 8px; }
 .panel { background: #fff; border: 1px solid #e9ece7; border-radius: 9px; margin-bottom: 15px; overflow: hidden; padding: 17px 19px; }
 .section-heading { align-items: center; display: flex; justify-content: space-between; margin-bottom: 14px; }
 .section-heading h2 { color: #334239; font-family: Calibri,Arial,sans-serif; font-size: 14px; margin: 5px 0 0; }
@@ -52,6 +54,7 @@ td small { color: #8c978e; font-size: 8px; }
 }
 @media(max-width:560px) {
   .page-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .page-actions { flex-wrap: wrap; }
   .panel { padding: 15px 12px; }
   .details-grid { gap: 12px; grid-template-columns: repeat(2,minmax(0,1fr)); }
   table { min-width: 500px; }

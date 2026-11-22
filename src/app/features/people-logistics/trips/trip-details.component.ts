@@ -21,6 +21,7 @@ export class TripDetailsComponent implements OnInit {
   deliveryEntries: TripRecord[] = [];
   loading = true;
   errorMessage = '';
+  tripId = '';
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -29,6 +30,7 @@ export class TripDetailsComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('tripId') ?? '';
+    this.tripId = id;
     if (!id) {
       this.errorMessage = 'A trip ID was not provided.';
       this.loading = false;

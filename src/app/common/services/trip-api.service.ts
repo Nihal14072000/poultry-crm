@@ -26,6 +26,7 @@ interface ApiOrder extends Record<string, unknown> {
 interface ApiParty extends ApiEntity {
   contact?: string;
   location?: string;
+  outstanding?: number | null;
   order?: ApiOrder[];
 }
 
@@ -124,12 +125,13 @@ export interface TripDetailsResponse {
 }
 
 export interface PartyDirectoryRecord {
-  [key: string]: string | number | boolean | undefined;
+  [key: string]: string | number | boolean | null | undefined;
   _demoId: string;
   id: number;
   name: string;
   contact: string;
   location: string;
+  outstanding?: number | null;
   isActive: boolean;
   isDeleted: boolean;
   status: string;
@@ -214,7 +216,7 @@ export class TripApiService {
     return this.orderTypesRequest;
   }
 
-  async createParty(type: 'buying' | 'selling', party: { name: string; contact: string; location: string; isActive: boolean }): Promise<void> {
+  async createParty(type: 'buying' | 'selling', party: { name: string; contact: string; location: string; outstanding: number | null; isActive: boolean }): Promise<void> {
     const endpoint = type === 'buying' ? 'buying-parties' : 'selling-parties';
     await firstValueFrom(this.http.post(`${this.baseUrl}/${endpoint}`, { ...party, isDeleted: false }));
   }
@@ -222,7 +224,7 @@ export class TripApiService {
   async updateParty(
     type: 'buying' | 'selling',
     id: string,
-    party: { name: string; contact: string; location: string; isActive: boolean; isDeleted: boolean }
+    party: { name: string; contact: string; location: string; outstanding: number | null; isActive: boolean; isDeleted: boolean }
   ): Promise<void> {
     const endpoint = type === 'buying' ? 'buying-parties' : 'selling-parties';
     const partyId = this.parseId(id);
@@ -822,6 +824,7 @@ export class TripApiService {
       name: String(party.name ?? ''),
       contact: String(party.contact ?? ''),
       location: String(party.location ?? ''),
+      outstanding: party.outstanding ?? null,
       isActive: party.isActive === true,
       isDeleted: party.isDeleted === true,
       status: party.isDeleted ? 'Deleted' : party.isActive ? 'Active' : 'Inactive'

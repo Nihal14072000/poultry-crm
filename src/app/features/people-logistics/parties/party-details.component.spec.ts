@@ -19,7 +19,7 @@ describe('PartyDetailsComponent', () => {
   it('loads party details without fetching unused trip data', async () => {
     tripsApi.getBuyingParties.and.resolveTo([{
       _demoId: '7', id: 7, name: 'Supplier', contact: '', location: '',
-      isActive: true, isDeleted: false, status: 'Active'
+      outstanding: null, isActive: true, isDeleted: false, status: 'Active'
     }]);
     financeApi.summary.and.resolveTo({ totalReceived: 125, totalReceivable: 200 });
     financeApi.sumCompletedPaymentsByParty.and.resolveTo(125);
@@ -56,7 +56,7 @@ describe('PartyDetailsComponent', () => {
     } as unknown as ActivatedRoute, tripsApi, financeApi);
     tripsApi.getSellingParties.and.resolveTo([{
       _demoId: '12', id: 12, name: 'Latif Kasab', contact: '', location: '',
-      isActive: true, isDeleted: false, status: 'Active'
+      outstanding: 80, isActive: true, isDeleted: false, status: 'Active'
     }]);
     tripsApi.getPartyOrders.and.resolveTo([{
       tripId: 15, orderTypeId: 1, orderTypeName: 'Broiler', qty: 20, weight: 50, rate: 110, createDate: '2026-03-10'
@@ -79,7 +79,7 @@ describe('PartyDetailsComponent', () => {
     expect(financeApi.paymentsForParty).toHaveBeenCalledWith('12', 'S');
     expect(component.paymentsTotal).toBe(35);
     expect(component.transactionTotal).toBe(100);
-    expect(component.dueTotal).toBe(65);
+    expect(component.dueTotal).toBe(145);
     expect(component.transactionLabel).toBe('Sales');
     expect(component.payments.map((payment) => payment['id'])).toEqual([6]);
     expect(component.orders[0]['tripId']).toBe(15);
