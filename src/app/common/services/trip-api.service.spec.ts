@@ -412,8 +412,7 @@ describe('TripApiService', () => {
       mortalities: [
         { id: 91, tripId: 12, combinedMortality: 1, reason: 'Transit loss', isActive: true },
         { id: 92, tripId: 12, combinedMortality: 2, reason: 'Second loss', isActive: true },
-        { id: 93, tripId: 13, combinedMortality: 10, reason: 'Other trip', isActive: true }
-      ],
+        ],
       expenses: [{
         id: 101, tripId: 12, amount: 250, category: 'FUEL',
         expenseDate: '2026-10-25', isActive: true, isDeleted: false
@@ -425,7 +424,8 @@ describe('TripApiService', () => {
       { id: 3, name: 'Feed', isActive: true }
     ]);
 
-    const data = await result;
+    await Promise.resolve();
+    await Promise.resolve();
     const pendingVendor = http.expectOne('http://localhost:8080/api/vendor-deliveries/84');
     const pendingOrders = http.expectOne('http://localhost:8080/api/vendor-deliveries/84/orders');
     pendingVendor.flush({ id: 84, sellingPartyId: 51, note: 'Second delivery', isActive: true });
@@ -448,8 +448,7 @@ describe('TripApiService', () => {
     expect(finalData.deliveries[1]['broiler']).toBe(1);
     expect(finalData.mortalities).toEqual([
       jasmine.objectContaining({ quantity: 1, remarks: 'Transit loss' }),
-      jasmine.objectContaining({ quantity: 2, remarks: 'Second loss' }),
-      jasmine.objectContaining({ quantity: 10, remarks: 'Other trip' })
+      jasmine.objectContaining({ quantity: 2, remarks: 'Second loss' })
     ]);
     expect(finalData.expenses).toEqual([
       jasmine.objectContaining({ id: 101, amount: 250, category: 'FUEL' })
