@@ -24,12 +24,15 @@ export class ExpenseApiService {
   constructor(private readonly http: HttpClient) {}
 
   async expensesForTrip(tripId: string): Promise<ExpenseRecord[]> {
-    const response = await firstValueFrom(this.http.get<ExpenseRecord[] | { items?: ExpenseRecord[]; data?: ExpenseRecord[] }>(this.endpoint));
+    if (!/^\\d+$/.test(tripId) || Number(tripId) <= 0) {
+      throw new Error('A valid trip ID is required to retrieve expenses.');
+    }
+    const response = await firstValueFrom(this.http.get<ExpenseRecord[] | { items?: ExpenseRecord[]; data?: ExpenseRecord[] }>(
+      `${this.endpoint}/trip/${encodeURIComponent(tripId)}`
+    ));
     const rows = Array.isArray(response) ? response : response.items ?? response.data ?? [];
-    const expectedTripId = Number(tripId);
     return rows
       .map((row) => this.camelCaseRow(row))
-      .filter((row) => Number(row['tripId']) === expectedTripId)
       .sort((a, b) => String(b['expenseDate'] ?? '').localeCompare(String(a['expenseDate'] ?? '')) || Number(b['id'] ?? 0) - Number(a['id'] ?? 0));
   }
 
