@@ -1,4 +1,5 @@
 import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
+import { InfoPopoverComponent } from '../../../common/components/info-popover/info-popover.component';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -21,7 +22,7 @@ interface SupplierReceiptForm {
 }
 
 @Component({
-  selector: 'app-trip-deliveries', standalone: true, imports: [CommonModule, LoadingSkeletonComponent, FormsModule, RouterLink, StatusPillPipe],
+  selector: 'app-trip-deliveries', standalone: true, imports: [CommonModule, LoadingSkeletonComponent, InfoPopoverComponent, FormsModule, RouterLink, StatusPillPipe],
   templateUrl: './trip-deliveries.component.html', styleUrl: './trip-deliveries.component.css'
 })
 export class TripDeliveriesComponent implements OnInit {
