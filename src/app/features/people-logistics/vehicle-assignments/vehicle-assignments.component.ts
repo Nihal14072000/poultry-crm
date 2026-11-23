@@ -196,7 +196,7 @@ export class VehicleAssignmentsComponent implements OnInit {
     if (!id || !this.rolePermissions.can('vehicle-assignments', 'transition') || this.saving) return;
     this.saving = true;
     this.errorMessage = '';
-    this.successMessage = '';
+
     try {
       const returned = await firstValueFrom(this.directories.updateRecord('vehicle-assignments', id, {
         ...assignment,
