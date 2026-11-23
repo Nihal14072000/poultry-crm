@@ -235,7 +235,7 @@ export class TripDeliveriesComponent implements OnInit {
     return String(directoryName ?? tripName ?? payment['partyName'] ?? payment['buyingPartyName'] ?? payment['sellingPartyName'] ?? partyId ?? '—');
   }
   togglePaymentForm(): void {
-    if (this.showPaymentForm) this.cancelPaymentEdit();
+    if (this.showPaymentForm || this.editingPaymentId) this.cancelPaymentEdit();
     else this.showPaymentForm = true;
   }
   toggleExpenseForm(): void {
@@ -336,7 +336,10 @@ export class TripDeliveriesComponent implements OnInit {
     this.paymentDate = String(payment['paymentDate'] ?? '').slice(0, 10);
     this.paymentMethod = payment['paymentMethod'] as PaymentMethod;
     this.paymentReference = String(payment['reference'] ?? payment['externalReference'] ?? '');
-    this.showPaymentForm = true;
+    this.showPaymentForm = false;
+  }
+  paymentId(payment: FinanceRecord): string {
+    return String(payment['id'] ?? payment['paymentId'] ?? '');
   }
   cancelPaymentEdit(): void {
     this.editingPaymentId = '';
