@@ -12,6 +12,7 @@ import {
 import { DirectoryService } from './directory.service';
 import { RolePermissionService } from './role-permission.service';
 import { TripApiService } from './trip-api.service';
+import type { TripDeliveryData } from './trip-api.service';
 import { SessionAuthService } from './session-auth.service';
 
 function isValidDateOnly(value: string): boolean {
@@ -241,7 +242,7 @@ export class TripService {
     }
   }
 
-  async getDeliveryData(tripId: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<{ trip: TripRecord; supplierPickups: TripVendorPickup[]; supplierReceipts: TripRecord[]; destinations: TripRecord[]; deliveries: TripRecord[]; mortalities: TripRecord[]; loadedBroiler: number; loadedCulls: number; loadedBirds: number }> {
+  async getDeliveryData(tripId: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<TripDeliveryData> {
     this.assertDeliveryRole();
     const data = await this.tripApi.getDeliveryData(tripId, pendingSupplierPickupIds, pendingVendorDeliveryIds);
     if (data.trip['status'] === 'Deleted') {
