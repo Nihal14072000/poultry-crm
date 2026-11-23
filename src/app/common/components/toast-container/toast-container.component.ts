@@ -1,29 +1,19 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { ToastService, ToastType } from '../../services/toast.service';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ToastContainerDirective, ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-toast-container',
   standalone: true,
-  imports: [CommonModule],
-  templateUrl: './toast-container.component.html',
-  styleUrl: './toast-container.component.css'
+  imports: [ToastContainerDirective],
+  templateUrl: './toast-container.component.html'
 })
-export class ToastContainerComponent {
-  readonly messages$ = this.toasts.messages$;
+export class ToastContainerComponent implements OnInit {
+  @ViewChild(ToastContainerDirective, { static: true })
+  private toastContainer!: ToastContainerDirective;
 
-  constructor(private readonly toasts: ToastService) {}
+  constructor(private readonly toastr: ToastrService) {}
 
-  dismiss(id: number): void {
-    this.toasts.dismiss(id);
-  }
-
-  iconFor(type: ToastType): string {
-    switch (type) {
-      case 'success': return '✓';
-      case 'error': return '!';
-      case 'warning': return '⚠';
-      default: return 'i';
-    }
+  ngOnInit(): void {
+    this.toastr.overlayContainer = this.toastContainer;
   }
 }
