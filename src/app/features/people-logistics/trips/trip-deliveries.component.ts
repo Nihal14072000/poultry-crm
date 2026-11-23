@@ -307,7 +307,7 @@ export class TripDeliveriesComponent implements OnInit {
     const expenseId = String(expense['id'] ?? '');
     if (!expenseId || this.saving || expense['isDeleted'] === true) return;
     if (!window.confirm('Delete this expense?')) return;
-    this.saving = true; this.error = ''; this.success = '';
+    this.saving = true; this.error = '';
     try {
       await this.expensesApi.deleteExpense(expenseId);
       if (this.editingExpenseId === expenseId) this.cancelExpenseEdit();
@@ -485,7 +485,7 @@ export class TripDeliveriesComponent implements OnInit {
   cancelEntry(): void { this.activeOrderId = ''; this.editingDeliveryId = ''; }
   async startTrip(): Promise<void> {
     if (!this.trip || !this.canStartTrip || this.saving) return;
-    this.saving = true; this.error = ''; this.success = '';
+    this.saving = true; this.error = '';
     try { await this.service.startAssignedTrip(this.id(this.trip)); this.toast.success('Trip marked in transit.'); await this.load(); }
     catch (e) { this.toast.error(e instanceof Error ? e.message : 'Trip could not be started.'); }
     finally { this.saving = false; }
@@ -493,7 +493,7 @@ export class TripDeliveriesComponent implements OnInit {
   async saveEntry(): Promise<void> {
     if (!this.trip || !this.activeOrderId || this.saving ||
       (this.editingDeliveryId && !this.canEditActualDelivery)) return;
-    this.saving = true; this.error = ''; this.success = '';
+    this.saving = true; this.error = '';
     let deliverySaved = false;
     try {
       const tripId = this.id(this.trip);
@@ -521,7 +521,7 @@ export class TripDeliveriesComponent implements OnInit {
   }
   async saveMortality(): Promise<void> {
     if (!this.trip || this.saving || !this.allSupplierReceiptsSaved()) return;
-    this.saving = true; this.error = ''; this.success = '';
+    this.saving = true; this.error = '';
     try {
       const editing = !!this.editingMortalityId;
       await this.service.saveTripMortality(this.id(this.trip), Number(this.mortalityQuantity), this.mortalityRemarks, this.pendingPickupIds(), this.pendingDeliveryIds(), this.editingMortalityId || undefined);
@@ -536,7 +536,7 @@ export class TripDeliveriesComponent implements OnInit {
     const mortalityId = this.id(record);
     if (!this.trip || !mortalityId || this.saving || String(this.trip['status']) === 'Completed') return;
     if (!window.confirm('Delete this mortality record?')) return;
-    this.saving = true; this.error = ''; this.success = '';
+    this.saving = true; this.error = '';
     try {
       await this.service.deleteTripMortality(this.id(this.trip), mortalityId);
       if (this.editingMortalityId === mortalityId) this.cancelMortalityEdit();
@@ -555,7 +555,7 @@ export class TripDeliveriesComponent implements OnInit {
       this.error = 'Select a party and enter a positive payment amount.';
       return;
     }
-    this.saving = true; this.error = ''; this.success = '';
+    this.saving = true; this.error = '';
     try {
       const editing = !!this.editingPaymentId;
       const existing = this.tripPayments.find((item) => String(item['id'] ?? item['paymentId'] ?? '') === this.editingPaymentId);
@@ -588,7 +588,7 @@ export class TripDeliveriesComponent implements OnInit {
     const paymentId = String(payment['id'] ?? payment['paymentId'] ?? '');
     if (!paymentId || this.saving || payment['isDeleted'] === true) return;
     if (!window.confirm('Delete this payment? It will remain in the system for audit history.')) return;
-    this.saving = true; this.error = ''; this.success = '';
+    this.saving = true; this.error = '';
     try {
       await this.finance.deletePayment(paymentId);
       if (this.editingPaymentId === paymentId) this.cancelPaymentEdit();
@@ -603,7 +603,7 @@ export class TripDeliveriesComponent implements OnInit {
   }
   async saveSupplierReceipt(form: SupplierReceiptForm): Promise<void> {
     if (!this.trip || this.saving) return;
-    this.saving = true; this.error = ''; this.success = '';
+    this.saving = true; this.error = '';
     try {
       const tripId = this.id(this.trip);
       const pickupId = await this.service.saveSupplierPickup(tripId, form.vendorId, {
@@ -622,7 +622,7 @@ export class TripDeliveriesComponent implements OnInit {
   unreconciled(): number { return this.totalLoaded() - this.totalDelivered() - this.totalMortality(); }
   async complete(): Promise<void> {
     if (!this.trip || this.saving) return;
-    this.saving = true; this.error = ''; this.success = '';
+    this.saving = true; this.error = '';
     try {
       const tripId = this.id(this.trip);
       const result = await this.service.submitForReconciliation(tripId, this.pendingPickupIds(), this.pendingDeliveryIds());
