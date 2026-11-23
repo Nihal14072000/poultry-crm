@@ -84,15 +84,16 @@
                     <td><strong>{{ destination['vendorName'] }}</strong><small>{{ destination['address'] }} · {{ destination['contact'] }} {{ destination['phone'] }}</small></td>
                     <td><strong>{{ destination['orderedBroiler'] }} broiler · {{ destination['orderedBroilerWeight'] }} kg × {{ destination['broilerRate'] | currency:'INR':'symbol':'1.2-2' }}/kg</strong><small>{{ destination['orderedCulls'] }} culls · {{ destination['orderedCullsWeight'] }} kg × {{ destination['cullsRate'] | currency:'INR':'symbol':'1.2-2' }}/kg</small><small>{{ destination['orderedFeed'] }} {{ trip['feedUnit'] }} feed · {{ destination['orderedFeedWeight'] }} kg × {{ destination['feedRate'] | currency:'INR':'symbol':'1.2-2' }}/kg</small><small>Proposed sales · {{ destination['deliveryTotal'] | currency:'INR':'symbol':'1.2-2' }}</small></td>
                     <td>{{ delivered(id(destination),'broiler') }} broiler · {{ delivered(id(destination),'culls') }} culls<small>{{ deliveredWeight(id(destination),'broiler') }} kg broiler · {{ deliveredWeight(id(destination),'culls') }} kg culls</small><small>{{ delivered(id(destination),'feed') }} {{ trip['feedUnit'] }} feed · {{ deliveredWeight(id(destination),'feed') }} kg</small><small>Actual sales · {{ deliveryRevenue(id(destination)) | currency:'INR':'symbol':'1.2-2' }}</small>
-                      @for (delivery of entries(id(destination)); track id(delivery)) {
-                        <small>Entry: {{ delivery['broiler'] }} broiler · {{ delivery['broilerWeight'] }} kg × {{ delivery['broilerRate'] | currency:'INR':'symbol':'1.2-2' }}/kg; {{ delivery['culls'] }} culls · {{ delivery['cullsWeight'] }} kg × {{ delivery['cullsRate'] | currency:'INR':'symbol':'1.2-2' }}/kg; {{ delivery['feed'] }} {{ trip['feedUnit'] }} feed · {{ delivery['feedWeight'] }} kg × {{ delivery['feedRate'] | currency:'INR':'symbol':'1.2-2' }}/kg
-                          @if (canEditActualDelivery) { <button class="link-button" type="button" (click)="editActualDelivery(delivery)" [disabled]="saving">Edit actual</button> }
-                        </small>
-                      }
                     </td>
                     <td>{{ remaining(destination) }}</td>
                     <td><span class="status status-pill" [ngClass]="destinationStatus(destination) | statusPill">{{ destinationStatus(destination) }}</span></td>
-                    <td>@if (canEnterDelivery) { <button class="link-button" type="button" (click)="open(destination)">{{ entries(id(destination)).length ? 'Enter another' : 'Enter delivery' }}</button> } @else { <span>View only</span> }</td>
+                    <td>
+                      @if (canEnterDelivery) { <button class="link-button" type="button" (click)="open(destination)">{{ entries(id(destination)).length ? 'Enter another' : 'Enter delivery' }}</button> }
+                      @for (delivery of entries(id(destination)); track id(delivery)) {
+                        @if (canEditActualDelivery) { <button class="link-button" type="button" (click)="editActualDelivery(delivery)" [disabled]="saving">Edit actual</button> }
+                      }
+                      @if (!canEnterDelivery) { <span>View only</span> }
+                    </td>
                   }
                 </tr>
               }
