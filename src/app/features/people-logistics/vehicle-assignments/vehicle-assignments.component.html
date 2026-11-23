@@ -8,7 +8,6 @@
     <button class="button button-secondary" type="button" (click)="refresh()" [disabled]="loading || saving">↻ Refresh</button>
   </header>
 
-  @if (successMessage) { <p class="feedback success" role="status">{{ successMessage }}</p> }
   @if (errorMessage) { <p class="feedback error" role="alert">{{ errorMessage }}</p> }
 
   @if (loading) {
