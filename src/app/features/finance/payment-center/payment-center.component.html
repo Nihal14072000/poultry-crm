@@ -4,8 +4,7 @@
       <div class="eyebrow">FINANCE <span>/</span> PAYMENT TRACKING</div>
       <h1>{{ view === 'record' ? 'Record a payment' : view === 'allocate' ? 'Allocate payment' : view === 'trip-summary'
         ? 'Trip payment summary' : view === 'receivables' ? 'Buyer receivables' : view === 'payables' ? 'Seller
-        payables' : view === 'payments' ? 'Payment history' : 'Finance dashboard' }}</h1>
-      <app-info-popover title="Receipts, payouts & allocations" content="Buyer receipts record money collected; seller payouts record money paid. Only completed payments can be allocated, and an allocation must match the selected payment's buyer or seller settlement. Review receivables and payables to track the remaining balances." />
+        payables' : view === 'payments' ? 'Payment history' : 'Finance dashboard' }} <app-info-popover title="Receipts, payouts & allocations" content="Buyer receipts record money collected; seller payouts record money paid. Only completed payments can be allocated, and an allocation must match the selected payment's buyer or seller settlement. Review receivables and payables to track the remaining balances." /></h1>
       <p>Trip settlements, receipts and payouts from the payment API.</p>
     </div>
     <div class="actions"><a class="button secondary" routerLink="/finance/payments">Payment history</a>@if
