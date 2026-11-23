@@ -411,8 +411,8 @@ describe('TripApiService', () => {
       }],
       mortalities: [
         { id: 91, tripId: 12, combinedMortality: 1, reason: 'Transit loss', isActive: true },
-        { id: 92, tripId: 12, combinedMortality: 2, reason: 'Second loss', isActive: true },
-        ],
+        { id: 92, tripId: 12, combinedMortality: 2, reason: 'Second loss', isActive: true }
+      ],
       expenses: [{
         id: 101, tripId: 12, amount: 250, category: 'FUEL',
         expenseDate: '2026-10-25', isActive: true, isDeleted: false
