@@ -460,8 +460,11 @@ export class TripDeliveriesComponent implements OnInit {
       this.number(form.cullsWeight) * this.number(planned?.culls.rate) +
       this.number(form.feedWeight) * this.number(planned?.feed.rate);
   }
+  completedSupplierPickups(): number { return this.supplierReceiptForms.filter((form) => !!this.supplierReceipt(form.vendorId)).length; }
   completedDestinations(): number { return this.destinations.filter((destination) => this.destinationStatus(destination) === 'Delivered').length; }
-  progress(): number { return this.destinations.length ? Math.round(this.completedDestinations() * 100 / this.destinations.length) : 0; }
+  totalProgressItems(): number { return this.supplierReceiptForms.length + this.destinations.length; }
+  completedProgressItems(): number { return this.completedSupplierPickups() + this.completedDestinations(); }
+  progress(): number { return this.totalProgressItems() ? Math.round(this.completedProgressItems() * 100 / this.totalProgressItems()) : 0; }
   destinationStatus(destination: TripRecord): string {
     const id = this.id(destination); const destinationEntries = this.entries(id); const count = destinationEntries.length;
     if (!count) return 'Pending';
