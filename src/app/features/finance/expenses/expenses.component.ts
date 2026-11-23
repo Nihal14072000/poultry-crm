@@ -145,7 +145,9 @@ export class ExpensesComponent implements OnInit {
         await this.api.createExpense(input);
         this.toast.success('Expense created successfully.');
       }
-      this.closeForm();
+      this.formOpen = false;
+      this.editingId = '';
+      this.form = this.newForm();
       await this.load();
     } catch (error) {
       this.toast.error(error instanceof Error ? error.message : 'Expense could not be saved.');
@@ -166,7 +168,11 @@ export class ExpensesComponent implements OnInit {
     try {
       await this.api.deleteExpense(id);
       this.expenses = this.expenses.filter(row => String(row['id'] ?? '') !== id);
-      if (this.editingId === id) this.closeForm();
+      if (this.editingId === id) {
+        this.formOpen = false;
+        this.editingId = '';
+        this.form = this.newForm();
+      }
       this.toast.success('Expense deleted successfully.');
     } catch (error) {
       this.toast.error(error instanceof Error ? error.message : 'Expense could not be deleted.');
