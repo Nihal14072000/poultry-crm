@@ -1,4 +1,5 @@
 import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
+import { InfoPopoverComponent } from '../../../common/components/info-popover/info-popover.component';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -21,7 +22,7 @@ type DeskView = 'quotes' | 'orders' | 'deliveries' | 'invoices';
 @Component({
   selector: 'app-trading-desk',
   standalone: true,
-  imports: [CommonModule, LoadingSkeletonComponent, DataGridComponent, FormsModule, NgSelectModule],
+  imports: [CommonModule, LoadingSkeletonComponent, InfoPopoverComponent, DataGridComponent, FormsModule, NgSelectModule],
   templateUrl: './trading-desk.component.html',
   styleUrl: './trading-desk.component.css'
 })
