@@ -10,6 +10,7 @@ import { RolePermissionService } from '../../../common/services/role-permission.
 import { FinanceApiService, FinanceRecord, PaymentMethod, PaymentType } from '../../../common/services/finance-api.service';
 import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 import { TripApiService } from '../../../common/services/trip-api.service';
+import { ExpenseApiService, ExpenseRecord } from '../../../common/services/expenses-api.service';
 
 interface SupplierReceiptForm {
   vendorId: string; vendorName: string;
@@ -31,6 +32,14 @@ export class TripDeliveriesComponent implements OnInit {
   supplierReceipts: TripRecord[] = [];
   supplierReceiptForms: SupplierReceiptForm[] = [];
   tripPayments: FinanceRecord[] = [];
+  tripExpenses: ExpenseRecord[] = [];
+  readonly expenseCategories = ['TRANSPORT', 'LOADING', 'FUEL', 'MARKET_FEE', 'OTHER'];
+  expenseCategory = 'TRANSPORT';
+  expenseAmount: number | null = null;
+  expenseDate = new Date().toISOString().slice(0, 10);
+  expenseNote = '';
+  showExpenseForm = false;
+  editingExpenseId = '';
   allSuppliers: TripRecord[] = [];
   allDeliveryVendors: TripRecord[] = [];
   private pendingSupplierPickupIds: Record<string, string> = {};
@@ -73,7 +82,7 @@ export class TripDeliveriesComponent implements OnInit {
   showPaymentForm = false;
   editingPaymentId = '';
 
-  constructor(private readonly service: TripService, private readonly finance: FinanceApiService, private readonly tripApi: TripApiService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService, readonly rolePermissions: RolePermissionService) {}
+  constructor(private readonly service: TripService, private readonly finance: FinanceApiService, private readonly expensesApi: ExpenseApiService, private readonly tripApi: TripApiService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService, readonly rolePermissions: RolePermissionService) {}
 
   async ngOnInit(): Promise<void> {
     const state = this.router.getCurrentNavigation()?.extras.state as { successMessage?: string } | undefined;
@@ -88,15 +97,17 @@ export class TripDeliveriesComponent implements OnInit {
       if (tripId) {
         this.readPendingSupplierPickups(tripId);
         this.readPendingVendorDeliveries(tripId);
-        const [data, payments, suppliersDirectory, deliveryVendorsDirectory] = await Promise.all([
+        const [data, payments, expenses, suppliersDirectory, deliveryVendorsDirectory] = await Promise.all([
           this.service.getDeliveryData(tripId, this.pendingPickupIds(), this.pendingDeliveryIds()),
           this.finance.paymentsForTrip(tripId),
+          this.expensesApi.expensesForTrip(tripId),
           this.tripApi.getBuyingParties(),
           this.tripApi.getSellingParties()
         ]);
         this.trip = data.trip; this.destinations = data.destinations; this.deliveries = data.deliveries; this.mortalities = data.mortalities;
         this.supplierPickups = data.supplierPickups; this.supplierReceipts = data.supplierReceipts;
         this.tripPayments = payments;
+        this.tripExpenses = expenses;
         this.allSuppliers = suppliersDirectory.filter((party) => this.isAvailablePaymentParty(party)) as TripRecord[];
         this.allDeliveryVendors = deliveryVendorsDirectory.filter((party) => this.isAvailablePaymentParty(party)) as TripRecord[];
         this.supplierReceiptForms = data.supplierPickups.map((pickup) => {
@@ -225,6 +236,90 @@ export class TripDeliveriesComponent implements OnInit {
   togglePaymentForm(): void {
     if (this.showPaymentForm) this.cancelPaymentEdit();
     else this.showPaymentForm = true;
+  }
+  toggleExpenseForm(): void {
+    if (this.showExpenseForm) this.cancelExpenseEdit();
+    else this.showExpenseForm = true;
+  }
+  editExpense(expense: ExpenseRecord): void {
+    this.editingExpenseId = String(expense['id'] ?? '');
+    if (!this.editingExpenseId) return;
+    this.expenseCategory = String(expense['category'] ?? 'OTHER');
+    this.expenseAmount = this.number(expense['amount']);
+    this.expenseDate = String(expense['expenseDate'] ?? '').slice(0, 10);
+    this.expenseNote = String(expense['note'] ?? '');
+    this.showExpenseForm = true;
+  }
+  cancelExpenseEdit(): void {
+    this.editingExpenseId = '';
+    this.expenseCategory = 'TRANSPORT';
+    this.expenseAmount = null;
+    this.expenseDate = new Date().toISOString().slice(0, 10);
+    this.expenseNote = '';
+    this.showExpenseForm = false;
+  }
+  expenseCategoryLabel(category: unknown): string {
+    return String(category ?? '').replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+  totalTripExpenses(): number {
+    return this.tripExpenses
+      .filter((expense) => expense['isDeleted'] !== true && expense['isActive'] !== false)
+      .reduce((sum, expense) => sum + this.number(expense['amount']), 0);
+  }
+  private async refreshTripExpenses(): Promise<void> {
+    if (!this.trip) return;
+    this.tripExpenses = await this.expensesApi.expensesForTrip(this.id(this.trip));
+  }
+  async saveExpense(): Promise<void> {
+    if (!this.trip || this.saving) return;
+    const amount = Number(this.expenseAmount);
+    if (!this.expenseCategory.trim() || !Number.isFinite(amount) || amount <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(this.expenseDate)) {
+      this.error = 'Select an expense category, enter a positive amount, and choose a valid date.';
+      return;
+    }
+    this.saving = true; this.error = ''; this.success = '';
+    try {
+      const editing = !!this.editingExpenseId;
+      const existing = this.tripExpenses.find((expense) => String(expense['id'] ?? '') === this.editingExpenseId);
+      const input: ExpenseRecord = {
+        ...(existing ?? {}),
+        ...(editing ? { id: Number(this.editingExpenseId) } : {}),
+        tripId: Number(this.id(this.trip)),
+        category: this.expenseCategory.trim(),
+        amount: Math.round(amount * 100) / 100,
+        expenseDate: this.expenseDate,
+        note: this.expenseNote.trim(),
+        isActive: existing?.['isActive'] ?? true,
+        isDeleted: false
+      };
+      if (editing) await this.expensesApi.updateExpense(this.editingExpenseId, input);
+      else await this.expensesApi.createExpense(input);
+      this.cancelExpenseEdit();
+      this.success = editing ? 'Trip expense updated.' : 'Trip expense added.';
+      try {
+        await this.refreshTripExpenses();
+      } catch (refreshError) {
+        this.error = `Expense was saved, but the expense list could not be refreshed: ${refreshError instanceof Error ? refreshError.message : 'Unknown error.'}`;
+      }
+    } catch (e) { this.error = e instanceof Error ? e.message : 'Expense could not be saved.'; }
+    finally { this.saving = false; }
+  }
+  async deleteExpense(expense: ExpenseRecord): Promise<void> {
+    const expenseId = String(expense['id'] ?? '');
+    if (!expenseId || this.saving || expense['isDeleted'] === true) return;
+    if (!window.confirm('Delete this expense?')) return;
+    this.saving = true; this.error = ''; this.success = '';
+    try {
+      await this.expensesApi.deleteExpense(expenseId);
+      if (this.editingExpenseId === expenseId) this.cancelExpenseEdit();
+      this.success = 'Trip expense deleted.';
+      try {
+        await this.refreshTripExpenses();
+      } catch (refreshError) {
+        this.error = `Expense was deleted, but the expense list could not be refreshed: ${refreshError instanceof Error ? refreshError.message : 'Unknown error.'}`;
+      }
+    } catch (e) { this.error = e instanceof Error ? e.message : 'Expense could not be deleted.'; }
+    finally { this.saving = false; }
   }
   toggleMortalityForm(): void {
     if (this.showMortalityForm) this.cancelMortalityEdit();
