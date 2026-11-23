@@ -161,12 +161,28 @@
       }
     </section>
     <section class="panel payment-panel">
-      <div class="section-heading"><div><span class="step">TRIP PAYMENTS</span><h2>Trip payments <app-info-popover title="Trip payments" content="Record buyer receipts as payments received and supplier payouts as payments made. Payments are linked to this trip. Only payouts to suppliers assigned to this trip reduce its outstanding supplier balance." /></h2></div><button class="button button-secondary" type="button" (click)="togglePaymentForm()" [disabled]="saving">{{ showPaymentForm ? 'Cancel' : tripPayments.length ? 'Add another payment' : 'Add payment' }}</button></div>
+      <div class="section-heading"><div><span class="step">TRIP PAYMENTS</span><h2>Trip payments <app-info-popover title="Trip payments" content="Record buyer receipts as payments received and supplier payouts as payments made. Payments are linked to this trip. Only payouts to suppliers assigned to this trip reduce its outstanding supplier balance." /></h2></div><button class="button button-secondary" type="button" (click)="togglePaymentForm()" [disabled]="saving">{{ showPaymentForm || editingPaymentId ? 'Cancel' : tripPayments.length ? 'Add another payment' : 'Add payment' }}</button></div>
       
       @if (tripPayments.length) {
         <div class="table-wrap"><table><thead><tr><th>TYPE</th><th>PARTY</th><th>AMOUNT</th><th>DATE</th><th>METHOD</th><th>REFERENCE</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody>
           @for (payment of tripPayments; track $index) {
             <tr><td>{{ payment['paymentType'] === 'BUYER_RECEIPT' ? 'Payment received' : 'Supplier payment made' }}</td><td>{{ paymentPartyName(payment) }}</td><td>{{ number(payment['amount']) | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ payment['paymentDate'] }}</td><td>{{ payment['paymentMethod'] }}</td><td>{{ payment['reference'] || payment['externalReference'] || '—' }}</td><td>{{ payment['isDeleted'] === true ? 'Deleted' : payment['status'] }}</td><td>@if (payment['isDeleted'] !== true) { <button class="link-button icon-action" type="button" aria-label="Edit payment" title="Edit payment" (click)="editPayment(payment)"><img src="assets/icons/actions/edit.svg" width="16" height="16" alt="" aria-hidden="true"></button><button class="link-button delete-action" type="button" aria-label="Delete payment" title="Delete payment" (click)="deletePayment(payment)" [disabled]="saving"><img src="assets/icons/actions/delete.svg" width="16" height="16" alt="" aria-hidden="true"></button> } @else { <span>—</span> }</td></tr>
+            @if (editingPaymentId === paymentId(payment)) {
+              <tr class="destination-details-row payment-edit-row"><td colspan="8">
+                <div class="inline-entry">
+                  <div class="form-grid">
+                    <label>Type<select name="paymentType" [(ngModel)]="paymentType" (ngModelChange)="changePaymentType()" [disabled]="saving"><option value="BUYER_RECEIPT">Payment received</option><option value="SELLER_PAYOUT">Supplier payment made</option></select></label>
+                    <label>Party<select name="paymentParty" [(ngModel)]="paymentPartyId" [disabled]="saving"><option value="">Select party</option>@for (party of paymentParties; track party.id) { <option [value]="party.id">{{ party.name }}</option> }</select></label>
+                    <label>Amount<input name="paymentAmount" type="number" min="0.01" step="0.01" [(ngModel)]="paymentAmount" [disabled]="saving"></label>
+                    <label>Date<input name="paymentDate" type="date" [(ngModel)]="paymentDate" [disabled]="saving"></label>
+                    <label>Method<select name="paymentMethod" [(ngModel)]="paymentMethod" [disabled]="saving"><option value="UPI">UPI</option><option value="BANK_TRANSFER">Bank transfer</option><option value="CASH">Cash</option><option value="CHEQUE">Cheque</option><option value="CARD">Card</option><option value="OTHER">Other</option></select></label>
+                    <label>Reference<input name="paymentReference" maxlength="100" [(ngModel)]="paymentReference" [disabled]="saving"></label>
+                  </div>
+                  <button class="button button-primary save-button" type="button" (click)="savePayment()" [disabled]="saving">{{ saving ? 'Saving…' : 'Update payment' }}</button>
+                  <button class="button button-secondary" type="button" (click)="cancelPaymentEdit()" [disabled]="saving">Cancel</button>
+                </div>
+              </td></tr>
+            }
           }
         </tbody></table></div>
       } @else { <p class="empty">No payments have been recorded for this trip.</p> }
@@ -180,7 +196,7 @@
           </div>
         </div>
       }
-      @if (showPaymentForm) {
+      @if (showPaymentForm && !editingPaymentId) {
         <div class="form-grid">
           <label>Type<select name="paymentType" [(ngModel)]="paymentType" (ngModelChange)="changePaymentType()"><option value="BUYER_RECEIPT">Payment received</option><option value="SELLER_PAYOUT">Supplier payment made</option></select></label>
           <label>Party<select name="paymentParty" [(ngModel)]="paymentPartyId"><option value="">Select party</option>@for (party of paymentParties; track party.id) { <option [value]="party.id">{{ party.name }}</option> }</select></label>
