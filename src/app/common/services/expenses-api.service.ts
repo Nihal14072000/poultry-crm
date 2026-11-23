@@ -24,7 +24,7 @@ export class ExpenseApiService {
   constructor(private readonly http: HttpClient) {}
 
   async expensesForTrip(tripId: string): Promise<ExpenseRecord[]> {
-    if (!/^\\d+$/.test(tripId) || Number(tripId) <= 0) {
+    if (!/^\d+$/.test(tripId) || Number(tripId) <= 0) {
       throw new Error('A valid trip ID is required to retrieve expenses.');
     }
     const response = await firstValueFrom(this.http.get<ExpenseRecord[] | { items?: ExpenseRecord[]; data?: ExpenseRecord[] }>(
