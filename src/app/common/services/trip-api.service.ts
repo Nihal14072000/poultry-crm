@@ -67,6 +67,7 @@ interface ApiSupplierPickup extends Record<string, unknown> {
   buyingParty?: ApiParty;
   actualOrders?: ApiActualOrder[];
   note?: string;
+  isActive?: boolean;
   isDeleted?: boolean;
 }
 
@@ -77,6 +78,7 @@ interface ApiVendorDelivery extends Record<string, unknown> {
   actualOrders?: ApiActualOrder[];
   note?: string;
   createDate?: string;
+  isActive?: boolean;
   isDeleted?: boolean;
 }
 
@@ -86,6 +88,7 @@ interface ApiMortality extends Record<string, unknown> {
   combinedMortality?: number;
   reason?: string;
   createDate?: string;
+  isActive?: boolean;
   isDeleted?: boolean;
 }
 
@@ -314,7 +317,7 @@ export class TripApiService {
     const linkedVendorDeliveries = (response.deliveries ?? [])
       .filter((delivery) => delivery.isDeleted !== true && delivery.isActive !== false)
       .flatMap((delivery) => delivery.vendorDeliveries ?? []);
-    const pendingVendorDeliveries = (await Promise.all(pendingVendorDeliveryIds.map(async (deliveryId) => {
+    const pendingVendorDeliveries = (await Promise.all(pendingVendorDeliveryIds.map(async (deliveryId): Promise<ApiVendorDelivery | null> => {
       const vendorDeliveryId = this.parseId(deliveryId);
       try {
         const [delivery, actualOrders] = await Promise.all([
@@ -328,7 +331,7 @@ export class TripApiService {
             return [];
           })
         ]);
-        return { ...delivery, actualOrders };
+        return { ...delivery, actualOrders } as ApiVendorDelivery;
       } catch (error) {
         console.warn(`Unable to load pending vendor delivery ${vendorDeliveryId} for trip ${tripId}.`, error);
         return null;
