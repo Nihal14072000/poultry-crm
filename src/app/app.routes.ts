@@ -89,7 +89,9 @@ function pageRoute(page: DirectoryPage): Route {
   return {
     path: page.path,
     canActivate: [requirePermissionGuard],
-    loadComponent: page.resource === 'users-roles'
+    loadComponent: page.resource === 'expenses'
+      ? () => import('./features/finance/expenses/expenses.component').then((module) => module.ExpensesComponent)
+      : page.resource === 'users-roles'
       ? () => import('./features/identity/users-roles/users-roles.component').then((module) => module.UsersRolesComponent)
       : ['finance', 'receivables', 'payables', 'payments'].includes(page.resource)
       ? () => import('./features/finance/payment-center/payment-center.component').then((module) => module.PaymentCenterComponent)
