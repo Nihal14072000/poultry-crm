@@ -256,7 +256,6 @@ export class TripService {
     if (String(data.trip['status']) === 'Completed') throw new Error('Completed trip records are read-only.');
     const planned = data.supplierPickups.find((pickup) => pickup.vendorId === vendorId);
     if (!planned) throw new Error('This supplier is not assigned to the trip.');
-    if (input.broiler <= 0 || input.broilerWeight <= 0) throw new Error('Actual broiler quantity and weight are required.');
     const feedUnit = String(data.trip['feedUnit'] ?? '');
     const actual = this.validatePickup({ vendorId, broiler: { quantity: input.broiler, weight: input.broilerWeight, rate: planned.broiler.rate },
       culls: { quantity: input.culls, weight: input.cullsWeight, rate: planned.culls.rate },
