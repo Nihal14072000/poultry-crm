@@ -19,8 +19,7 @@ interface RoleVisibility {
 
 export const enabledFeatures = [
   'employees', 'fleet', 'vehicles', 'trips', 'finance',
-  'payments', 'expenses', 'reports', 'analytics', 'notifications',
-  'organization', 'users-roles', 'documents', 'audit', 'administration' , 'deliveries'
+  'payments', 'expenses', 'deliveries'
 ] as const;
 
 const allScreens: readonly ScreenResource[] = enabledFeatures;

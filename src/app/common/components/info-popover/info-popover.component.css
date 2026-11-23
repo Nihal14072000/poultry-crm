@@ -19,6 +19,7 @@
   border: 0;
   border-radius: 50%;
   background: transparent;
+  box-shadow: none;
   cursor: pointer;
 }
 
