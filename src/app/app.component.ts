@@ -22,7 +22,7 @@ export class AppComponent {
   ) {}
 
   readonly expandedGroups: Record<string, boolean> = Object.fromEntries(
-    ['Workspace', 'Farm operations', 'Inventory', 'Trading', 'Customer relations', 'People & logistics', 'Finance', 'Insights & admin']
+    ['Workspace', 'Farm operations', 'Inventory', 'Trading', 'Customer relations', 'People & logistics', 'Finance']
       .map((label) => [label, false])
   );
 
@@ -104,19 +104,6 @@ export class AppComponent {
         { label: 'Trip payment summary', path: '/finance/trip-summary', icon: 'finance' },
         { label: 'Expenses', path: '/finance/expenses', icon: 'expenses' },
         { label: 'Profitability', path: '/finance/profitability', icon: 'profitability' }
-      ]
-    },
-    {
-      label: 'Insights & admin',
-      links: [
-        { label: 'Reports', path: '/insights-admin/reports', icon: 'reports' },
-        { label: 'Analytics', path: '/insights-admin/analytics', icon: 'analytics' },
-        { label: 'Notifications', path: '/insights-admin/notifications', icon: 'notifications' },
-        { label: 'Organization', path: '/insights-admin/organization', icon: 'organization' },
-        { label: 'Users & roles', path: '/insights-admin/users-roles', icon: 'users' },
-        { label: 'Documents', path: '/insights-admin/documents', icon: 'documents' },
-        { label: 'Audit history', path: '/insights-admin/audit', icon: 'audit' },
-        { label: 'Administration', path: '/insights-admin/administration', icon: 'administration' }
       ]
     }
   ];

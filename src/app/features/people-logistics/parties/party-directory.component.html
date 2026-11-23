@@ -39,7 +39,7 @@
                 <td><span class="status-badge" [class.positive]="record['status'] === 'Active'" [class.warning]="record['status'] === 'Inactive'" [class.muted]="record['status'] === 'Deleted'"><i></i>{{ record['status'] || '—' }}</span></td>
                 @if (canUpdate || canDelete) {
                   <td class="row-actions">
-                    @if (record['isDeleted'] !== true && canUpdate) { <button type="button" [attr.aria-label]="'Edit ' + partyType + ' party'" [attr.title]="'Edit ' + partyType + ' party'" (click)="openEdit(record)"><img src="assets/icons/actions/edit.svg" width="16" height="16" alt="" aria-hidden="true"></button> }
+                    @if (record['isDeleted'] !== true && canUpdate) { <button type="button" class="icon-action" [attr.aria-label]="'Edit ' + partyType + ' party'" [attr.title]="'Edit ' + partyType + ' party'" (click)="openEdit(record)"><img src="assets/icons/actions/edit.svg" width="16" height="16" alt="" aria-hidden="true"></button> }
                     @if (record['isDeleted'] !== true && canDelete) { <button type="button" class="delete-action" aria-label="Delete party" title="Delete party" (click)="requestDelete(record)"><img src="assets/icons/actions/delete.svg" width="16" height="16" alt="" aria-hidden="true"></button> }
                     @if (record['isDeleted'] === true) { <span class="immutable-label">Deleted</span> }
                   </td>
