@@ -178,8 +178,10 @@
                     <label>Method<select name="paymentMethod" [(ngModel)]="paymentMethod" [disabled]="saving"><option value="UPI">UPI</option><option value="BANK_TRANSFER">Bank transfer</option><option value="CASH">Cash</option><option value="CHEQUE">Cheque</option><option value="CARD">Card</option><option value="OTHER">Other</option></select></label>
                     <label>Reference<input name="paymentReference" maxlength="100" [(ngModel)]="paymentReference" [disabled]="saving"></label>
                   </div>
-                  <button class="button button-primary save-button" type="button" (click)="savePayment()" [disabled]="saving">{{ saving ? 'Saving…' : 'Update payment' }}</button>
-                  <button class="button button-secondary" type="button" (click)="cancelPaymentEdit()" [disabled]="saving">Cancel</button>
+                  <div class="payment-edit-actions">
+                    <button class="button button-primary" type="button" (click)="savePayment()" [disabled]="saving">{{ saving ? 'Saving…' : 'Update payment' }}</button>
+                    <button class="button button-secondary" type="button" (click)="cancelPaymentEdit()" [disabled]="saving">Cancel</button>
+                  </div>
                 </div>
               </td></tr>
             }
