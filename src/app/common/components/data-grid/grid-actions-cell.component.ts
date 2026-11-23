@@ -16,11 +16,77 @@ interface GridActionsParams extends ICellRendererParams {
 @Component({
   selector: 'app-grid-actions-cell',
   standalone: true,
-  template: `<span class="grid-actions">@for (item of actions; track item.action) { <button type="button" [disabled]="item.disabled" (click)="run(item.action)">{{ item.label }}</button> }</span>`,
+  template: `
+    <span class="grid-actions">
+      @for (item of actions; track item.action) {
+        <button
+          type="button"
+          [disabled]="item.disabled"
+          [class.icon-action]="iconFor(item)"
+          [attr.aria-label]="item.label"
+          [attr.title]="item.label"
+          (click)="run(item.action)">
+          @if (iconFor(item); as icon) {
+            <img [src]="icon" alt="" aria-hidden="true" />
+          } @else {
+            {{ item.label }}
+          }
+        </button>
+      }
+    </span>
+  `,
   styles: [`
-    .grid-actions { display: flex; flex-wrap: wrap; gap: 4px; }
-    button { background: #eef4ed; border: 0; border-radius: 4px; color: #396447; cursor: pointer; font: inherit; font-size: 11px; padding: 4px 7px; }
-    button:disabled { cursor: wait; opacity: .5; }
+    .grid-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      background: #eef4ed;
+      border: 0;
+      border-radius: 5px;
+      color: #396447;
+      cursor: pointer;
+      font: inherit;
+      font-size: 11px;
+      padding: 4px 7px;
+    }
+
+    button.icon-action {
+      width: 30px;
+      height: 30px;
+      min-height: 30px;
+      padding: 6px;
+      background: transparent;
+      color: #475569;
+    }
+
+    button.icon-action:hover:not(:disabled) {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    button:focus-visible {
+      outline: 2px solid #64748b;
+      outline-offset: 2px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .45;
+    }
+
+    img {
+      display: block;
+      width: 17px;
+      height: 17px;
+    }
   `]
 })
 export class GridActionsCellComponent implements ICellRendererAngularComp {
@@ -35,6 +101,14 @@ export class GridActionsCellComponent implements ICellRendererAngularComp {
   refresh(params: GridActionsParams): boolean {
     this.agInit(params);
     return true;
+  }
+
+  iconFor(item: GridAction): string | null {
+    const action = `${item.action} ${item.label}`.toLowerCase();
+    if (/\\bedit\\b/.test(action)) return 'assets/icons/actions/edit.svg';
+    if (/\\bdelete\\b/.test(action)) return 'assets/icons/actions/delete.svg';
+    if (/\\bview\\b/.test(action)) return 'assets/icons/actions/view.svg';
+    return null;
   }
 
   run(action: string): void {
