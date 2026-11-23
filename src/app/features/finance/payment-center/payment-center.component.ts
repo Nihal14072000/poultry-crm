@@ -191,7 +191,6 @@ export class PaymentCenterComponent implements OnInit {
   requestDeletePayment(payment: FinanceRecord): void {
     if (!this.permissions.can('payments', 'delete') || payment['isDeleted'] === true) return;
     this.error = '';
-    this.success = '';
     if (!this.id(payment)) {
       this.error = 'This payment is missing its ID and cannot be marked deleted.';
       return;
