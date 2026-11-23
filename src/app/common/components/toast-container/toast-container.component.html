@@ -1,12 +1,1 @@
-<div class="toast-region" aria-label="Notifications" aria-live="polite" aria-relevant="additions text">
-  @for (toast of messages$ | async; track toast.id) {
-    <section class="toast" [class.toast-success]="toast.type === 'success'"
-      [class.toast-error]="toast.type === 'error'" [class.toast-warning]="toast.type === 'warning'"
-      [class.toast-info]="toast.type === 'info'" [attr.role]="toast.type === 'error' ? 'alert' : 'status'">
-      <span class="toast-icon" aria-hidden="true">{{ iconFor(toast.type) }}</span>
-      <p>{{ toast.message }}</p>
-      <button type="button" class="toast-dismiss" aria-label="Dismiss notification"
-        (click)="dismiss(toast.id)">×</button>
-    </section>
-  }
-</div>
+<div toastContainer></div>
