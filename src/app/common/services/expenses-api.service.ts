@@ -27,9 +27,17 @@ export class ExpenseApiService {
     if (!/^\d+$/.test(tripId) || Number(tripId) <= 0) {
       throw new Error('A valid trip ID is required to retrieve expenses.');
     }
-    const response = await firstValueFrom(this.http.get<ExpenseRecord[] | { items?: ExpenseRecord[]; data?: ExpenseRecord[] }>(
-      `${this.endpoint}/trip/${encodeURIComponent(tripId)}`
-    ));
+    let response: ExpenseRecord[] | { items?: ExpenseRecord[]; data?: ExpenseRecord[] };
+    try {
+      response = await firstValueFrom(this.http.get<ExpenseRecord[] | { items?: ExpenseRecord[]; data?: ExpenseRecord[] }>(
+        `${this.endpoint}/trip/${encodeURIComponent(tripId)}`
+      ));
+    } catch (error) {
+      // Expense data is supplementary to the trip view. A failed expense request
+      // must not prevent the rest of the page from rendering.
+      console.warn(`Unable to load expenses for trip ${tripId}; showing an empty expense list.`, error);
+      return [];
+    }
     const rows = Array.isArray(response) ? response : response.items ?? response.data ?? [];
     return rows
       .map((row) => this.camelCaseRow(row))
