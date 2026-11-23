@@ -11,6 +11,7 @@ import { FinanceApiService, FinanceRecord, PaymentMethod, PaymentType } from '..
 import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
 import { TripApiService } from '../../../common/services/trip-api.service';
 import { ExpenseApiService, ExpenseRecord } from '../../../common/services/expenses-api.service';
+import { ToastService } from '../../../common/services/toast.service';
 
 interface SupplierReceiptForm {
   vendorId: string; vendorName: string;
@@ -51,7 +52,6 @@ export class TripDeliveriesComponent implements OnInit {
   loading = true;
   saving = false;
   error = '';
-  success = '';
   dateFilter = '';
   vehicleFilter = '';
   routeFilter = '';
@@ -82,11 +82,11 @@ export class TripDeliveriesComponent implements OnInit {
   showPaymentForm = false;
   editingPaymentId = '';
 
-  constructor(private readonly service: TripService, private readonly finance: FinanceApiService, private readonly expensesApi: ExpenseApiService, private readonly tripApi: TripApiService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService, readonly rolePermissions: RolePermissionService) {}
+  constructor(private readonly service: TripService, private readonly finance: FinanceApiService, private readonly expensesApi: ExpenseApiService, private readonly tripApi: TripApiService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService, readonly rolePermissions: RolePermissionService, private readonly toast: ToastService) {}
 
   async ngOnInit(): Promise<void> {
     const state = this.router.getCurrentNavigation()?.extras.state as { successMessage?: string } | undefined;
-    this.success = state?.successMessage ?? '';
+    if (state?.successMessage) this.toast.success(state.successMessage);
     await this.load();
   }
 
@@ -276,7 +276,7 @@ export class TripDeliveriesComponent implements OnInit {
       this.error = 'Select an expense category, enter a positive amount, and choose a valid date.';
       return;
     }
-    this.saving = true; this.error = ''; this.success = '';
+    this.saving = true; this.error = '';
     try {
       const editing = !!this.editingExpenseId;
       const existing = this.tripExpenses.find((expense) => String(expense['id'] ?? '') === this.editingExpenseId);
@@ -294,13 +294,13 @@ export class TripDeliveriesComponent implements OnInit {
       if (editing) await this.expensesApi.updateExpense(this.editingExpenseId, input);
       else await this.expensesApi.createExpense(input);
       this.cancelExpenseEdit();
-      this.success = editing ? 'Trip expense updated.' : 'Trip expense added.';
+      this.toast.success(editing ? 'Trip expense updated successfully.' : 'Trip expense added successfully.');
       try {
         await this.refreshTripExpenses();
       } catch (refreshError) {
-        this.error = `Expense was saved, but the expense list could not be refreshed: ${refreshError instanceof Error ? refreshError.message : 'Unknown error.'}`;
+        this.toast.warning(`Expense was saved, but the list could not be refreshed: ${refreshError instanceof Error ? refreshError.message : 'Unknown error.'}`);
       }
-    } catch (e) { this.error = e instanceof Error ? e.message : 'Expense could not be saved.'; }
+    } catch (e) { this.toast.error(e instanceof Error ? e.message : 'Expense could not be saved.'); }
     finally { this.saving = false; }
   }
   async deleteExpense(expense: ExpenseRecord): Promise<void> {
@@ -311,13 +311,13 @@ export class TripDeliveriesComponent implements OnInit {
     try {
       await this.expensesApi.deleteExpense(expenseId);
       if (this.editingExpenseId === expenseId) this.cancelExpenseEdit();
-      this.success = 'Trip expense deleted.';
+      this.toast.success('Trip expense deleted successfully.');
       try {
         await this.refreshTripExpenses();
       } catch (refreshError) {
-        this.error = `Expense was deleted, but the expense list could not be refreshed: ${refreshError instanceof Error ? refreshError.message : 'Unknown error.'}`;
+        this.toast.warning(`Expense was deleted, but the list could not be refreshed: ${refreshError instanceof Error ? refreshError.message : 'Unknown error.'}`);
       }
-    } catch (e) { this.error = e instanceof Error ? e.message : 'Expense could not be deleted.'; }
+    } catch (e) { this.toast.error(e instanceof Error ? e.message : 'Expense could not be deleted.'); }
     finally { this.saving = false; }
   }
   toggleMortalityForm(): void {
@@ -486,8 +486,8 @@ export class TripDeliveriesComponent implements OnInit {
   async startTrip(): Promise<void> {
     if (!this.trip || !this.canStartTrip || this.saving) return;
     this.saving = true; this.error = ''; this.success = '';
-    try { await this.service.startAssignedTrip(this.id(this.trip)); this.success = 'Trip marked in transit.'; await this.load(); }
-    catch (e) { this.error = e instanceof Error ? e.message : 'Trip could not be started.'; }
+    try { await this.service.startAssignedTrip(this.id(this.trip)); this.toast.success('Trip marked in transit.'); await this.load(); }
+    catch (e) { this.toast.error(e instanceof Error ? e.message : 'Trip could not be started.'); }
     finally { this.saving = false; }
   }
   async saveEntry(): Promise<void> {
@@ -509,13 +509,13 @@ export class TripDeliveriesComponent implements OnInit {
       this.persistPendingVendorDeliveries(tripId);
       this.cancelEntry();
       await this.load();
-      this.success = editing ? 'Actual delivery updated.' : 'Delivery saved. Record mortality if applicable, review reconciliation, and complete the trip below.';
+      this.toast.success(editing ? 'Actual delivery updated successfully.' : 'Delivery saved successfully. Record mortality if applicable, review reconciliation, and complete the trip below.');
     } catch (e) {
       if (deliverySaved && this.trip) {
         this.cancelEntry();
         await this.load();
       }
-      this.error = e instanceof Error ? e.message : 'Delivery could not be saved.';
+      this.toast.error(e instanceof Error ? e.message : 'Delivery could not be saved.');
     }
     finally { this.saving = false; }
   }
@@ -526,10 +526,10 @@ export class TripDeliveriesComponent implements OnInit {
       const editing = !!this.editingMortalityId;
       await this.service.saveTripMortality(this.id(this.trip), Number(this.mortalityQuantity), this.mortalityRemarks, this.pendingPickupIds(), this.pendingDeliveryIds(), this.editingMortalityId || undefined);
       this.cancelMortalityEdit();
-      this.success = editing ? 'Trip mortality record updated.' : 'Trip mortality record saved.';
+      this.toast.success(editing ? 'Trip mortality record updated successfully.' : 'Trip mortality record saved successfully.');
       await this.load();
     }
-    catch (e) { this.error = e instanceof Error ? e.message : 'Mortality could not be saved.'; }
+    catch (e) { this.toast.error(e instanceof Error ? e.message : 'Mortality could not be saved.'); }
     finally { this.saving = false; }
   }
   async deleteMortality(record: TripRecord): Promise<void> {
@@ -540,9 +540,9 @@ export class TripDeliveriesComponent implements OnInit {
     try {
       await this.service.deleteTripMortality(this.id(this.trip), mortalityId);
       if (this.editingMortalityId === mortalityId) this.cancelMortalityEdit();
-      this.success = 'Trip mortality record deleted.';
+      this.toast.success('Trip mortality record deleted successfully.');
       await this.load();
-    } catch (e) { this.error = e instanceof Error ? e.message : 'Mortality record could not be deleted.'; }
+    } catch (e) { this.toast.error(e instanceof Error ? e.message : 'Mortality record could not be deleted.'); }
     finally { this.saving = false; }
   }
   private async refreshTripPaymentHistory(): Promise<void> {
@@ -575,13 +575,13 @@ export class TripDeliveriesComponent implements OnInit {
       if (editing) await this.finance.updatePayment(this.editingPaymentId, input);
       else await this.finance.createPayment(input);
       this.cancelPaymentEdit();
-      this.success = editing ? 'Payment updated.' : 'Payment recorded.';
+      this.toast.success(editing ? 'Payment updated successfully.' : 'Payment created successfully.');
       try {
         await this.refreshTripPaymentHistory();
       } catch (refreshError) {
-        this.error = `Payment was saved, but payment history could not be refreshed: ${refreshError instanceof Error ? refreshError.message : 'Unknown error.'}`;
+        this.toast.warning(`Payment was saved, but payment history could not be refreshed: ${refreshError instanceof Error ? refreshError.message : 'Unknown error.'}`);
       }
-    } catch (e) { this.error = e instanceof Error ? e.message : 'Payment could not be recorded.'; }
+    } catch (e) { this.toast.error(e instanceof Error ? e.message : 'Payment could not be recorded.'); }
     finally { this.saving = false; }
   }
   async deletePayment(payment: FinanceRecord): Promise<void> {
@@ -592,13 +592,13 @@ export class TripDeliveriesComponent implements OnInit {
     try {
       await this.finance.deletePayment(paymentId);
       if (this.editingPaymentId === paymentId) this.cancelPaymentEdit();
-      this.success = 'Payment deleted.';
+      this.toast.success('Payment deleted successfully.');
       try {
         await this.refreshTripPaymentHistory();
       } catch (refreshError) {
-        this.error = `Payment was deleted, but payment history could not be refreshed: ${refreshError instanceof Error ? refreshError.message : 'Unknown error.'}`;
+        this.toast.warning(`Payment was deleted, but payment history could not be refreshed: ${refreshError instanceof Error ? refreshError.message : 'Unknown error.'}`);
       }
-    } catch (e) { this.error = e instanceof Error ? e.message : 'Payment could not be deleted.'; }
+    } catch (e) { this.toast.error(e instanceof Error ? e.message : 'Payment could not be deleted.'); }
     finally { this.saving = false; }
   }
   async saveSupplierReceipt(form: SupplierReceiptForm): Promise<void> {
@@ -613,10 +613,10 @@ export class TripDeliveriesComponent implements OnInit {
       }, this.pendingPickupIds());
       this.pendingSupplierPickupIds[form.vendorId] = pickupId;
       this.persistPendingSupplierPickups(tripId);
-      this.success = `Actual supplier pickup from ${form.vendorName} saved.`;
+      this.toast.success(`Actual supplier pickup from ${form.vendorName} saved successfully.`);
       this.activePickupVendorId = '';
       await this.load();
-    } catch (e) { this.error = e instanceof Error ? e.message : 'Supplier pickup could not be saved.'; }
+    } catch (e) { this.toast.error(e instanceof Error ? e.message : 'Supplier pickup could not be saved.'); }
     finally { this.saving = false; }
   }
   unreconciled(): number { return this.totalLoaded() - this.totalDelivered() - this.totalMortality(); }
@@ -633,11 +633,11 @@ export class TripDeliveriesComponent implements OnInit {
           state: { successMessage: 'Trip completed successfully.' }
         });
       } else {
-        this.success = 'Trip submitted for Organization Admin reconciliation approval.';
+        this.toast.success('Trip submitted for Organization Admin reconciliation approval.');
         await this.load();
       }
     }
-    catch (e) { this.error = e instanceof Error ? e.message : 'Trip could not be completed.'; }
+    catch (e) { this.toast.error(e instanceof Error ? e.message : 'Trip could not be completed.'); }
     finally { this.saving = false; }
   }
 }
