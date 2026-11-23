@@ -104,10 +104,10 @@ export class GridActionsCellComponent implements ICellRendererAngularComp {
   }
 
   iconFor(item: GridAction): string | null {
-    const action = `${item.action} ${item.label}`.toLowerCase();
-    if (/\\bedit\\b/.test(action)) return 'assets/icons/actions/edit.svg';
-    if (/\\bdelete\\b/.test(action)) return 'assets/icons/actions/delete.svg';
-    if (/\\bview\\b/.test(action)) return 'assets/icons/actions/view.svg';
+    const actionWords = `${item.action} ${item.label}`.toLowerCase().split(/[^a-z]+/);
+    if (actionWords.includes('edit')) return 'assets/icons/actions/edit.svg';
+    if (actionWords.includes('delete')) return 'assets/icons/actions/delete.svg';
+    if (actionWords.includes('view')) return 'assets/icons/actions/view.svg';
     return null;
   }
 
