@@ -133,7 +133,7 @@ export class PartyDirectoryComponent implements OnInit {
   requestDelete(party: PartyDirectoryRecord): void {
     if (!this.canDelete || party['isDeleted'] === true) return;
     this.deleteCandidate = party;
-    this.successMessage = '';
+
     this.actionError = '';
   }
 
@@ -150,7 +150,7 @@ export class PartyDirectoryComponent implements OnInit {
 
     this.saving = true;
     this.actionError = '';
-    this.successMessage = '';
+
     try {
       await this.tripApi.updateParty(this.partyType, id, {
         name: String(party['name'] ?? ''),
