@@ -46,11 +46,11 @@
                 <td><span class="status status-pill" [ngClass]="trip['status'] | statusPill">{{ trip['status'] || '—' }}</span></td>
                 <td class="actions-cell">
                   @if (!isDeleted(trip) && rolePermissions.can('trips', 'update')) {
-                    <a class="edit-link" [routerLink]="['/people-logistics/trips', trip['_demoId'], 'edit']">Edit</a>
+                    <a class="edit-link" [routerLink]="['/people-logistics/trips', trip['_demoId'], 'edit']" aria-label="Edit trip" title="Edit trip"><img src="assets/icons/actions/edit.svg" width="16" height="16" alt="" aria-hidden="true"></a>
                   }
                   @if (!isDeleted(trip) && rolePermissions.can('trips', 'delete')) {
-                    <button class="delete-link" type="button" [disabled]="deletingTripId === trip['_demoId']" (click)="deleteTrip(trip)">
-                      {{ deletingTripId === trip['_demoId'] ? 'Deleting…' : 'Delete' }}
+                    <button class="delete-link" type="button" [attr.aria-label]="deletingTripId === trip['_demoId'] ? 'Deleting trip' : 'Delete trip'" [attr.title]="deletingTripId === trip['_demoId'] ? 'Deleting trip' : 'Delete trip'" [disabled]="deletingTripId === trip['_demoId']" (click)="deleteTrip(trip)">
+                      @if (deletingTripId === trip['_demoId']) { Deleting… } @else { <img src="assets/icons/actions/delete.svg" width="16" height="16" alt="" aria-hidden="true"> }
                     </button>
                   }
                   @if (isDeleted(trip) || (!rolePermissions.can('trips', 'update') && !rolePermissions.can('trips', 'delete'))) { <span>—</span> }

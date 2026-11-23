@@ -363,9 +363,9 @@ export class CreateTripComponent implements OnInit {
   }
 
   get deliveryStopError(): string {
-    if (!this.deliveryStops.length) return 'Add at least one vendor destination.';
+    if (!this.deliveryStops.length) return 'Add at least one Vendor Destination.';
     const ids = this.deliveryStops.map((item) => item.vendorDestinationId);
-    if (ids.some((id) => !id) || new Set(ids).size !== ids.length) return 'Select a different vendor destination for each stop.';
+    if (ids.some((id) => !id) || new Set(ids).size !== ids.length) return 'Select a different Vendor Destination for each stop.';
     if (this.deliveryStops.some((item) => [item.broilerQuantity, item.cullsQuantity, item.feedQuantity].some((quantity) => quantity !== null && (!Number.isSafeInteger(quantity) || quantity < 0)) || [item.broilerWeight, item.cullsWeight, item.feedWeight].some((weight) => weight !== null && (!Number.isFinite(weight) || weight < 0 || Math.abs(weight * 100 - Math.round(weight * 100)) > 1e-8)) || [item.broilerRate, item.cullsRate, item.feedRate].some((rate) => rate !== null && (!Number.isFinite(rate) || rate < 0 || Math.abs(rate * 100 - Math.round(rate * 100)) > 1e-8)) || (Number(item.broilerQuantity ?? 0) > 0 && Number(item.broilerWeight ?? 0) <= 0) || (Number(item.cullsQuantity ?? 0) > 0 && Number(item.cullsWeight ?? 0) <= 0) || (Number(item.feedQuantity ?? 0) > 0 && Number(item.feedWeight ?? 0) <= 0) || (Number(item.feedQuantity ?? 0) === 0 && Number(item.feedWeight ?? 0) > 0) || Number(item.broilerQuantity ?? 0) + Number(item.cullsQuantity ?? 0) <= 0)) return 'Each vendor stop needs positive whole-number quantities, valid weights and rates, and a weight for any feed quantity.';
     return '';
   }

@@ -19,14 +19,13 @@
       @if (!allSupplierReceiptsSaved()) { <p class="feedback error">Record the actual receipt for every supplier before entering deliveries or mortality and before reconciliation.</p> }
       @for (form of supplierReceiptForms; track form.vendorId) {
         <article class="pickup-receipt">
-          <div class="pickup-receipt-heading"><strong>{{ form.vendorName }}</strong><button class="button button-secondary" type="button" (click)="toggleSupplierReceiptForm(form)" [disabled]="saving || trip['status'] === 'Completed'">{{ activePickupVendorId === form.vendorId ? 'Cancel' : supplierReceipt(form.vendorId) ? 'Edit actual receipt' : 'Enter actual receipt' }}</button></div>
+          <div class="pickup-receipt-heading"><strong>{{ form.vendorName }}</strong><button class="button button-secondary" type="button" [attr.aria-label]="activePickupVendorId === form.vendorId ? 'Cancel actual receipt' : supplierReceipt(form.vendorId) ? 'Edit actual receipt' : 'Enter actual receipt'" [attr.title]="activePickupVendorId === form.vendorId ? 'Cancel actual receipt' : supplierReceipt(form.vendorId) ? 'Edit actual receipt' : 'Enter actual receipt'" (click)="toggleSupplierReceiptForm(form)" [disabled]="saving || trip['status'] === 'Completed'">@if (activePickupVendorId === form.vendorId) { Cancel } @else if (supplierReceipt(form.vendorId)) { <img src="assets/icons/actions/edit.svg" width="16" height="16" alt="" aria-hidden="true"> } @else { Enter actual receipt }</button></div>
           @if (plannedSupplier(form.vendorId); as planned) {
             <div class="table-wrap"><table><thead><tr><th>ITEM</th><th>PROPOSED QTY / WEIGHT / RATE / COST</th><th>ACTUAL QTY / WEIGHT / COST</th></tr></thead><tbody>
               <tr><th scope="row">Broiler</th><td>{{ planned.broiler.quantity }} · {{ planned.broiler.weight }} kg · {{ planned.broiler.rate | currency:'INR':'symbol':'1.2-2' }}/kg · {{ planned.broiler.total | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ supplierActualSummary(form.vendorId, 'broiler') }}</td></tr>
               <tr><th scope="row">Culls</th><td>{{ planned.culls.quantity }} · {{ planned.culls.weight }} kg · {{ planned.culls.rate | currency:'INR':'symbol':'1.2-2' }}/kg · {{ planned.culls.total | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ supplierActualSummary(form.vendorId, 'culls') }}</td></tr>
               <tr><th scope="row">Feed ({{ trip['feedUnit'] }})</th><td>{{ planned.feed.quantity }} · {{ planned.feed.weight }} kg · {{ planned.feed.rate | currency:'INR':'symbol':'1.2-2' }}/kg · {{ planned.feed.total | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ supplierActualSummary(form.vendorId, 'feed') }}</td></tr>
-            </tbody></table></div>
-            <tfoot><tr class="pickup-total-row"><th scope="row">TOTAL</th><td><strong>Total quotation · {{ planned.total | currency:'INR':'symbol':'1.2-2' }}</strong></td><td><strong>Total pickup · {{ number(supplierReceipt(form.vendorId)?.['total']) | currency:'INR':'symbol':'1.2-2' }}</strong></td></tr></tfoot>
+            </tbody><tfoot><tr class="table-total-row"><th scope="row">TOTAL</th><td><strong>Total quotation · {{ planned.total | currency:'INR':'symbol':'1.2-2' }}</strong></td><td><strong>Total pickup · {{ number(supplierReceipt(form.vendorId)?.['total']) | currency:'INR':'symbol':'1.2-2' }}</strong></td></tr></tfoot></table></div>
           }
           @if (activePickupVendorId === form.vendorId) {
             <div class="pickup-entry-grid">
@@ -73,31 +72,62 @@
       @else {
         <div class="table-wrap">
           <table>
-            <thead><tr><th>STOP</th><th>VENDOR DESTINATION</th><th>PROPOSED QTY / WEIGHT / RATE / SALES</th><th>ACTUAL QTY / WEIGHT / RATE / SALES</th><th>BALANCE</th><th>STATUS</th><th>ACTION</th></tr></thead>
+            <thead><tr><th aria-label="Expand or collapse row"></th><th>Vendor Destination</th><th>Proposed Order</th><th>Actual Order</th><th>BALANCE</th><th>STATUS</th><th>ACTION</th></tr></thead>
             <tbody>
               @for (destination of destinations; track id(destination)) {
-                <tr>
-                  @if (activeOrderId === id(destination)) {
-                    <td colspan="7"><ng-container [ngTemplateOutlet]="deliveryEditor"></ng-container></td>
-                  } @else {
-                    <td>{{ destination['routeSequence'] | number:'2.0-0' }}</td>
-                    <td><strong>{{ destination['vendorName'] }}</strong><small>{{ destination['address'] }} · {{ destination['contact'] }} {{ destination['phone'] }}</small></td>
-                    <td><strong>{{ destination['orderedBroiler'] }} broiler · {{ destination['orderedBroilerWeight'] }} kg × {{ destination['broilerRate'] | currency:'INR':'symbol':'1.2-2' }}/kg</strong><small>{{ destination['orderedCulls'] }} culls · {{ destination['orderedCullsWeight'] }} kg × {{ destination['cullsRate'] | currency:'INR':'symbol':'1.2-2' }}/kg</small><small>{{ destination['orderedFeed'] }} {{ trip['feedUnit'] }} feed · {{ destination['orderedFeedWeight'] }} kg × {{ destination['feedRate'] | currency:'INR':'symbol':'1.2-2' }}/kg</small><small>Proposed sales · {{ destination['deliveryTotal'] | currency:'INR':'symbol':'1.2-2' }}</small></td>
-                    <td>{{ delivered(id(destination),'broiler') }} broiler · {{ delivered(id(destination),'culls') }} culls<small>{{ deliveredWeight(id(destination),'broiler') }} kg broiler · {{ deliveredWeight(id(destination),'culls') }} kg culls</small><small>{{ delivered(id(destination),'feed') }} {{ trip['feedUnit'] }} feed · {{ deliveredWeight(id(destination),'feed') }} kg</small><small>Actual sales · {{ deliveryRevenue(id(destination)) | currency:'INR':'symbol':'1.2-2' }}</small>
-                    </td>
-                    <td>{{ remaining(destination) }}</td>
-                    <td><span class="status status-pill" [ngClass]="destinationStatus(destination) | statusPill">{{ destinationStatus(destination) }}</span></td>
-                    <td>
-                      @if (canEnterDelivery) { <button class="link-button" type="button" (click)="open(destination)">{{ entries(id(destination)).length ? 'Enter another' : 'Enter delivery' }}</button> }
-                      @for (delivery of entries(id(destination)); track id(delivery)) {
-                        @if (canEditActualDelivery) { <button class="link-button" type="button" (click)="editActualDelivery(delivery)" [disabled]="saving">Edit actual</button> }
-                      }
-                      @if (!canEnterDelivery) { <span>View only</span> }
-                    </td>
-                  }
+                <tr class="destination-summary-row" tabindex="0" [attr.aria-expanded]="isDestinationExpanded(id(destination))" [attr.aria-label]="(isDestinationExpanded(id(destination)) ? 'Collapse' : 'Expand') + ' details for ' + destination['vendorName']" (click)="toggleDestinationDetails(id(destination))" (keydown.enter)="toggleDestinationDetails(id(destination))" (keydown.space)="$event.preventDefault(); toggleDestinationDetails(id(destination))">
+                  <td><img class="destination-disclosure-icon" [class.expanded]="isDestinationExpanded(id(destination))" src="assets/icons/actions/arrow-up.svg" alt="" aria-hidden="true"></td>
+                  <td><strong>{{ destination['vendorName'] }}</strong></td>
+                  <td>Total birds · {{ number(destination['orderedBroiler']) + number(destination['orderedCulls']) }} · Proposed sales {{ destination['deliveryTotal'] | currency:'INR':'symbol':'1.2-2' }}</td>
+                  <td>{{ delivered(id(destination),'broiler') + delivered(id(destination),'culls') }} birds · Actual sales {{ deliveryRevenue(id(destination)) | currency:'INR':'symbol':'1.2-2' }}</td>
+                  <td>{{ remaining(destination) }}</td>
+                  <td><span class="status status-pill" [ngClass]="destinationStatus(destination) | statusPill">{{ destinationStatus(destination) }}</span></td>
+                  <td (click)="$event.stopPropagation()">
+                    @if (canEnterDelivery) { <button class="link-button" type="button" (click)="open(destination)">{{ entries(id(destination)).length ? 'Enter another' : 'Enter delivery' }}</button> }
+                    @for (delivery of entries(id(destination)); track id(delivery)) {
+                      @if (canEditActualDelivery) { <button class="link-button" type="button" aria-label="Edit actual delivery" title="Edit actual delivery" (click)="editActualDelivery(delivery)" [disabled]="saving"><img src="assets/icons/actions/edit.svg" width="16" height="16" alt="" aria-hidden="true"></button> }
+                    }
+                  </td>
                 </tr>
+                @if (isDestinationExpanded(id(destination))) {
+                  <tr class="destination-details-row">
+                    <td colspan="7">
+                      @if (activeOrderId === id(destination)) {
+                        <div class="inline-entry"><ng-container [ngTemplateOutlet]="deliveryEditor"></ng-container></div>
+                      } @else {
+                        <div class="destination-expanded">
+                          <div class="destination-expanded-heading">
+                            <div><strong>{{ destination['vendorName'] }}</strong><small>{{ destination['address'] }} · {{ destination['contact'] }} {{ destination['phone'] }}</small></div>
+                            <span class="status status-pill" [ngClass]="destinationStatus(destination) | statusPill">{{ destinationStatus(destination) }}</span>
+                          </div>
+                          <div class="destination-expanded-sections">
+                            <section class="destination-expanded-section">
+                              <h3>Proposed</h3>
+                              <div class="destination-line-grid">
+                                <span>Broiler</span><span>{{ destination['orderedBroiler'] }}</span><span>{{ destination['orderedBroilerWeight'] }} kg</span><span>{{ destination['broilerRate'] | currency:'INR':'symbol':'1.2-2' }}/kg</span><span>{{ destination['broilerTotal'] | currency:'INR':'symbol':'1.2-2' }}</span>
+                                <span>Culls</span><span>{{ destination['orderedCulls'] }}</span><span>{{ destination['orderedCullsWeight'] }} kg</span><span>{{ destination['cullsRate'] | currency:'INR':'symbol':'1.2-2' }}/kg</span><span>{{ destination['cullsTotal'] | currency:'INR':'symbol':'1.2-2' }}</span>
+                                <span>Feed ({{ trip['feedUnit'] }})</span><span>{{ destination['orderedFeed'] }}</span><span>{{ destination['orderedFeedWeight'] }} kg</span><span>{{ destination['feedRate'] | currency:'INR':'symbol':'1.2-2' }}/kg</span><span>{{ destination['feedTotal'] | currency:'INR':'symbol':'1.2-2' }}</span>
+                                <strong class="destination-line-total">Proposed sales</strong><strong>{{ destination['deliveryTotal'] | currency:'INR':'symbol':'1.2-2' }}</strong>
+                              </div>
+                            </section>
+                            <section class="destination-expanded-section">
+                              <h3>Actual</h3>
+                              <div class="destination-line-grid">
+                                <span>Broiler</span><span>{{ delivered(id(destination),'broiler') }}</span><span>{{ deliveredWeight(id(destination),'broiler') }} kg</span><span>{{ deliveryLineRate(id(destination),'broiler') | currency:'INR':'symbol':'1.2-2' }}/kg</span><span>{{ deliveryLineSales(id(destination),'broiler') | currency:'INR':'symbol':'1.2-2' }}</span>
+                                <span>Culls</span><span>{{ delivered(id(destination),'culls') }}</span><span>{{ deliveredWeight(id(destination),'culls') }} kg</span><span>{{ deliveryLineRate(id(destination),'culls') | currency:'INR':'symbol':'1.2-2' }}/kg</span><span>{{ deliveryLineSales(id(destination),'culls') | currency:'INR':'symbol':'1.2-2' }}</span>
+                                <span>Feed ({{ trip['feedUnit'] }})</span><span>{{ delivered(id(destination),'feed') }}</span><span>{{ deliveredWeight(id(destination),'feed') }} kg</span><span>{{ deliveryLineRate(id(destination),'feed') | currency:'INR':'symbol':'1.2-2' }}/kg</span><span>{{ deliveryLineSales(id(destination),'feed') | currency:'INR':'symbol':'1.2-2' }}</span>
+                                <strong class="destination-line-total">Actual sales</strong><strong>{{ deliveryRevenue(id(destination)) | currency:'INR':'symbol':'1.2-2' }}</strong>
+                              </div>
+                            </section>
+                          </div>
+                        </div>
+                      }
+                  </td>
+                  </tr>
+                }
               }
             </tbody>
+            <tfoot><tr class="table-total-row"><td></td><th scope="row">TOTAL</th><td><strong>Proposed sales · {{ plannedSalesTotal() | currency:'INR':'symbol':'1.2-2' }}</strong></td><td><strong>Actual sales · {{ actualSalesTotal() | currency:'INR':'symbol':'1.2-2' }}</strong></td><td colspan="3"></td></tr></tfoot>
           </table>
         </div>
       }
@@ -108,7 +138,7 @@
       @if (mortalities.length) {
         <div class="table-wrap"><table><thead><tr><th>RECORD</th><th>MORTALITY</th><th>REASON</th><th>RECORDED AT</th><th>ACTION</th></tr></thead><tbody>
           @for (record of mortalities; track $index) {
-            <tr><td>{{ $index + 1 }}</td><td>{{ record['quantity'] }} birds</td><td>{{ record['remarks'] || '—' }}</td><td>{{ record['recordedAt'] || '—' }}</td><td>@if (trip['status'] !== 'Completed') { <button class="link-button" type="button" (click)="editMortality(record)">Edit</button><button class="link-button" type="button" (click)="deleteMortality(record)" [disabled]="saving">Delete</button> }</td></tr>
+            <tr><td>{{ $index + 1 }}</td><td>{{ record['quantity'] }} birds</td><td>{{ record['remarks'] || '—' }}</td><td>{{ record['recordedAt'] || '—' }}</td><td>@if (trip['status'] !== 'Completed') { <button class="link-button" type="button" aria-label="Edit mortality record" title="Edit mortality record" (click)="editMortality(record)"><img src="assets/icons/actions/edit.svg" width="16" height="16" alt="" aria-hidden="true"></button><button class="link-button" type="button" aria-label="Delete mortality record" title="Delete mortality record" (click)="deleteMortality(record)" [disabled]="saving"><img src="assets/icons/actions/delete.svg" width="16" height="16" alt="" aria-hidden="true"></button> }</td></tr>
           }
         </tbody></table></div>
       } @else { <p class="empty">No mortality records added.</p> }
@@ -127,7 +157,7 @@
       @if (tripPayments.length) {
         <div class="table-wrap"><table><thead><tr><th>TYPE</th><th>PARTY</th><th>AMOUNT</th><th>DATE</th><th>METHOD</th><th>REFERENCE</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody>
           @for (payment of tripPayments; track $index) {
-            <tr><td>{{ payment['paymentType'] === 'BUYER_RECEIPT' ? 'Payment received' : 'Supplier payment made' }}</td><td>{{ paymentPartyName(payment) }}</td><td>{{ number(payment['amount']) | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ payment['paymentDate'] }}</td><td>{{ payment['paymentMethod'] }}</td><td>{{ payment['reference'] || payment['externalReference'] || '—' }}</td><td>{{ payment['isDeleted'] === true ? 'Deleted' : payment['status'] }}</td><td>@if (payment['isDeleted'] !== true) { <button class="link-button" type="button" (click)="editPayment(payment)">Edit</button><button class="link-button" type="button" (click)="deletePayment(payment)" [disabled]="saving">Delete</button> } @else { <span>—</span> }</td></tr>
+            <tr><td>{{ payment['paymentType'] === 'BUYER_RECEIPT' ? 'Payment received' : 'Supplier payment made' }}</td><td>{{ paymentPartyName(payment) }}</td><td>{{ number(payment['amount']) | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ payment['paymentDate'] }}</td><td>{{ payment['paymentMethod'] }}</td><td>{{ payment['reference'] || payment['externalReference'] || '—' }}</td><td>{{ payment['isDeleted'] === true ? 'Deleted' : payment['status'] }}</td><td>@if (payment['isDeleted'] !== true) { <button class="link-button" type="button" aria-label="Edit payment" title="Edit payment" (click)="editPayment(payment)"><img src="assets/icons/actions/edit.svg" width="16" height="16" alt="" aria-hidden="true"></button><button class="link-button" type="button" aria-label="Delete payment" title="Delete payment" (click)="deletePayment(payment)" [disabled]="saving"><img src="assets/icons/actions/delete.svg" width="16" height="16" alt="" aria-hidden="true"></button> } @else { <span>—</span> }</td></tr>
           }
         </tbody></table></div>
       } @else { <p class="empty">No payments have been recorded for this trip.</p> }
@@ -160,7 +190,7 @@
       @if (tripExpenses.length) {
         <div class="table-wrap"><table><thead><tr><th>CATEGORY</th><th>AMOUNT</th><th>DATE</th><th>NOTE</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody>
           @for (expense of tripExpenses; track $index) {
-            <tr><td>{{ expenseCategoryLabel(expense['category']) }}</td><td>{{ number(expense['amount']) | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ expense['expenseDate'] }}</td><td>{{ expense['note'] || '—' }}</td><td>{{ expense['isDeleted'] === true ? 'Deleted' : expense['isActive'] === false ? 'Inactive' : 'Active' }}</td><td>@if (expense['isDeleted'] !== true) { <button class="link-button" type="button" (click)="editExpense(expense)">Edit</button><button class="link-button" type="button" (click)="deleteExpense(expense)" [disabled]="saving">Delete</button> } @else { <span>—</span> }</td></tr>
+            <tr><td>{{ expenseCategoryLabel(expense['category']) }}</td><td>{{ number(expense['amount']) | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ expense['expenseDate'] }}</td><td>{{ expense['note'] || '—' }}</td><td>{{ expense['isDeleted'] === true ? 'Deleted' : expense['isActive'] === false ? 'Inactive' : 'Active' }}</td><td>@if (expense['isDeleted'] !== true) { <button class="link-button" type="button" aria-label="Edit expense" title="Edit expense" (click)="editExpense(expense)"><img src="assets/icons/actions/edit.svg" width="16" height="16" alt="" aria-hidden="true"></button><button class="link-button" type="button" aria-label="Delete expense" title="Delete expense" (click)="deleteExpense(expense)" [disabled]="saving"><img src="assets/icons/actions/delete.svg" width="16" height="16" alt="" aria-hidden="true"></button> } @else { <span>—</span> }</td></tr>
           }
         </tbody></table></div>
       } @else { <p class="empty">No expenses have been recorded for this trip.</p> }
@@ -189,7 +219,7 @@
           }
         }
         @if (hasMissingDestinationDeliveries) {
-          <p class="feedback error">Record an actual delivery for every vendor destination before completing the trip.</p>
+          <p class="feedback error">Record an actual delivery for every Vendor Destination before completing the trip.</p>
         }
       </div>
       @if (hasReconciliationMismatch) {

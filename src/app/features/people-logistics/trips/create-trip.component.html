@@ -162,23 +162,23 @@
                 <tbody>
                   <tr>
                     <th scope="row"><span class="item-icon broiler" aria-hidden="true">B</span>Broiler <small>birds</small></th>
-                    <td><input [name]="'delivery-broiler-' + stop.key" type="number" min="0" step="1" inputmode="numeric" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' planned broiler birds'" [(ngModel)]="stop.broilerQuantity"></td>
-                    <td><input [name]="'delivery-broiler-weight-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' planned broiler weight in kilograms'" [(ngModel)]="stop.broilerWeight"></td>
-                    <td><input [name]="'delivery-broiler-rate-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' broiler rate in rupees per kilogram'" [(ngModel)]="stop.broilerRate"></td>
+                    <td><input [name]="'delivery-broiler-' + stop.key" type="number" min="0" step="1" inputmode="numeric" [attr.aria-label]="'Vendor Destination ' + (index + 1) + ' planned broiler birds'" [(ngModel)]="stop.broilerQuantity"></td>
+                    <td><input [name]="'delivery-broiler-weight-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor Destination ' + (index + 1) + ' planned broiler weight in kilograms'" [(ngModel)]="stop.broilerWeight"></td>
+                    <td><input [name]="'delivery-broiler-rate-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor Destination ' + (index + 1) + ' broiler rate in rupees per kilogram'" [(ngModel)]="stop.broilerRate"></td>
                     <td class="calculated">{{ deliveryLineTotal(stop, 'broiler') | currency:'INR':'symbol':'1.2-2' }}</td>
                   </tr>
                   <tr>
                     <th scope="row"><span class="item-icon culls" aria-hidden="true">C</span>Culls <small>birds</small></th>
-                    <td><input [name]="'delivery-culls-' + stop.key" type="number" min="0" step="1" inputmode="numeric" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' planned cull birds'" [(ngModel)]="stop.cullsQuantity"></td>
-                    <td><input [name]="'delivery-culls-weight-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' planned cull weight in kilograms'" [(ngModel)]="stop.cullsWeight"></td>
-                    <td><input [name]="'delivery-culls-rate-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' cull rate in rupees per kilogram'" [(ngModel)]="stop.cullsRate"></td>
+                    <td><input [name]="'delivery-culls-' + stop.key" type="number" min="0" step="1" inputmode="numeric" [attr.aria-label]="'Vendor Destination ' + (index + 1) + ' planned cull birds'" [(ngModel)]="stop.cullsQuantity"></td>
+                    <td><input [name]="'delivery-culls-weight-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor Destination ' + (index + 1) + ' planned cull weight in kilograms'" [(ngModel)]="stop.cullsWeight"></td>
+                    <td><input [name]="'delivery-culls-rate-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor Destination ' + (index + 1) + ' cull rate in rupees per kilogram'" [(ngModel)]="stop.cullsRate"></td>
                     <td class="calculated">{{ deliveryLineTotal(stop, 'culls') | currency:'INR':'symbol':'1.2-2' }}</td>
                   </tr>
                   <tr>
                     <th scope="row"><span class="item-icon feed" aria-hidden="true">F</span>Feed <small>{{ feedUnit }}</small></th>
-                    <td><input [name]="'delivery-feed-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' planned feed quantity in ' + feedUnit" [(ngModel)]="stop.feedQuantity"></td>
-                    <td><input [name]="'delivery-feed-weight-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' planned feed weight in kilograms'" [(ngModel)]="stop.feedWeight"></td>
-                    <td><input [name]="'delivery-feed-rate-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor destination ' + (index + 1) + ' feed rate in rupees per kilogram'" [(ngModel)]="stop.feedRate"></td>
+                    <td><input [name]="'delivery-feed-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor Destination ' + (index + 1) + ' planned feed quantity in ' + feedUnit" [(ngModel)]="stop.feedQuantity"></td>
+                    <td><input [name]="'delivery-feed-weight-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor Destination ' + (index + 1) + ' planned feed weight in kilograms'" [(ngModel)]="stop.feedWeight"></td>
+                    <td><input [name]="'delivery-feed-rate-' + stop.key" type="number" min="0" step="0.01" inputmode="decimal" [attr.aria-label]="'Vendor Destination ' + (index + 1) + ' feed rate in rupees per kilogram'" [(ngModel)]="stop.feedRate"></td>
                     <td class="calculated">{{ deliveryLineTotal(stop, 'feed') | currency:'INR':'symbol':'1.2-2' }}</td>
                   </tr>
                   <tr class="delivery-total-row"><th colspan="4" scope="row">Planned vendor total</th><td class="calculated">{{ deliveryStopTotal(stop) | currency:'INR':'symbol':'1.2-2' }}</td></tr>

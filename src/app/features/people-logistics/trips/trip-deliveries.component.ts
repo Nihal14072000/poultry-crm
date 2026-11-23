@@ -58,6 +58,7 @@ export class TripDeliveriesComponent implements OnInit {
   routeFilter = '';
   statusFilter = '';
   activeOrderId = '';
+  expandedDestinationIds = new Set<string>();
   editingDeliveryId = '';
   broiler = 0;
   broilerWeight = 0;
@@ -373,6 +374,20 @@ export class TripDeliveriesComponent implements OnInit {
   delivered(destinationId: string, kind: 'broiler' | 'culls' | 'feed'): number { return this.entries(destinationId).reduce((sum, item) => sum + Number(item[kind] ?? 0), 0); }
   deliveredWeight(destinationId: string, kind: 'broiler' | 'culls' | 'feed'): number { return this.entries(destinationId).reduce((sum, item) => sum + Number(item[`${kind}Weight`] ?? 0), 0); }
   deliveryRevenue(destinationId: string): number { return this.entries(destinationId).reduce((sum, item) => sum + Number(item['deliveryTotal'] ?? 0), 0); }
+  deliveryLineSales(destinationId: string, kind: 'broiler' | 'culls' | 'feed'): number {
+    return this.entries(destinationId).reduce((sum, item) => sum + this.number(item[`${kind}Total`]), 0);
+  }
+  deliveryLineRate(destinationId: string, kind: 'broiler' | 'culls' | 'feed'): number {
+    const weight = this.deliveredWeight(destinationId, kind);
+    return weight > 0 ? this.deliveryLineSales(destinationId, kind) / weight : 0;
+  }
+  isDestinationExpanded(destinationId: string): boolean {
+    return this.expandedDestinationIds.has(destinationId) || this.activeOrderId === destinationId;
+  }
+  toggleDestinationDetails(destinationId: string): void {
+    if (this.isDestinationExpanded(destinationId)) this.expandedDestinationIds.delete(destinationId);
+    else this.expandedDestinationIds.add(destinationId);
+  }
   remaining(destination: TripRecord): string {
     const plannedBirds = this.number(destination['orderedBroiler']) + this.number(destination['orderedCulls']);
     const amount = plannedBirds - this.delivered(this.id(destination), 'broiler') - this.delivered(this.id(destination), 'culls');

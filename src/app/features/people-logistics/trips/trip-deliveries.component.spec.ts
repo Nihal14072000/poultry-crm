@@ -86,6 +86,29 @@ describe('TripDeliveriesComponent payments', () => {
     expect(component.totalTripExpenses()).toBe(250);
   });
 
+  it('calculates actual line sales and weighted rates for a destination', () => {
+    component.deliveries = [
+      { vendorDestinationId: '51', broilerWeight: 10, broilerTotal: 1000, feedWeight: 0, feedTotal: 10 },
+      { vendorDestinationId: '51', broilerWeight: 5, broilerTotal: 650, feedWeight: 0, feedTotal: 5 },
+      { vendorDestinationId: '52', broilerWeight: 5, broilerTotal: 5000 }
+    ];
+
+    expect(component.deliveryLineSales('51', 'broiler')).toBe(1650);
+    expect(component.deliveryLineRate('51', 'broiler')).toBe(110);
+    expect(component.deliveryLineRate('51', 'feed')).toBe(0);
+  });
+
+  it('toggles expanded destination details independently', () => {
+    component.toggleDestinationDetails('51');
+    component.toggleDestinationDetails('52');
+    expect(component.isDestinationExpanded('51')).toBeTrue();
+    expect(component.isDestinationExpanded('52')).toBeTrue();
+
+    component.toggleDestinationDetails('51');
+    expect(component.isDestinationExpanded('51')).toBeFalse();
+    expect(component.isDestinationExpanded('52')).toBeTrue();
+  });
+
   it('creates an expense linked to the current trip', async () => {
     component.trip = { _demoId: '12' };
     component.expenseCategory = 'FUEL';

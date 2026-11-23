@@ -96,8 +96,8 @@
           <td>{{ text(payment,'reference','paymentReference') || '—' }}</td>
           <td>{{ payment['isDeleted'] === true ? 'Deleted' : text(payment,'status') || '—' }}</td>
           <td class="payment-actions">
-            @if (payment['isDeleted'] !== true && permissions.can('payments','update')) { <button type="button" (click)="editPayment(payment)">Edit</button> }
-            @if (payment['isDeleted'] !== true && permissions.can('payments','delete')) { <button type="button" class="delete-action" (click)="requestDeletePayment(payment)">Delete</button> }
+            @if (payment['isDeleted'] !== true && permissions.can('payments','update')) { <button type="button" aria-label="Edit payment" title="Edit payment" (click)="editPayment(payment)"><img src="assets/icons/actions/edit.svg" width="16" height="16" alt="" aria-hidden="true"></button> }
+            @if (payment['isDeleted'] !== true && permissions.can('payments','delete')) { <button type="button" class="delete-action" aria-label="Delete payment" title="Delete payment" (click)="requestDeletePayment(payment)"><img src="assets/icons/actions/delete.svg" width="16" height="16" alt="" aria-hidden="true"></button> }
             @if (payment['isDeleted'] === true || (!permissions.can('payments','update') && !permissions.can('payments','delete'))) { <span>—</span> }
           </td>
         </tr> } @empty { <tr>
