@@ -23,7 +23,7 @@ export const appConfig: ApplicationConfig = {
       progressBar: true,
       newestOnTop: true,
       preventDuplicates: true,
-      maxOpened: 4,
+      maxOpened: 3,
       autoDismiss: true
     }),
     { provide: DATA_ADAPTER, useClass: JsonFileAdapter }
