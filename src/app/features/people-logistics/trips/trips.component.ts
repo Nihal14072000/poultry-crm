@@ -7,6 +7,7 @@ import { TripApiService } from '../../../common/services/trip-api.service';
 import { TripService } from '../../../common/services/trip.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
+import { ToastService } from '../../../common/services/toast.service';
 
 @Component({
   selector: 'app-trips',
@@ -20,16 +21,16 @@ export class TripsComponent implements OnInit {
   loading = true;
   errorMessage = '';
   deletingTripId: string | null = null;
-  successMessage: string;
 
   constructor(
     private readonly tripService: TripApiService,
     private readonly tripRecords: TripService,
     private readonly router: Router,
-    readonly rolePermissions: RolePermissionService
+    readonly rolePermissions: RolePermissionService,
+    private readonly toast: ToastService
   ) {
     const state = router.getCurrentNavigation()?.extras.state as { successMessage?: string } | undefined;
-    this.successMessage = state?.successMessage ?? '';
+    if (state?.successMessage) this.toast.success(state.successMessage);
   }
 
   get canOpenTripDeliveries(): boolean {
@@ -50,11 +51,10 @@ export class TripsComponent implements OnInit {
 
     this.deletingTripId = id;
     this.errorMessage = '';
-    this.successMessage = '';
     try {
       await this.tripRecords.softDeleteTrip(id);
       trip['status'] = 'Deleted';
-      this.successMessage = 'Trip deleted successfully.';
+      this.toast.success('Trip deleted successfully.');
     } catch (error) {
       this.errorMessage = error instanceof Error ? error.message : 'Trip could not be deleted. Try again.';
     } finally {

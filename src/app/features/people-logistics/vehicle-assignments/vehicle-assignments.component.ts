@@ -9,6 +9,7 @@ import { GridActionsCellComponent } from '../../../common/components/data-grid/g
 import { firstValueFrom } from 'rxjs';
 import { DirectoryService } from '../../../common/services/directory.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
+import { ToastService } from '../../../common/services/toast.service';
 
 type FleetRecord = Record<string, string | number>;
 
@@ -36,11 +37,11 @@ export class VehicleAssignmentsComponent implements OnInit {
   loading = true;
   saving = false;
   errorMessage = '';
-  successMessage = '';
 
   constructor(
     private readonly directories: DirectoryService,
-    readonly rolePermissions: RolePermissionService
+    readonly rolePermissions: RolePermissionService,
+    private readonly toast: ToastService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -164,13 +165,11 @@ export class VehicleAssignmentsComponent implements OnInit {
     const employee = this.availableDrivers.find((item) => item['_demoId'] === this.selectedDriverId);
     if (!vehicle || !employee || !this.assignedDate) {
       this.errorMessage = 'Select an available vehicle, an available driver, and an assignment date.';
-      this.successMessage = '';
       return;
     }
 
     this.saving = true;
     this.errorMessage = '';
-    this.successMessage = '';
     try {
       const saved = await firstValueFrom(this.directories.createRecord('vehicle-assignments', {
         vehicleId: String(vehicle['_demoId']),
@@ -184,7 +183,7 @@ export class VehicleAssignmentsComponent implements OnInit {
       this.selectedVehicleId = '';
       this.selectedDriverId = '';
       this.assignedDate = localDateString();
-      this.successMessage = `${vehicle['vehicle']} assigned to ${employee['name']}. Vehicle particulars are linked to the employee record.`;
+      this.toast.success(`${vehicle['vehicle']} assigned to ${employee['name']}. Vehicle particulars are linked to the employee record.`);
     } catch {
       this.errorMessage = 'The vehicle assignment could not be saved. Please try again.';
     } finally {
@@ -197,7 +196,7 @@ export class VehicleAssignmentsComponent implements OnInit {
     if (!id || !this.rolePermissions.can('vehicle-assignments', 'transition') || this.saving) return;
     this.saving = true;
     this.errorMessage = '';
-    this.successMessage = '';
+
     try {
       const returned = await firstValueFrom(this.directories.updateRecord('vehicle-assignments', id, {
         ...assignment,
@@ -205,7 +204,7 @@ export class VehicleAssignmentsComponent implements OnInit {
         status: 'Returned'
       }));
       this.assignments = this.assignments.map((item) => item['_demoId'] === id ? returned : item);
-      this.successMessage = 'Assignment closed. The vehicle and driver are available for another assignment.';
+      this.toast.success('Assignment closed. The vehicle and driver are available for another assignment.');
     } catch {
       this.errorMessage = 'The assignment could not be closed. Please try again.';
     } finally {

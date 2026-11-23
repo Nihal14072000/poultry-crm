@@ -11,6 +11,7 @@ import { RolePermissionService } from '../../../common/services/role-permission.
 import { SessionAuthService } from '../../../common/services/session-auth.service';
 import { DemoUser } from '../../../common/models/auth.model';
 import { forkJoin } from 'rxjs';
+import { ToastService } from '../../../common/services/toast.service';
 
 @Component({
   selector: 'app-users-roles',
@@ -26,14 +27,14 @@ export class UsersRolesComponent implements OnInit {
   loading = true;
   savingId = '';
   error = '';
-  success = '';
   addUserOpen = false;
   newUser = { name: '', email: '', role: 'Farm Supervisor', businessUnit: '' };
 
   constructor(
     private readonly directories: DirectoryService,
     readonly rolePermissions: RolePermissionService,
-    readonly auth: SessionAuthService
+    readonly auth: SessionAuthService,
+    private readonly toast: ToastService
   ) {
     this.roleNames = rolePermissions.roleNames;
   }
@@ -128,7 +129,6 @@ export class UsersRolesComponent implements OnInit {
     if (!id || !this.rolePermissions.canManageRoles() || this.savingId) return;
     this.savingId = id;
     this.error = '';
-    this.success = '';
     const updated = {
       ...user,
       permissions: this.permissionSummary(user.role)
@@ -137,7 +137,7 @@ export class UsersRolesComponent implements OnInit {
       next: (saved) => {
         const savedUser = this.toDemoUser(saved);
         this.users = this.users.map((item) => item['_demoId'] === id ? savedUser : item);
-        this.success = `Access updated for ${savedUser.name}.`;
+        this.toast.success(`Access updated for ${savedUser.name}.`);
         this.savingId = '';
       },
       error: () => {
@@ -149,7 +149,7 @@ export class UsersRolesComponent implements OnInit {
 
   addUser(): void {
     this.error = '';
-    this.success = '';
+
     const name = this.newUser.name.trim();
     const email = this.newUser.email.trim().toLowerCase();
     if (!this.rolePermissions.canManageRoles()) return;
@@ -180,7 +180,7 @@ export class UsersRolesComponent implements OnInit {
         this.users = [...this.users, this.toDemoUser(created)];
         this.newUser = { name: '', email: '', role: 'Farm Supervisor', businessUnit: '' };
         this.addUserOpen = false;
-        this.success = `Created ${name}. This browser demo uses the shared password ${'demo1234'} for active accounts.`;
+        this.toast.success(`Created ${name}. This browser demo uses the shared password ${'demo1234'} for active accounts.`);
         this.savingId = '';
       },
       error: () => {

@@ -11,8 +11,7 @@
       (permissions.can('payments','create')) { <a class="button primary" routerLink="/finance/record">＋ Record
         payment</a> }</div>
   </header>
-  @if (success) { <p class="feedback success" role="status">{{ success }}</p> } @if (error) { <p class="feedback error"
-    role="alert">{{ error }}</p> }
+  @if (error) { <p class="feedback error" role="alert">{{ error }}</p> }
   @if (view !== 'record') { <div class="toolbar"><label>Trip<select [(ngModel)]="tripId" (ngModelChange)="changeTrip()">
         <option value="">All trips</option>@for (trip of trips; track trip['_demoId']) { <option
           [value]="trip['_demoId']">{{ trip['tripNumber'] }} · {{ trip['tripDate'] }}</option> }

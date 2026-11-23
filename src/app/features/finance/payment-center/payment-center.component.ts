@@ -8,6 +8,7 @@ import { TripRecord } from '../../../common/models/trip.model';
 import { TripApiService } from '../../../common/services/trip-api.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { StatusPillPipe } from '../../../common/pipes/status-pill.pipe';
+import { ToastService } from '../../../common/services/toast.service';
 
 type View = 'overview' | 'receivables' | 'payables' | 'payments' | 'record' | 'allocate' | 'trip-summary';
 type FormValue = Omit<PaymentInput, 'partyId'> & { partyId: number | null };
@@ -16,14 +17,14 @@ type PaymentTrend = { label: string; month: string; receipts: number; payouts: n
 
 @Component({ selector: 'app-payment-center', standalone: true, imports: [CommonModule, LoadingSkeletonComponent, FormsModule, RouterLink, CurrencyPipe, StatusPillPipe], templateUrl: './payment-center.component.html', styleUrl: './payment-center.component.css' })
 export class PaymentCenterComponent implements OnInit {
-  view: View = 'overview'; loading = true; saving = false; error = ''; success = ''; query = ''; statusFilter = ''; tripId = ''; partyId = ''; paymentPartyFilter = '';
+  view: View = 'overview'; loading = true; saving = false; error = ''; query = ''; statusFilter = ''; tripId = ''; partyId = ''; paymentPartyFilter = '';
   trips: TripRecord[] = []; parties: TripRecord[] = []; paymentParties: PaymentPartyOption[] = []; records: FinanceRecord[] = []; payments: FinanceRecord[] = []; settlements: FinanceRecord[] = []; summary?: FinanceRecord; financeSummary?: FinanceRecord;
   selectedPaymentId = ''; allocations: Record<string, number> = {}; editingPaymentId = ''; deleteCandidate?: FinanceRecord;
   readonly methods: PaymentMethod[] = ['BANK_TRANSFER', 'CASH', 'CHEQUE', 'UPI', 'CARD', 'OTHER'];
   readonly statuses: PaymentStatus[] = ['PENDING', 'COMPLETED', 'FAILED', 'VOID'];
   form: FormValue = this.newForm();
   amountInputDisplay = '0';
-  constructor(private readonly route: ActivatedRoute, private readonly router: Router, private readonly api: FinanceApiService, private readonly tripsApi: TripApiService, readonly permissions: RolePermissionService) {}
+  constructor(private readonly route: ActivatedRoute, private readonly router: Router, private readonly api: FinanceApiService, private readonly tripsApi: TripApiService, readonly permissions: RolePermissionService, private readonly toast: ToastService) {}
   async ngOnInit(): Promise<void> { this.view = this.route.snapshot.routeConfig?.path as View || 'overview'; this.tripId = this.route.snapshot.queryParamMap.get('tripId') ?? ''; await this.load(); }
   async load(): Promise<void> {
     this.loading = true; this.error = '';
@@ -135,7 +136,7 @@ export class PaymentCenterComponent implements OnInit {
       return;
     }
     this.error = '';
-    this.success = '';
+
     this.editingPaymentId = this.id(payment);
     this.form = {
       paymentType: paymentType as PaymentType,
@@ -176,21 +177,20 @@ export class PaymentCenterComponent implements OnInit {
       if (this.editingPaymentId) {
         const updated = await this.api.updatePayment(this.editingPaymentId, this.form as PaymentInput);
         this.payments = this.payments.map(payment => this.id(payment) === this.editingPaymentId ? { ...payment, ...updated } : payment);
-        this.success = 'Payment updated.';
+        this.toast.success('Payment updated successfully.');
         this.editingPaymentId = '';
       } else {
         await this.api.createPayment(this.form as PaymentInput);
-        this.success = 'Payment recorded.';
+        this.toast.success('Payment created successfully.');
         this.form = this.newForm();
         this.amountInputDisplay = '0';
       }
-    } catch (e) { this.error = e instanceof Error ? e.message : 'Payment could not be saved.'; }
+    } catch (e) { this.toast.error(e instanceof Error ? e.message : 'Payment could not be saved.'); }
     finally { this.saving = false; }
   }
   requestDeletePayment(payment: FinanceRecord): void {
     if (!this.permissions.can('payments', 'delete') || payment['isDeleted'] === true) return;
     this.error = '';
-    this.success = '';
     if (!this.id(payment)) {
       this.error = 'This payment is missing its ID and cannot be marked deleted.';
       return;
@@ -211,12 +211,12 @@ export class PaymentCenterComponent implements OnInit {
       await this.api.deletePayment(id);
       payment['isDeleted'] = true;
       payment['isActive'] = false;
-      this.success = 'Payment deleted.';
+      this.toast.success('Payment deleted successfully.');
       this.deleteCandidate = undefined;
-    } catch (e) { this.error = e instanceof Error ? e.message : 'Payment could not be deleted.'; }
+    } catch (e) { this.toast.error(e instanceof Error ? e.message : 'Payment could not be deleted.'); }
     finally { this.saving = false; }
   }
-  async submitAllocations(): Promise<void> { if (!this.selectedPayment || !this.permissions.can('payments','update')) return; const rows = Object.entries(this.allocations).filter(([, amount]) => Number(amount)>0); if (!rows.length || this.paymentRemaining < 0) { this.error='Enter allocations within the remaining payment amount.'; return; } for (const [id, amount] of rows) { const settlement = this.settlements.find(s=>this.id(s)===id); if (!settlement || Number(amount)>this.money(settlement,'outstandingBalance','balance')) { this.error='An allocation exceeds its settlement balance.'; return; } } this.saving=true; this.error=''; try { for (const [settlementId, amount] of rows) await this.api.allocate({paymentId:Number(this.id(this.selectedPayment)),settlementId:Number(settlementId),amount:Number(amount)}); this.success='Allocation saved.'; this.allocations={}; await this.load(); } catch(e) { this.error=e instanceof Error?e.message:'Allocation could not be saved.'; } finally { this.saving=false; } }
+  async submitAllocations(): Promise<void> { if (!this.selectedPayment || !this.permissions.can('payments','update')) return; const rows = Object.entries(this.allocations).filter(([, amount]) => Number(amount)>0); if (!rows.length || this.paymentRemaining < 0) { this.error='Enter allocations within the remaining payment amount.'; return; } for (const [id, amount] of rows) { const settlement = this.settlements.find(s=>this.id(s)===id); if (!settlement || Number(amount)>this.money(settlement,'outstandingBalance','balance')) { this.error='An allocation exceeds its settlement balance.'; return; } } this.saving=true; this.error=''; try { for (const [settlementId, amount] of rows) await this.api.allocate({paymentId:Number(this.id(this.selectedPayment)),settlementId:Number(settlementId),amount:Number(amount)}); this.toast.success('Payment allocation saved successfully.'); this.allocations={}; await this.load(); } catch(e) { this.toast.error(e instanceof Error?e.message:'Allocation could not be saved.'); } finally { this.saving=false; } }
   changeTrip(): void { void this.load(); }
   validForm(): boolean { const f=this.form; if (!f.partyId || !Number.isFinite(Number(f.amount)) || Number(f.amount)<=0 || !/^\d{4}-\d{2}-\d{2}$/.test(f.paymentDate)) { this.error='Party, positive amount, and payment date are required.'; return false; } return true; }
   id(row?: FinanceRecord): string { return String(row?.['id'] ?? row?.['paymentId'] ?? row?.['settlementId'] ?? ''); }

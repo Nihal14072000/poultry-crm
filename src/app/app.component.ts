@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { HeaderControlsComponent } from './common/components/header-controls/header-controls.component';
+import { ToastContainerComponent } from './common/components/toast-container/toast-container.component';
 import { navigationScreenResources } from './common/config/screen-visibility.config';
 import { RolePermissionService } from './common/services/role-permission.service';
 import { SessionAuthService } from './common/services/session-auth.service';
@@ -8,7 +9,7 @@ import { SessionAuthService } from './common/services/session-auth.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [HeaderControlsComponent, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [HeaderControlsComponent, ToastContainerComponent, RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
