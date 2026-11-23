@@ -1,6 +1,6 @@
 .delivery-page { animation: arrive .2s ease-out; }
 .page-heading,.section-heading,.trip-card,.reconcile { align-items:center; display:flex; justify-content:space-between; gap:16px; }
-.page-heading { margin-bottom:20px; }
+.page-heading { margin-bottom:10px; }
 .page-heading h1 { color:#26372d; font-size:25px; margin:8px 0 4px; }
 .page-heading p,.trip-card p,.reconcile p { color:#858f87; font-size:12px; margin:5px 0; }
 .eyebrow,.step { color:#8c978e; font-size:9px; font-weight:700; letter-spacing:.95px; }
@@ -32,6 +32,10 @@ input,select,textarea { background:#fff; border:1px solid #dfe5dd; border-radius
 .summary-grid strong { color:#34443a; font-size:17px; }
 .summary-grid article.payment-due { background:#fff3ef; border-color:#f1d0c8; }
 .summary-grid article.payment-due strong { color:#a25243; }
+.summary-grid article.profit-positive { background:#edf6ef; border-color:#cfe4d2; }
+.summary-grid article.profit-positive strong { color:#347044; }
+.summary-grid article.profit-nonpositive { background:#fff3ef; border-color:#f1d0c8; }
+.summary-grid article.profit-nonpositive strong { color:#a25243; }
 .table-wrap { overflow-x:auto; }
 .inline-entry { padding:4px; }
 table { border-collapse:collapse; min-width:700px; text-align:left; width:100%; }
