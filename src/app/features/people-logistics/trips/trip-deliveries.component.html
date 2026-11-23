@@ -29,8 +29,8 @@
           }
           @if (activePickupVendorId === form.vendorId) {
             <div class="pickup-entry-grid">
-              <label>Actual broiler qty *<input type="number" min="1" step="1" required [name]="'pickup-broiler-' + form.vendorId" [(ngModel)]="form.broiler" [disabled]="saving"></label>
-              <label>Actual broiler kg *<input type="number" min="0.01" step="0.01" required [name]="'pickup-broiler-weight-' + form.vendorId" [(ngModel)]="form.broilerWeight" [disabled]="saving"></label>
+              <label>Actual broiler qty (optional)<input type="number" min="0" step="1" [name]="'pickup-broiler-' + form.vendorId" [(ngModel)]="form.broiler" [disabled]="saving"></label>
+              <label>Actual broiler kg (optional)<input type="number" min="0" step="0.01" [name]="'pickup-broiler-weight-' + form.vendorId" [(ngModel)]="form.broilerWeight" [disabled]="saving"></label>
               <label>Actual culls qty (optional)<input type="number" min="0" step="1" [name]="'pickup-culls-' + form.vendorId" [(ngModel)]="form.culls" [disabled]="saving"></label>
               <label>Actual culls kg (optional)<input type="number" min="0" step="0.01" [name]="'pickup-culls-weight-' + form.vendorId" [(ngModel)]="form.cullsWeight" [disabled]="saving"></label>
               <label>Actual feed qty ({{ trip['feedUnit'] }}, optional)<input type="number" min="0" step="1" [name]="'pickup-feed-' + form.vendorId" [(ngModel)]="form.feed" [disabled]="saving"></label>
