@@ -1,0 +1,105 @@
+<main class="expenses-page">
+  <header class="page-heading">
+    <div>
+      <div class="eyebrow">FINANCE <span>/</span> EXPENSES</div>
+      <h1>Expenses</h1>
+      <p>Operating and trip expenses retrieved from the expenses API.</p>
+    </div>
+    @if (permissions.can('expenses', 'create')) {
+      <button type="button" class="button primary" (click)="openCreate()">＋ Add expense</button>
+    }
+  </header>
+
+  @if (error) { <p class="feedback error" role="alert">{{ error }}</p> }
+
+  <div class="toolbar">
+    <label>Trip
+      <select [(ngModel)]="tripFilter">
+        <option value="">All trips</option>
+        @for (trip of trips; track trip['_demoId']) {
+          <option [value]="trip['_demoId']">{{ trip['tripNumber'] }} · {{ trip['tripDate'] }}</option>
+        }
+      </select>
+    </label>
+    <label class="search">Search
+      <input type="search" [(ngModel)]="query" placeholder="Search category, note or trip">
+    </label>
+  </div>
+
+  @if (loading) {
+    <app-loading-skeleton variant="finance" />
+  } @else {
+    <section class="summary">
+      <span>{{ filteredExpenses.length }} expense records</span>
+      <strong>{{ totalAmount | currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong>
+    </section>
+    <section class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>TRIP</th><th>CATEGORY</th><th>DATE</th><th>NOTE</th><th>AMOUNT</th><th>ACTIONS</th></tr></thead>
+          <tbody>
+            @for (expense of filteredExpenses; track expense['id']) {
+              <tr>
+                <td>{{ tripLabel(expense) }}</td>
+                <td>{{ categoryLabel(expense['category']) }}</td>
+                <td>{{ expense['expenseDate'] || '—' }}</td>
+                <td class="note">{{ expense['note'] || '—' }}</td>
+                <td class="money">{{ amount(expense) | currency:'INR':'symbol':'1.2-2':'en-IN' }}</td>
+                <td class="actions">
+                  @if (permissions.can('expenses', 'update')) {
+                    <button type="button" title="Edit expense" aria-label="Edit expense" (click)="edit(expense)"><img src="assets/icons/actions/edit.svg" alt=""></button>
+                  }
+                  @if (permissions.can('expenses', 'delete')) {
+                    <button type="button" class="delete" title="Delete expense" aria-label="Delete expense" (click)="remove(expense)"><img src="assets/icons/actions/delete.svg" alt=""></button>
+                  }
+                  @if (!permissions.can('expenses', 'update') && !permissions.can('expenses', 'delete')) { <span>—</span> }
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="empty">No expenses match the selected filters.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  @if (formOpen) {
+    <div class="dialog-backdrop" (click)="closeForm()">
+      <section class="expense-dialog" role="dialog" aria-modal="true" aria-labelledby="expense-form-title" (click)="$event.stopPropagation()">
+        <h2 id="expense-form-title">{{ editingId ? 'Edit expense' : 'Add expense' }}</h2>
+        <form (ngSubmit)="save()">
+          <div class="form-grid">
+            <label>Trip (optional)
+              <select [(ngModel)]="form.tripId" name="tripId" [disabled]="saving">
+                <option [ngValue]="null">General expense</option>
+                @for (trip of trips; track trip['_demoId']) {
+                  <option [ngValue]="+trip['_demoId']">{{ trip['tripNumber'] }} · {{ trip['tripDate'] }}</option>
+                }
+              </select>
+            </label>
+            <label>Category
+              <select [(ngModel)]="form.category" name="category" required [disabled]="saving">
+                @for (category of categories; track category) { <option [value]="category">{{ categoryLabel(category) }}</option> }
+              </select>
+            </label>
+            <label>Amount (₹)
+              <input type="number" min="0.01" step="0.01" [(ngModel)]="form.amount" name="amount" required [disabled]="saving">
+            </label>
+            <label>Expense date
+              <input type="date" [(ngModel)]="form.expenseDate" name="expenseDate" required [disabled]="saving">
+            </label>
+            <label class="wide">Note
+              <textarea [(ngModel)]="form.note" name="note" maxlength="500" [disabled]="saving"></textarea>
+            </label>
+          </div>
+          @if (error) { <p class="feedback error" role="alert">{{ error }}</p> }
+          <div class="dialog-actions">
+            <button type="button" class="button secondary" (click)="closeForm()" [disabled]="saving">Cancel</button>
+            <button type="submit" class="button primary" [disabled]="saving">{{ saving ? 'Saving…' : editingId ? 'Save changes' : 'Save expense' }}</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  }
+</main>
