@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PartyDirectoryRecord, TripApiService } from '../../../common/services/trip-api.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
 import { PartyLoadingSkeletonComponent } from './party-loading-skeleton.component';
+import { ToastService } from '../../../common/services/toast.service';
 
 type PartyType = 'buying' | 'selling';
 
@@ -26,7 +27,6 @@ export class PartyDirectoryComponent implements OnInit {
   editorMode: 'create' | 'edit' = 'create';
   editingParty?: PartyDirectoryRecord;
   deleteCandidate?: PartyDirectoryRecord;
-  successMessage = '';
   actionError = '';
   formError = '';
   partyForm = { name: '', contact: '', location: '', outstanding: 0, isActive: true };
@@ -34,7 +34,8 @@ export class PartyDirectoryComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     private readonly tripApi: TripApiService,
-    private readonly rolePermissions: RolePermissionService
+    private readonly rolePermissions: RolePermissionService,
+    private readonly toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -108,7 +109,6 @@ export class PartyDirectoryComponent implements OnInit {
 
     this.saving = true;
     this.formError = '';
-    this.successMessage = '';
     this.actionError = '';
     try {
       if (this.editorMode === 'edit' && this.editingParty) {
@@ -121,7 +121,7 @@ export class PartyDirectoryComponent implements OnInit {
       }
       this.editorOpen = false;
       this.editingParty = undefined;
-      this.successMessage = `${this.partyType === 'buying' ? 'Buying party' : 'Selling party'} ${this.editorMode === 'edit' ? 'updated' : 'added'} successfully.`;
+      this.toast.success(`${this.partyType === 'buying' ? 'Buying party' : 'Selling party'} ${this.editorMode === 'edit' ? 'updated' : 'added'} successfully.`);
       await this.loadParties();
     } catch {
       this.formError = `The party could not be ${this.editorMode === 'edit' ? 'updated' : 'saved'}. Please try again.`;
@@ -161,7 +161,7 @@ export class PartyDirectoryComponent implements OnInit {
         isDeleted: true
       });
       this.deleteCandidate = undefined;
-      this.successMessage = `${this.partyType === 'buying' ? 'Buying party' : 'Selling party'} deleted successfully.`;
+      this.toast.success(`${this.partyType === 'buying' ? 'Buying party' : 'Selling party'} deleted successfully.`);
       await this.loadParties();
     } catch {
       this.actionError = 'The party could not be deleted. Please try again.';
