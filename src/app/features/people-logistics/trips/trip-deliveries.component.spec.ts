@@ -98,6 +98,18 @@ describe('TripDeliveriesComponent payments', () => {
     expect(component.deliveryLineRate('51', 'feed')).toBe(0);
   });
 
+  it('calculates trip profit after purchases and expenses', () => {
+    component.deliveries = [{ deliveryTotal: 1000 }];
+    component.supplierReceipts = [{ total: 400 }];
+    component.tripExpenses = [
+      { amount: 100 },
+      { amount: 50, isDeleted: true },
+      { amount: 25, isActive: false }
+    ];
+
+    expect(component.tripProfit()).toBe(500);
+  });
+
   it('toggles expanded destination details independently', () => {
     component.toggleDestinationDetails('51');
     component.toggleDestinationDetails('52');
@@ -202,6 +214,16 @@ describe('TripDeliveriesComponent payments', () => {
     expect(component.totalPaymentReceived()).toBe(450);
     expect(component.totalSupplierPaymentsMade()).toBe(200);
     expect(component.paymentsToBeDone()).toBe(500);
+  });
+
+  it('calculates buyer payment due from sales and received payments without going negative', () => {
+    component.deliveries = [{ deliveryTotal: 900 }];
+    component.tripPayments = [{ paymentType: 'BUYER_RECEIPT', status: 'COMPLETED', amount: 600 }];
+
+    expect(component.buyerPaymentsDue()).toBe(300);
+
+    component.tripPayments = [{ paymentType: 'BUYER_RECEIPT', status: 'COMPLETED', amount: 1000 }];
+    expect(component.buyerPaymentsDue()).toBe(0);
   });
 
   it('does not reduce trip supplier outstanding for a payout to a supplier outside the trip', () => {

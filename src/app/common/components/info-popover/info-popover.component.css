@@ -2,7 +2,7 @@
   display: inline-flex;
   position: relative;
   vertical-align: middle;
-  z-index: 20;
+  z-index: 2;
 }
 
 .info-popover {
@@ -58,7 +58,7 @@
   line-height: 1.5;
   white-space: normal;
   text-align: left;
-  z-index: 100;
+  z-index: 2;
 }
 
 .info-panel strong {

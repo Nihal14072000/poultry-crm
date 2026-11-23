@@ -419,6 +419,7 @@ export class TripDeliveriesComponent implements OnInit {
   actualSalesTotal(): number { return this.deliveries.reduce((sum, entry) => sum + this.number(entry['deliveryTotal']), 0); }
   proposedSupplierCost(): number { return this.number(this.trip?.['grandTotal']); }
   actualSupplierCost(): number { return this.supplierReceipts.reduce((sum, receipt) => sum + this.number(receipt['total']), 0); }
+  tripProfit(): number { return this.actualSalesTotal() - this.actualSupplierCost() - this.totalTripExpenses(); }
   paymentMethodBreakdown(): { method: string; label: string; amount: number }[] {
     const totals = new Map<string, number>();
     for (const payment of this.tripPayments) {
@@ -439,6 +440,7 @@ export class TripDeliveriesComponent implements OnInit {
       .filter((payment) => payment['paymentType'] === 'BUYER_RECEIPT' && payment['status'] === 'COMPLETED' && payment['isDeleted'] !== true)
       .reduce((sum, payment) => sum + this.number(payment['amount']), 0);
   }
+  buyerPaymentsDue(): number { return Math.max(0, this.actualSalesTotal() - this.totalPaymentReceived()); }
   totalSupplierPaymentsMade(): number {
     const currentTripSupplierIds = new Set(this.supplierPickups.map((pickup) => String(pickup.vendorId)));
     return this.tripPayments
