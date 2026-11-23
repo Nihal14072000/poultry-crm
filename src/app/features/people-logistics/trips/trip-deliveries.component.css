@@ -80,3 +80,7 @@ td small { color:#879289; margin-top:3px; }
 .payment-method-grid article { background:#f8faf7; border:1px solid #e8ede6; border-radius:8px; display:flex; flex-direction:column; gap:5px; padding:11px 12px; }
 .payment-method-grid span { color:#78847a; font-size:10px; }
 .payment-method-grid strong { color:#34443a; font-size:16px; }
+
+.expense-total { align-items:center; background:#f8faf7; border:1px solid #e8ede6; border-radius:8px; display:flex; justify-content:space-between; margin:12px 0; padding:12px 14px; }
+.expense-total span { color:#78847a; font-size:11px; }
+.expense-total strong { color:#34443a; font-size:17px; }

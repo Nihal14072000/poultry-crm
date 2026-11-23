@@ -1,5 +1,6 @@
 import { ActivatedRoute, Router } from '@angular/router';
 import { FinanceApiService } from '../../../common/services/finance-api.service';
+import { ExpenseApiService } from '../../../common/services/expenses-api.service';
 import { TripDeliveryData } from '../../../common/services/trip-api.service';
 import { SessionAuthService } from '../../../common/services/session-auth.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
@@ -11,6 +12,7 @@ describe('TripDeliveriesComponent payments', () => {
   let component: TripDeliveriesComponent;
   let service: jasmine.SpyObj<TripService>;
   let finance: jasmine.SpyObj<FinanceApiService>;
+  let expensesApi: jasmine.SpyObj<ExpenseApiService>;
   let tripApi: jasmine.SpyObj<TripApiService>;
 
   beforeEach(() => {
@@ -32,6 +34,11 @@ describe('TripDeliveriesComponent payments', () => {
       loadedBirds: 0
     } satisfies TripDeliveryData);
     finance = jasmine.createSpyObj<FinanceApiService>('FinanceApiService', ['payments', 'paymentsForTrip', 'createPayment', 'updatePayment', 'deletePayment']);
+    expensesApi = jasmine.createSpyObj<ExpenseApiService>('ExpenseApiService', ['expensesForTrip', 'createExpense', 'updateExpense', 'deleteExpense']);
+    expensesApi.expensesForTrip.and.resolveTo([]);
+    expensesApi.createExpense.and.resolveTo({ id: 91 });
+    expensesApi.updateExpense.and.resolveTo({ id: 91 });
+    expensesApi.deleteExpense.and.resolveTo();
     tripApi = jasmine.createSpyObj<TripApiService>('TripApiService', ['getBuyingParties', 'getSellingParties']);
     tripApi.getBuyingParties.and.resolveTo([
       { _demoId: '31', id: 31, name: 'Supplier', contact: '', location: '', isActive: true, isDeleted: false, status: 'Active' },
@@ -50,6 +57,7 @@ describe('TripDeliveriesComponent payments', () => {
     component = new TripDeliveriesComponent(
       service,
       finance,
+      expensesApi,
       tripApi,
       route,
       router,
@@ -63,6 +71,54 @@ describe('TripDeliveriesComponent payments', () => {
 
     expect(finance.paymentsForTrip).toHaveBeenCalledWith('12');
     expect(component.tripPayments).toEqual([{ id: 21, tripId: 12, amount: 25 }]);
+  });
+
+  it('loads expenses for the selected trip', async () => {
+    expensesApi.expensesForTrip.and.resolveTo([
+      { id: 91, tripId: 12, category: 'FUEL', amount: 250, expenseDate: '2026-11-23' }
+    ]);
+    await component.ngOnInit();
+
+    expect(expensesApi.expensesForTrip).toHaveBeenCalledWith('12');
+    expect(component.tripExpenses).toEqual([
+      { id: 91, tripId: 12, category: 'FUEL', amount: 250, expenseDate: '2026-11-23' }
+    ]);
+    expect(component.totalTripExpenses()).toBe(250);
+  });
+
+  it('creates an expense linked to the current trip', async () => {
+    component.trip = { _demoId: '12' };
+    component.expenseCategory = 'FUEL';
+    component.expenseAmount = 125.5;
+    component.expenseDate = '2026-11-23';
+    component.expenseNote = 'Diesel';
+    expensesApi.expensesForTrip.and.resolveTo([{ id: 92, tripId: 12, category: 'FUEL', amount: 125.5 }]);
+
+    await component.saveExpense();
+
+    expect(expensesApi.createExpense).toHaveBeenCalledWith(jasmine.objectContaining({
+      tripId: 12, category: 'FUEL', amount: 125.5, expenseDate: '2026-11-23', note: 'Diesel',
+      isActive: true, isDeleted: false
+    }));
+    expect(component.totalTripExpenses()).toBe(125.5);
+    expect(component.showExpenseForm).toBeFalse();
+  });
+
+  it('updates and deletes an existing trip expense', async () => {
+    spyOn(window, 'confirm').and.returnValue(true);
+    component.trip = { _demoId: '12' };
+    component.tripExpenses = [{ id: 91, tripId: 12, category: 'FUEL', amount: 100, expenseDate: '2026-11-22', note: 'Old' }];
+    component.editExpense(component.tripExpenses[0]);
+    component.expenseAmount = 150;
+    component.expenseNote = 'Updated diesel';
+    await component.saveExpense();
+
+    expect(expensesApi.updateExpense).toHaveBeenCalledWith('91', jasmine.objectContaining({
+      id: 91, tripId: 12, amount: 150, note: 'Updated diesel'
+    }));
+
+    await component.deleteExpense({ id: 91, tripId: 12 });
+    expect(expensesApi.deleteExpense).toHaveBeenCalledWith('91');
   });
 
   it('allows adding a route stop or supplier pickup only with trip update permission', () => {

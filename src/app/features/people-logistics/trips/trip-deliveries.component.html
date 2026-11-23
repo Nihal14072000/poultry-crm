@@ -153,6 +153,27 @@
         <button class="button button-primary save-button" type="button" (click)="savePayment()" [disabled]="saving">{{ saving ? 'Saving…' : editingPaymentId ? 'Update payment' : 'Save payment' }}</button>
       }
     </section>
+    <section class="panel payment-panel">
+      <div class="section-heading"><div><span class="step">TRIP EXPENSES</span><h2>Trip expenses</h2></div><button class="button button-secondary" type="button" (click)="toggleExpenseForm()" [disabled]="saving">{{ showExpenseForm ? 'Cancel' : tripExpenses.length ? 'Add another expense' : 'Add expense' }}</button></div>
+      <p class="readonly">Record costs incurred during this trip. Expenses are linked to the active trip and can be edited or deleted from this list.</p>
+      <div class="expense-total"><span>Total trip expenses</span><strong>{{ totalTripExpenses() | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+      @if (tripExpenses.length) {
+        <div class="table-wrap"><table><thead><tr><th>CATEGORY</th><th>AMOUNT</th><th>DATE</th><th>NOTE</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody>
+          @for (expense of tripExpenses; track $index) {
+            <tr><td>{{ expenseCategoryLabel(expense['category']) }}</td><td>{{ number(expense['amount']) | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ expense['expenseDate'] }}</td><td>{{ expense['note'] || '—' }}</td><td>{{ expense['isDeleted'] === true ? 'Deleted' : expense['isActive'] === false ? 'Inactive' : 'Active' }}</td><td>@if (expense['isDeleted'] !== true) { <button class="link-button" type="button" (click)="editExpense(expense)">Edit</button><button class="link-button" type="button" (click)="deleteExpense(expense)" [disabled]="saving">Delete</button> } @else { <span>—</span> }</td></tr>
+          }
+        </tbody></table></div>
+      } @else { <p class="empty">No expenses have been recorded for this trip.</p> }
+      @if (showExpenseForm) {
+        <div class="form-grid">
+          <label>Category<select name="expenseCategory" [(ngModel)]="expenseCategory"><option value="TRANSPORT">Transport</option><option value="LOADING">Loading</option><option value="FUEL">Fuel</option><option value="MARKET_FEE">Market fee</option><option value="OTHER">Other</option>@if (!expenseCategories.includes(expenseCategory)) { <option [value]="expenseCategory">{{ expenseCategoryLabel(expenseCategory) }}</option> }</select></label>
+          <label>Amount<input name="expenseAmount" type="number" min="0.01" step="0.01" [(ngModel)]="expenseAmount" [disabled]="saving"></label>
+          <label>Date<input name="expenseDate" type="date" [(ngModel)]="expenseDate" [disabled]="saving"></label>
+          <label>Note<input name="expenseNote" maxlength="500" [(ngModel)]="expenseNote" placeholder="Optional expense details" [disabled]="saving"></label>
+        </div>
+        <button class="button button-primary save-button" type="button" (click)="saveExpense()" [disabled]="saving">{{ saving ? 'Saving…' : editingExpenseId ? 'Update expense' : 'Save expense' }}</button>
+      }
+    </section>
     <section class="panel reconcile">
       <div>
         <span class="step">RECONCILIATION</span>
