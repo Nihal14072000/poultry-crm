@@ -366,7 +366,7 @@ export class TripApiService {
     const expenses = (response.expenses ?? [])
       .map((expense) => Object.fromEntries(Object.entries(expense).map(([key, value]) => [
         key.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase()), value
-      ])) as ExpenseRecord[])
+      ])) as ExpenseRecord)
       .sort((a, b) => String(b['expenseDate'] ?? '').localeCompare(String(a['expenseDate'] ?? '')) ||
         Number(b['id'] ?? 0) - Number(a['id'] ?? 0));
 
