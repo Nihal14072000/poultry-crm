@@ -284,7 +284,7 @@ export class TripService {
       ? data.deliveries.find((item) => String(item['_demoId'] ?? '') === existingDeliveryId &&
         String(item['vendorDestinationId'] ?? '') === vendorDestinationId)
       : undefined;
-    if (existingDeliveryId && !existing) throw new Error('This actual delivery could not be found for the selected vendor destination.');
+    if (existingDeliveryId && !existing) throw new Error('This actual delivery could not be found for the selected Vendor Destination.');
     const validQuantity = (n: number) => Number.isSafeInteger(n) && n >= 0;
     if (!validQuantity(input.broiler) || !validQuantity(input.culls) || input.broiler + input.culls <= 0) throw new Error('Enter at least one positive whole bird quantity.');
     const broilerWeight = this.weight(input.broilerWeight, 'Broiler delivered weight');
@@ -364,10 +364,10 @@ export class TripService {
   async submitForReconciliation(tripId: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<'submitted' | 'completed'> {
     const data = await this.getDeliveryData(tripId, pendingSupplierPickupIds, pendingVendorDeliveryIds);
     if (String(data.trip['status']) === 'Completed') throw new Error('This trip has already been completed.');
-    if (!data.destinations.length) throw new Error('Assign at least one vendor destination before completion.');
+    if (!data.destinations.length) throw new Error('Assign at least one Vendor Destination before completion.');
     if (data.supplierPickups.some((pickup) => !data.supplierReceipts.some((receipt) => String(receipt['vendorId'] ?? '') === pickup.vendorId))) throw new Error('Record actual receipts for every supplier before submitting reconciliation.');
     if (data.destinations.some((destination) => !data.deliveries.some((item) => String(item['vendorDestinationId']) === String(destination['vendorDestinationId'])))) {
-      throw new Error('Record a delivery for every vendor destination before submitting.');
+      throw new Error('Record a delivery for every Vendor Destination before submitting.');
     }
     const delivered = data.deliveries.reduce((sum, item) => sum + Number(item['broiler'] ?? 0) + Number(item['culls'] ?? 0), 0);
     const mortality = data.mortalities.reduce((sum, record) => sum + Number(record['quantity'] ?? 0), 0);

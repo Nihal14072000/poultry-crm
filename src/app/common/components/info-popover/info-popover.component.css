@@ -13,23 +13,25 @@
 .info-trigger {
   display: inline-grid;
   place-items: center;
-  width: 0.625rem;
-  height: 0.625rem;
+  width: 1rem;
+  height: 1rem;
   padding: 0;
-  border: 1px solid #94a3b8;
+  border: 0;
   border-radius: 50%;
-  background: #fff;
-  color: #475569;
-  font: 600 0.375rem/1 sans-serif;
+  background: transparent;
   cursor: pointer;
+}
+
+.info-trigger img {
+  display: block;
+  width: .5rem;
+  height: .5rem;
 }
 
 .info-trigger:hover,
 .info-trigger:focus-visible,
 .info-trigger[aria-expanded='true'] {
-  border-color: #64748b;
-  background: #f1f5f9;
-  color: #0f172a;
+  opacity: .7;
 }
 
 .info-trigger:focus-visible {

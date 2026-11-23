@@ -66,8 +66,8 @@
                     <td [class.primary-value]="column.key === 'name' || column.key === 'vehicle'">{{ record[column.key] || '—' }}</td>
                   }
                   <td class="row-actions">
-                    @if (can('update')) { <button type="button" (click)="openEdit(record)">Edit</button> }
-                    @if (can('delete')) { <button type="button" class="delete-action" (click)="requestDelete(record)">Delete</button> }
+                    @if (can('update')) { <button type="button" [attr.aria-label]="'Edit ' + title" [attr.title]="'Edit ' + title" (click)="openEdit(record)"><img src="assets/icons/actions/edit.svg" width="16" height="16" alt="" aria-hidden="true"></button> }
+                    @if (can('delete')) { <button type="button" class="delete-action" [attr.aria-label]="'Delete ' + title" [attr.title]="'Delete ' + title" (click)="requestDelete(record)"><img src="assets/icons/actions/delete.svg" width="16" height="16" alt="" aria-hidden="true"></button> }
                     @if (!can('update') && !can('delete')) { <span class="immutable-label">—</span> }
                   </td>
                 </tr>
