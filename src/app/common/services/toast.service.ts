@@ -43,9 +43,16 @@ export class ToastService {
     const normalizedMessage = message.trim();
     if (!normalizedMessage) return;
 
+    const current = this.messagesSubject.value;
+    if (current.length >= 4) {
+      const oldest = current[0];
+      const oldestTimer = this.timers.get(oldest.id);
+      if (oldestTimer) clearTimeout(oldestTimer);
+      this.timers.delete(oldest.id);
+    }
+
     const id = ++this.nextId;
-    const messages = [...this.messagesSubject.value, { id, type, message: normalizedMessage }];
-    this.messagesSubject.next(messages.slice(-4));
+    this.messagesSubject.next([...current.slice(-3), { id, type, message }]);
     this.timers.set(id, setTimeout(() => this.dismiss(id), duration));
   }
 }
