@@ -350,93 +350,115 @@ describe('TripApiService', () => {
     await expectAsync(result).toBeResolved();
   });
 
-  it('loads delivery details and actual entries from backend delivery APIs', async () => {
+  it('loads all trip delivery data from the consolidated endpoint', async () => {
     const result = service.getDeliveryData('12', [], ['84']);
-    http.expectOne('http://localhost:8080/api/trips/12/retrieve').flush({
-      tripId: 12,
-      date: '2026-10-25',
-      route: 'Nashik to Pune',
-      status: 'In transit',
-      vehicle: { id: 21, name: 'Truck', vehNumber: 'MH-12-AB-4521' },
-      driver: { id: 12, name: 'Asha Patil' },
-      labour: { id: 13, name: 'Ravi Labour' },
-      supervisor: { id: 41, name: 'Supervisor One' },
-      buyingParties: [{
-        id: 31,
-        name: 'Farm Vendor',
-        order: [
-          { orderTypeId: 1, qty: 10, weight: 22, rate: 100, total: 2200 },
-          { orderTypeId: 2, qty: 0, weight: 0, rate: 40, total: 0 },
-          { orderTypeId: 3, qty: 5, weight: 5, rate: 20, total: 100 }
-        ]
+    const detailsRequest = http.expectOne('http://localhost:8080/api/trips/12/delivery-details');
+    expect(detailsRequest.request.method).toBe('GET');
+    detailsRequest.flush({
+      trip: {
+        tripId: 12,
+        date: '2026-10-25',
+        route: 'Nashik to Pune',
+        status: 'In transit',
+        vehicle: { id: 21, name: 'Truck', vehNumber: 'MH-12-AB-4521' },
+        driver: { id: 12, name: 'Asha Patil' },
+        labour: { id: 13, name: 'Ravi Labour' },
+        supervisor: { id: 41, name: 'Supervisor One' },
+        buyingParties: [{
+          id: 31,
+          name: 'Farm Vendor',
+          order: [
+            { orderTypeId: 1, qty: 10, weight: 22, rate: 100, total: 2200 },
+            { orderTypeId: 2, qty: 0, weight: 0, rate: 40, total: 0 },
+            { orderTypeId: 3, qty: 5, weight: 5, rate: 20, total: 100 }
+          ]
+        }],
+        sellingParties: [{
+          id: 51,
+          name: 'Market Vendor',
+          location: 'Pune',
+          order: [
+            { orderTypeId: 1, qty: 8, weight: 18, rate: 110, total: 1980 },
+            { orderTypeId: 2, qty: 0, weight: 0, rate: 45, total: 0 },
+            { orderTypeId: 3, qty: 0, weight: 0, rate: 25, total: 0 }
+          ]
+        }]
+      },
+      supplierPickups: [{
+        id: 81,
+        buyingParty: { id: 31, name: 'Farm Vendor' },
+        actualOrders: [
+          { orderTypeId: 1, qty: 9, weight: 20, rate: 100, total: 2000 },
+          { orderTypeId: 3, qty: 4, weight: 4, rate: 20, total: 80 }
+        ],
+        note: 'Received at farm',
+        isActive: true,
+        isDeleted: false
       }],
-      sellingParties: [{
-        id: 51,
-        name: 'Market Vendor',
-        location: 'Pune',
-        order: [
-          { orderTypeId: 1, qty: 8, weight: 18, rate: 110, total: 1980 },
-          { orderTypeId: 2, qty: 0, weight: 0, rate: 45, total: 0 },
-          { orderTypeId: 3, qty: 0, weight: 0, rate: 25, total: 0 }
-        ]
+      deliveries: [{
+        id: 75,
+        supplierPickup: { id: 81, isActive: true, isDeleted: false },
+        vendorDeliveries: [{
+          id: 82,
+          sellingParty: { id: 51, name: 'Market Vendor' },
+          actualOrders: [{ orderTypeId: 1, qty: 8, weight: 18, rate: 110, total: 1980 }],
+          note: 'Received by vendor',
+          isActive: true,
+          isDeleted: false
+        }],
+        isActive: true,
+        isDeleted: false
+      }],
+      mortalities: [
+        { id: 91, tripId: 12, combinedMortality: 1, reason: 'Transit loss', isActive: true },
+        { id: 92, tripId: 12, combinedMortality: 2, reason: 'Second loss', isActive: true }
+      ],
+      expenses: [{
+        id: 101, tripId: 12, amount: 250, category: 'FUEL',
+        expenseDate: '2026-10-25', isActive: true, isDeleted: false
       }]
     });
-    http.match('http://localhost:8080/api/order-types').forEach((request) => request.flush([
+    http.expectOne('http://localhost:8080/api/order-types').flush([
       { id: 1, name: 'Broiler', isActive: true },
       { id: 2, name: 'Culls', isActive: true },
       { id: 3, name: 'Feed', isActive: true }
-    ]));
-    http.expectOne('http://localhost:8080/api/deliveries').flush([{ id: 75, tripId: 12, isActive: true }]);
-    await Promise.resolve();
-    await Promise.resolve();
-    http.expectOne('http://localhost:8080/api/mortalities').flush([
-      { id: 91, tripId: 12, combinedMortality: 1, reason: 'Transit loss', isActive: true },
-      { id: 92, tripId: 12, combinedMortality: 2, reason: 'Second loss', isActive: true },
-      { id: 93, tripId: 13, combinedMortality: 10, reason: 'Other trip', isActive: true }
     ]);
-    http.expectOne('http://localhost:8080/api/deliveries/75/retrieve').flush({
-      id: 75,
-      supplierPickup: { id: 81 },
-      vendorDeliveries: [{
-        id: 82,
-        sellingParty: { id: 51, name: 'Market Vendor' },
-        actualOrders: [{ orderTypeId: 1, qty: 8, weight: 18, rate: 110, total: 1980 }],
-        note: 'Received by vendor'
-      }]
-    });
+
     await Promise.resolve();
     await Promise.resolve();
-    http.expectOne('http://localhost:8080/api/supplier-pickups/81/retrieve').flush({
-      id: 81,
-      buyingPartyId: 31,
-      actualOrders: [
-        { orderTypeId: 1, qty: 9, weight: 20, rate: 100, total: 2000 },
-        { orderTypeId: 3, qty: 4, weight: 4, rate: 20, total: 80 }
-      ]
-    });
-    http.expectOne('http://localhost:8080/api/vendor-deliveries/84').flush({
-      id: 84, sellingPartyId: 51, note: 'Second delivery'
-    });
-    http.expectOne('http://localhost:8080/api/vendor-deliveries/84/orders').flush([
+    const pendingVendor = http.expectOne('http://localhost:8080/api/vendor-deliveries/84');
+    const pendingOrders = http.expectOne('http://localhost:8080/api/vendor-deliveries/84/orders');
+    pendingVendor.flush({ id: 84, sellingPartyId: 51, note: 'Second delivery', isActive: true });
+    pendingOrders.flush([
       { orderTypeId: 1, qty: 1, weight: 2, rate: 110, total: 220 }
     ]);
 
-    const data = await result;
-    expect(data.trip['_demoId']).toBe('12');
-    expect(data.trip['labourId']).toBe('13');
-    expect(data.trip['labourName']).toBe('Ravi Labour');
-    expect(data.supplierReceipts[0]['broilerQuantity']).toBe(9);
-    expect(data.supplierReceipts[0]['vendorId']).toBe('31');
-    expect(data.destinations[0]['_demoId']).toBe('51');
-    expect(data.deliveries[0]['vendorDestinationId']).toBe('51');
-    expect(data.deliveries[0]['broiler']).toBe(8);
-    expect(data.deliveries[1]['_demoId']).toBe('84');
-    expect(data.deliveries[1]['broiler']).toBe(1);
-    expect(data.mortalities).toEqual([
+    // Pending local drafts are included after their individual requests finish.
+    await Promise.resolve();
+    const finalData = await result;
+    expect(finalData.trip['_demoId']).toBe('12');
+    expect(finalData.trip['labourId']).toBe('13');
+    expect(finalData.trip['labourName']).toBe('Ravi Labour');
+    expect(finalData.supplierReceipts[0]['broilerQuantity']).toBe(9);
+    expect(finalData.supplierReceipts[0]['vendorId']).toBe('31');
+    expect(finalData.destinations[0]['_demoId']).toBe('51');
+    expect(finalData.deliveries.map((delivery) => delivery['_demoId'])).toEqual(['82', '84']);
+    expect(finalData.deliveries[0]['vendorDestinationId']).toBe('51');
+    expect(finalData.deliveries[0]['broiler']).toBe(8);
+    expect(finalData.deliveries[1]['broiler']).toBe(1);
+    expect(finalData.mortalities).toEqual([
       jasmine.objectContaining({ quantity: 1, remarks: 'Transit loss' }),
       jasmine.objectContaining({ quantity: 2, remarks: 'Second loss' })
     ]);
-    expect(data.loadedBirds).toBe(9);
+    expect(finalData.expenses).toEqual([
+      jasmine.objectContaining({ id: 101, amount: 250, category: 'FUEL' })
+    ]);
+    expect(finalData.loadedBirds).toBe(9);
+    http.expectNone('http://localhost:8080/api/trips/12/retrieve');
+    http.expectNone('http://localhost:8080/api/deliveries/trip/12/retrieve');
+    http.expectNone('http://localhost:8080/api/mortalities/trip/12');
+    http.expectNone('http://localhost:8080/api/deliveries/75/retrieve');
+    http.expectNone('http://localhost:8080/api/supplier-pickups/81/retrieve');
   });
 
   it('creates supplier pickups and persists actual orders through the order endpoint', async () => {
