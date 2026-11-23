@@ -28,7 +28,7 @@
     @if (data; as desk) {
     @if (activeView === 'quotes') {
       <section class="panel quote-builder">
-        <div class="panel-heading"><div><span class="step">NEW QUOTATION</span><h2>Build a customer quote</h2><app-info-popover title="Quotation guidance" content="Choose the customer and price each product using its applicable unit: unit, tray, bird, or live-bird kilogram. An accepted quotation can be converted into a sales order." /></div></div>
+        <div class="panel-heading"><div><span class="step">NEW QUOTATION</span><h2>Build a customer quote <app-info-popover title="Quotation guidance" content="Choose the customer and price each product using its applicable unit: unit, tray, bird, or live-bird kilogram. An accepted quotation can be converted into a sales order." /></h2></div></div>
         <div class="quote-header">
           <label>Customer
             <ng-select class="app-select wide-select" labelForId="quote-customer" [(ngModel)]="customerName" [clearable]="false">
@@ -106,7 +106,7 @@
 
     @if (activeView === 'orders') {
       <section class="panel">
-        <div class="panel-heading"><div><span class="step">ORDER FULFILMENT</span><h2>Sales orders</h2><app-info-popover title="Order-to-cash workflow" content="Confirming an order checks the customer's credit and reserves stock or live birds. Record dispatch and actual delivery quantities next; invoices are raised from delivered quantities, and receipts reduce invoice and customer balances." /></div></div>
+        <div class="panel-heading"><div><span class="step">ORDER FULFILMENT</span><h2>Sales orders <app-info-popover title="Order-to-cash workflow" content="Confirming an order checks the customer's credit and reserves stock or live birds. Record dispatch and actual delivery quantities next; invoices are raised from delivered quantities, and receipts reduce invoice and customer balances." /></h2></div></div>
         @if (!desk.orders.length) { <p class="empty">No sales orders yet. Create one from an accepted quotation.</p> }
         @else {
           <app-data-grid [columnDefs]="orderGridColumns" [rowData]="orderGridRows" />
