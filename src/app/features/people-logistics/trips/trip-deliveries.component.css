@@ -111,3 +111,5 @@ td small { color:#879289; margin-top:3px; }
   font-weight:700;
 }
 .table-total-row td strong { color:#34443a; }
+
+.payment-edit-actions { align-items:center; display:flex; justify-content:space-between; gap:12px; margin-top:12px; width:100%; }
