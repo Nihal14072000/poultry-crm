@@ -28,7 +28,7 @@
         </article>
 
         <article class="form-card">
-          <div class="card-heading"><span class="card-step">02</span><div><h2>Flock readings</h2><p>Record bird count, feed and growth for this shed.</p></div></div>
+          <div class="card-heading"><span class="card-step">02</span><div><h2>Flock readings <app-info-popover title="Daily flock readings" content="Opening birds must match the batch's current live bird count. Enter mortality and culling as whole bird counts; together they cannot exceed opening birds. Record daily feed in kilograms, water in litres, and average bird weights in kilograms." /></h2></div></div>
           <div class="field-grid three">
             <label>Opening birds <span class="input-with-unit"><input type="number" min="0" step="1" formControlName="openingBirds"><small>birds</small></span>@if (form.controls.openingBirds.touched && (form.controls.openingBirds.invalid || !isWholeNumber(form.controls.openingBirds.value))) { <em>Enter a whole opening bird count.</em> }</label>
             <label>Mortality <span class="input-with-unit"><input type="number" min="0" step="1" formControlName="mortality"><small>birds</small></span>@if (form.controls.mortality.touched && (form.controls.mortality.invalid || !isWholeNumber(form.controls.mortality.value) || (form.controls.mortality.value ?? 0) > (form.controls.openingBirds.value ?? 0))) { <em>Enter a whole count that does not exceed opening birds.</em> }</label>

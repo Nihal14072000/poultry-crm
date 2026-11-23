@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
+import { InfoPopoverComponent } from '../../../common/components/info-popover/info-popover.component';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -109,7 +110,7 @@ function emptyOnboardingForm(type: OnboardingVendorType = 'SUPPLIER'): VendorOnb
 @Component({
   selector: 'app-vendor-onboarding',
   standalone: true,
-  imports: [CommonModule, LoadingSkeletonComponent, FormsModule, RouterLink, StatusPillPipe],
+  imports: [CommonModule, LoadingSkeletonComponent, InfoPopoverComponent, FormsModule, RouterLink, StatusPillPipe],
   templateUrl: './vendor-onboarding.component.html',
   styleUrl: './vendor-onboarding.component.css'
 })

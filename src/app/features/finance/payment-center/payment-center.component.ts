@@ -1,4 +1,5 @@
 import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
+import { InfoPopoverComponent } from '../../../common/components/info-popover/info-popover.component';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +16,7 @@ type FormValue = Omit<PaymentInput, 'partyId'> & { partyId: number | null };
 type PaymentPartyOption = TripRecord & { paymentType: PaymentType };
 type PaymentTrend = { label: string; month: string; receipts: number; payouts: number };
 
-@Component({ selector: 'app-payment-center', standalone: true, imports: [CommonModule, LoadingSkeletonComponent, FormsModule, RouterLink, CurrencyPipe, StatusPillPipe], templateUrl: './payment-center.component.html', styleUrl: './payment-center.component.css' })
+@Component({ selector: 'app-payment-center', standalone: true, imports: [CommonModule, LoadingSkeletonComponent, InfoPopoverComponent, FormsModule, RouterLink, CurrencyPipe, StatusPillPipe], templateUrl: './payment-center.component.html', styleUrl: './payment-center.component.css' })
 export class PaymentCenterComponent implements OnInit {
   view: View = 'overview'; loading = true; saving = false; error = ''; query = ''; statusFilter = ''; tripId = ''; partyId = ''; paymentPartyFilter = '';
   trips: TripRecord[] = []; parties: TripRecord[] = []; paymentParties: PaymentPartyOption[] = []; records: FinanceRecord[] = []; payments: FinanceRecord[] = []; settlements: FinanceRecord[] = []; summary?: FinanceRecord; financeSummary?: FinanceRecord;

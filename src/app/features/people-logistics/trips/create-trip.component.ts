@@ -1,4 +1,5 @@
 import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
+import { InfoPopoverComponent } from '../../../common/components/info-popover/info-popover.component';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -103,7 +104,7 @@ function today(): string {
 @Component({
   selector: 'app-create-trip',
   standalone: true,
-  imports: [CommonModule, LoadingSkeletonComponent, FormsModule, RouterLink],
+  imports: [CommonModule, LoadingSkeletonComponent, InfoPopoverComponent, FormsModule, RouterLink],
   templateUrl: './create-trip.component.html',
   styleUrl: './create-trip.component.css'
 })

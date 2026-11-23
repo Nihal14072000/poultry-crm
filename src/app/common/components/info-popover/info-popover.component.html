@@ -1,0 +1,15 @@
+<span class="info-popover">
+  <button
+    type="button"
+    class="info-trigger"
+    [attr.aria-expanded]="isOpen"
+    [attr.aria-label]="'More information: ' + title"
+    [attr.title]="title"
+    (click)="toggle($event)">i</button>
+  @if (isOpen) {
+    <span class="info-panel" role="note" (click)="$event.stopPropagation()">
+      <strong>{{ title }}</strong>
+      <span>{{ content }}</span>
+    </span>
+  }
+</span>

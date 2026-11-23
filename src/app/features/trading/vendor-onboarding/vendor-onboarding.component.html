@@ -234,7 +234,7 @@
         <span class="section-icon" aria-hidden="true">02</span>
         <div>
           <span class="step">OPERATIONS & LOGISTICS</span>
-          <h2>{{ form.vendorType === 'SUPPLIER' ? 'Farm capacity & bird readiness' : 'Daily requirements & receiving specs' }}</h2>
+          <h2>{{ form.vendorType === 'SUPPLIER' ? 'Farm capacity & bird readiness' : 'Daily requirements & receiving specs' }} <app-info-popover title="Operational details" content="For suppliers, record farm capacity, birds available for pickup, average bird weight, and readiness. For delivery vendors, record receiving capacity and daily requirements. Use current operational values because they support trip planning." /></h2>
         </div>
         <button type="button" class="collapse-toggle" [attr.aria-expanded]="sections.operations">
           {{ sections.operations ? '−' : '+' }}
@@ -334,7 +334,7 @@
         <span class="section-icon" aria-hidden="true">03</span>
         <div>
           <span class="step">COMMERCIAL TERMS</span>
-          <h2>Pricing, credit limits & payment terms</h2>
+          <h2>Pricing, credit limits & payment terms <app-info-popover title="Commercial terms" content="Record the agreed rates, credit limit, and payment terms for this business relationship. A zero credit limit is intended for spot cash or UPI payment. Confirm the commercial agreement before saving." /></h2>
         </div>
         <button type="button" class="collapse-toggle" [attr.aria-expanded]="sections.commercial">
           {{ sections.commercial ? '−' : '+' }}
