@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Employee } from '../models/directory.model';
 import { CreateTripInput, TripRecord, TripVendorPickup } from '../models/trip.model';
+import { ExpenseRecord } from './expenses-api.service';
 import { SessionAuthService } from './session-auth.service';
 
 type OrderKind = 'broiler' | 'culls' | 'feed';
@@ -93,6 +94,14 @@ interface ApiDeliveryDetails extends ApiDelivery {
   vendorDeliveries?: ApiVendorDelivery[];
 }
 
+interface ApiTripDeliveryDetailsResponse {
+  trip: ApiTrip;
+  supplierPickups?: ApiSupplierPickup[];
+  deliveries?: ApiDeliveryDetails[];
+  mortalities?: ApiMortality[];
+  expenses?: ExpenseRecord[];
+}
+
 export interface TripDeliveryData {
   trip: TripRecord;
   supplierPickups: TripVendorPickup[];
@@ -100,6 +109,7 @@ export interface TripDeliveryData {
   destinations: TripRecord[];
   deliveries: TripRecord[];
   mortalities: TripRecord[];
+  expenses: ExpenseRecord[];
   loadedBroiler: number;
   loadedCulls: number;
   loadedBirds: number;
@@ -256,7 +266,128 @@ export class TripApiService {
       firstValueFrom(this.http.get<ApiTrip>(`${this.baseUrl}/trips/${tripId}/retrieve`)),
       this.getOrderTypes()
     ]);
+    return this.mapTripDetails(response, this.getOrderTypeNames(orderTypes));
+  }
+
+  async getDeliveryData(
+    id: string,
+    pendingSupplierPickupIds: string[] = [],
+    pendingVendorDeliveryIds: string[] = []
+  ): Promise<TripDeliveryData> {
+    const tripId = this.parseId(id);
+    const [response, orderTypes] = await Promise.all([
+      firstValueFrom(this.http.get<ApiTripDeliveryDetailsResponse>(
+        `${this.baseUrl}/trips/${tripId}/delivery-details`
+      )),
+      this.getOrderTypes().catch((error) => {
+        console.warn('Unable to load order types for trip delivery data.', error);
+        return [];
+      })
+    ]);
+
     const orderNames = this.getOrderTypeNames(orderTypes);
+    const details = this.mapTripDetails(response.trip, orderNames);
+    const linkedPickups = response.supplierPickups ?? [];
+    const linkedPickupIds = new Set(linkedPickups
+      .map((pickup) => Number(pickup.id))
+      .filter((pickupId) => Number.isSafeInteger(pickupId) && pickupId > 0));
+    const pendingPickupIds = [...new Set(pendingSupplierPickupIds
+      .map((pickupId) => this.parseId(pickupId))
+      .filter((pickupId) => !linkedPickupIds.has(pickupId)))];
+    const pendingPickups = await Promise.all(pendingPickupIds.map((pickupId) =>
+      firstValueFrom(this.http.get<ApiSupplierPickup>(
+        `${this.baseUrl}/supplier-pickups/${pickupId}/retrieve`
+      )).catch((error) => {
+        console.warn(`Unable to load pending supplier pickup ${pickupId} for trip ${tripId}.`, error);
+        return null;
+      })
+    ));
+    const plannedSupplierIds = new Set(details.vendorPickups.map((pickup) => pickup.vendorId));
+    const supplierReceipts = [...linkedPickups, ...pendingPickups]
+      .filter((pickup): pickup is ApiSupplierPickup => pickup !== null)
+      .filter((pickup) => pickup.isDeleted !== true && pickup.isActive !== false)
+      .filter((pickup) => plannedSupplierIds.has(String(
+        pickup.buyingParty?.id ?? pickup.buyingPartyId ?? ''
+      )))
+      .map((pickup) => this.actualPickupRecord(pickup, orderNames));
+
+    const linkedVendorDeliveries = (response.deliveries ?? [])
+      .filter((delivery) => delivery.isDeleted !== true && delivery.isActive !== false)
+      .flatMap((delivery) => delivery.vendorDeliveries ?? []);
+    const pendingVendorDeliveries = (await Promise.all(pendingVendorDeliveryIds.map(async (deliveryId) => {
+      const vendorDeliveryId = this.parseId(deliveryId);
+      try {
+        const [delivery, actualOrders] = await Promise.all([
+          firstValueFrom(this.http.get<ApiVendorDelivery>(
+            `${this.baseUrl}/vendor-deliveries/${vendorDeliveryId}`
+          )),
+          firstValueFrom(this.http.get<ApiActualOrder[]>(
+            `${this.baseUrl}/vendor-deliveries/${vendorDeliveryId}/orders`
+          )).catch((error) => {
+            console.warn(`Unable to load orders for pending vendor delivery ${vendorDeliveryId}.`, error);
+            return [];
+          })
+        ]);
+        return { ...delivery, actualOrders };
+      } catch (error) {
+        console.warn(`Unable to load pending vendor delivery ${vendorDeliveryId} for trip ${tripId}.`, error);
+        return null;
+      }
+    }))).filter((delivery): delivery is ApiVendorDelivery => delivery !== null);
+
+    const destinationsById = new Map(details.vendorDestinations.map((destination) =>
+      [String(destination['vendorDestinationId']), destination] as const
+    ));
+    const deliveriesById = new Map<string, TripRecord>();
+    for (const delivery of [...linkedVendorDeliveries, ...pendingVendorDeliveries]) {
+      if (delivery.isDeleted === true || delivery.isActive === false) continue;
+      const sellingPartyId = String(delivery.sellingParty?.id ?? delivery.sellingPartyId ?? '');
+      const destination = destinationsById.get(sellingPartyId);
+      // Ignore stale/orphaned vendor delivery links; they do not belong in this trip.
+      if (!destination) continue;
+      const record = this.actualDeliveryRecord({
+        ...delivery,
+        sellingParty: delivery.sellingParty ?? {
+          id: Number(sellingPartyId),
+          name: String(destination['vendorName'] ?? '')
+        }
+      }, orderNames);
+      deliveriesById.set(String(delivery.id ?? ''), record);
+    }
+
+    const mortalities = (response.mortalities ?? [])
+      .filter((record) => record.isDeleted !== true && record.isActive !== false)
+      .map((record) => ({
+        _demoId: String(record.id ?? ''),
+        quantity: Number(record.combinedMortality ?? 0),
+        remarks: String(record.reason ?? ''),
+        recordedAt: String(record.createDate ?? '')
+      }));
+    const expenses = (response.expenses ?? [])
+      .map((expense) => Object.fromEntries(Object.entries(expense).map(([key, value]) => [
+        key.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase()), value
+      ])) as ExpenseRecord[])
+      .sort((a, b) => String(b['expenseDate'] ?? '').localeCompare(String(a['expenseDate'] ?? '')) ||
+        Number(b['id'] ?? 0) - Number(a['id'] ?? 0));
+
+    const deliveries = [...deliveriesById.values()];
+    const loadedBroiler = supplierReceipts.reduce((sum, receipt) => sum + Number(receipt['broilerQuantity'] ?? 0), 0);
+    const loadedCulls = supplierReceipts.reduce((sum, receipt) => sum + Number(receipt['cullsQuantity'] ?? 0), 0);
+    return {
+      trip: details.trip,
+      supplierPickups: details.vendorPickups,
+      supplierReceipts,
+      destinations: details.vendorDestinations,
+      deliveries,
+      mortalities,
+      expenses,
+      loadedBroiler,
+      loadedCulls,
+      loadedBirds: loadedBroiler + loadedCulls
+    };
+  }
+
+  private mapTripDetails(response: ApiTrip, orderNames: Map<number, OrderKind>): TripDetailsResponse {
     const vendorPickups = (response.buyingParties ?? []).filter((party) => !party.isDeleted)
       .map((party) => this.mapPickup(party, orderNames));
     const vendorDestinations = (response.sellingParties ?? []).filter((party) => !party.isDeleted)
@@ -275,83 +406,6 @@ export class TripApiService {
     trip['totalBirds'] = Number(trip['totalBroiler']) + Number(trip['totalCulls']);
     trip['grandTotal'] = vendorPickups.reduce((sum, pickup) => sum + pickup.total, 0);
     return { trip, vendorPickups, supplierReceipts: [], vendorDestinations, deliveryEntries: [] };
-  }
-
-  async getDeliveryData(id: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<TripDeliveryData> {
-    const tripId = this.parseId(id);
-    const [details, links, mortalities, orderTypes] = await Promise.all([
-      this.getTripDetails(id),
-      firstValueFrom(this.http.get<ApiDelivery[]>(`${this.baseUrl}/deliveries/trip/${tripId}/retrieve`)),
-      firstValueFrom(this.http.get<ApiMortality[]>(`${this.baseUrl}/mortalities/trip/${tripId}`)),
-      this.getOrderTypes()
-    ]);
-    const orderNames = this.getOrderTypeNames(orderTypes);
-    const related = links.filter((delivery) => delivery.isDeleted !== true);
-    const deliveryDetails = await Promise.all(related.map((delivery) =>
-      firstValueFrom(this.http.get<ApiDeliveryDetails>(`${this.baseUrl}/deliveries/${this.parseId(String(delivery.id))}/retrieve`))
-    ));
-    const linkedSupplierPickupIds = deliveryDetails
-      .map((delivery) => delivery.supplierPickup?.id)
-      .filter((pickupId): pickupId is number => Number.isSafeInteger(pickupId) && Number(pickupId) > 0);
-    const supplierPickupIds = [...new Set([...linkedSupplierPickupIds, ...pendingSupplierPickupIds.map((pickupId) => this.parseId(pickupId))])];
-    const actualPickups = await Promise.all(supplierPickupIds.map((pickupId) =>
-      firstValueFrom(this.http.get<ApiSupplierPickup>(`${this.baseUrl}/supplier-pickups/${this.parseId(String(pickupId))}/retrieve`))
-    ));
-    const plannedSupplierIds = new Set(details.vendorPickups.map((pickup) => pickup.vendorId));
-    for (const pickup of actualPickups) {
-      if (!plannedSupplierIds.has(String(pickup.buyingParty?.id ?? pickup.buyingPartyId ?? ''))) {
-        throw new Error('A saved supplier pickup does not belong to this trip.');
-      }
-    }
-    const supplierReceipts = actualPickups
-      .filter((pickup) => pickup.isDeleted !== true)
-      .map((pickup) => this.actualPickupRecord(pickup, orderNames));
-    const linkedVendorDeliveries = deliveryDetails.flatMap((delivery) => delivery.vendorDeliveries ?? []);
-    const pendingVendorDeliveries = await Promise.all(pendingVendorDeliveryIds.map(async (deliveryId) => {
-      const id = this.parseId(deliveryId);
-      const [delivery, actualOrders] = await Promise.all([
-        firstValueFrom(this.http.get<ApiVendorDelivery>(`${this.baseUrl}/vendor-deliveries/${id}`)),
-        firstValueFrom(this.http.get<ApiActualOrder[]>(`${this.baseUrl}/vendor-deliveries/${id}/orders`))
-      ]);
-      return { ...delivery, actualOrders };
-    }));
-    const destinationsById = new Map(details.vendorDestinations.map((destination) =>
-      [String(destination['vendorDestinationId']), destination] as const
-    ));
-    const deliveriesById = new Map<string, TripRecord>();
-    for (const delivery of [...linkedVendorDeliveries, ...pendingVendorDeliveries]) {
-      if (delivery.isDeleted === true) continue;
-      const sellingPartyId = String(delivery.sellingParty?.id ?? delivery.sellingPartyId ?? '');
-      const destination = destinationsById.get(sellingPartyId);
-      if (!destination) {
-        throw new Error('A saved vendor delivery does not belong to this trip.');
-      }
-      deliveriesById.set(String(delivery.id ?? ''), this.actualDeliveryRecord({
-        ...delivery,
-        sellingParty: delivery.sellingParty ?? { id: Number(sellingPartyId), name: String(destination['vendorName'] ?? '') }
-      }, orderNames));
-    }
-    const deliveries = [...deliveriesById.values()];
-    const tripMortalities = mortalities.filter((item) => item.isDeleted !== true);
-    const mortalityRecords = tripMortalities.map((record) => ({
-      _demoId: String(record.id ?? ''),
-      quantity: Number(record.combinedMortality ?? 0),
-      remarks: String(record.reason ?? ''),
-      recordedAt: String(record.createDate ?? '')
-    }));
-    const loadedBroiler = supplierReceipts.reduce((sum, receipt) => sum + Number(receipt['broilerQuantity'] ?? 0), 0);
-    const loadedCulls = supplierReceipts.reduce((sum, receipt) => sum + Number(receipt['cullsQuantity'] ?? 0), 0);
-    return {
-      trip: details.trip,
-      supplierPickups: details.vendorPickups,
-      supplierReceipts,
-      destinations: details.vendorDestinations,
-      deliveries,
-      mortalities: mortalityRecords,
-      loadedBroiler,
-      loadedCulls,
-      loadedBirds: loadedBroiler + loadedCulls
-    };
   }
 
   async saveSupplierPickup(
