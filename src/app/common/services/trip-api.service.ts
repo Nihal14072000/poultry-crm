@@ -254,7 +254,10 @@ export class TripApiService {
     const tripId = this.parseId(id);
     const [response, orderTypes] = await Promise.all([
       firstValueFrom(this.http.get<ApiTrip>(`${this.baseUrl}/trips/${tripId}/retrieve`)),
-      this.getOrderTypes()
+      this.getOrderTypes().catch((error) => {
+        console.warn('Unable to load order types while loading trip details.', error);
+        return [];
+      })
     ]);
     const orderNames = this.getOrderTypeNames(orderTypes);
     const vendorPickups = (response.buyingParties ?? []).filter((party) => !party.isDeleted)
@@ -279,42 +282,81 @@ export class TripApiService {
 
   async getDeliveryData(id: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<TripDeliveryData> {
     const tripId = this.parseId(id);
+    const emptyDetails: TripDetailsResponse = {
+      trip: {} as TripRecord,
+      vendorPickups: [],
+      supplierReceipts: [],
+      vendorDestinations: [],
+      deliveryEntries: []
+    };
+
+    // Load independent sections independently. Optional delivery APIs should not
+    // prevent the trip page from rendering when one endpoint is unavailable.
     const [details, links, mortalities, orderTypes] = await Promise.all([
-      this.getTripDetails(id),
-      firstValueFrom(this.http.get<ApiDelivery[]>(`${this.baseUrl}/deliveries/trip/${tripId}/retrieve`)),
-      firstValueFrom(this.http.get<ApiMortality[]>(`${this.baseUrl}/mortalities/trip/${tripId}`)),
-      this.getOrderTypes()
+      this.getTripDetails(id).catch((error) => {
+        console.warn(`Unable to load details for trip ${tripId}.`, error);
+        return emptyDetails;
+      }),
+      firstValueFrom(this.http.get<ApiDelivery[]>(`${this.baseUrl}/deliveries/trip/${tripId}/retrieve`)).catch((error) => {
+        console.warn(`Unable to load delivery links for trip ${tripId}.`, error);
+        return [];
+      }),
+      firstValueFrom(this.http.get<ApiMortality[]>(`${this.baseUrl}/mortalities/trip/${tripId}`)).catch((error) => {
+        console.warn(`Unable to load mortalities for trip ${tripId}.`, error);
+        return [];
+      }),
+      this.getOrderTypes().catch((error) => {
+        console.warn('Unable to load order types for delivery data.', error);
+        return [];
+      })
     ]);
+
     const orderNames = this.getOrderTypeNames(orderTypes);
-    const related = links.filter((delivery) => delivery.isDeleted !== true);
-    const deliveryDetails = await Promise.all(related.map((delivery) =>
-      firstValueFrom(this.http.get<ApiDeliveryDetails>(`${this.baseUrl}/deliveries/${this.parseId(String(delivery.id))}/retrieve`))
-    ));
+    const related = links.filter((delivery) => delivery.isDeleted !== true && Number.isSafeInteger(delivery.id) && Number(delivery.id) > 0);
+    const deliveryDetails = (await Promise.all(related.map((delivery) =>
+      firstValueFrom(this.http.get<ApiDeliveryDetails>(`${this.baseUrl}/deliveries/${Number(delivery.id)}/retrieve`))
+        .catch((error) => {
+          console.warn(`Unable to load delivery record ${delivery.id} for trip ${tripId}.`, error);
+          return null;
+        })
+    ))).filter((delivery): delivery is ApiDeliveryDetails => delivery !== null);
+
     const linkedSupplierPickupIds = deliveryDetails
       .map((delivery) => delivery.supplierPickup?.id)
       .filter((pickupId): pickupId is number => Number.isSafeInteger(pickupId) && Number(pickupId) > 0);
     const supplierPickupIds = [...new Set([...linkedSupplierPickupIds, ...pendingSupplierPickupIds.map((pickupId) => this.parseId(pickupId))])];
-    const actualPickups = await Promise.all(supplierPickupIds.map((pickupId) =>
-      firstValueFrom(this.http.get<ApiSupplierPickup>(`${this.baseUrl}/supplier-pickups/${this.parseId(String(pickupId))}/retrieve`))
-    ));
+    const actualPickups = (await Promise.all(supplierPickupIds.map((pickupId) =>
+      firstValueFrom(this.http.get<ApiSupplierPickup>(`${this.baseUrl}/supplier-pickups/${pickupId}/retrieve`))
+        .catch((error) => {
+          console.warn(`Unable to load supplier pickup ${pickupId} for trip ${tripId}.`, error);
+          return null;
+        })
+    ))).filter((pickup): pickup is ApiSupplierPickup => pickup !== null);
+
     const plannedSupplierIds = new Set(details.vendorPickups.map((pickup) => pickup.vendorId));
-    for (const pickup of actualPickups) {
-      if (!plannedSupplierIds.has(String(pickup.buyingParty?.id ?? pickup.buyingPartyId ?? ''))) {
-        throw new Error('A saved supplier pickup does not belong to this trip.');
-      }
-    }
     const supplierReceipts = actualPickups
-      .filter((pickup) => pickup.isDeleted !== true)
+      .filter((pickup) => pickup.isDeleted !== true &&
+        plannedSupplierIds.has(String(pickup.buyingParty?.id ?? pickup.buyingPartyId ?? '')))
       .map((pickup) => this.actualPickupRecord(pickup, orderNames));
+
     const linkedVendorDeliveries = deliveryDetails.flatMap((delivery) => delivery.vendorDeliveries ?? []);
-    const pendingVendorDeliveries = await Promise.all(pendingVendorDeliveryIds.map(async (deliveryId) => {
-      const id = this.parseId(deliveryId);
-      const [delivery, actualOrders] = await Promise.all([
-        firstValueFrom(this.http.get<ApiVendorDelivery>(`${this.baseUrl}/vendor-deliveries/${id}`)),
-        firstValueFrom(this.http.get<ApiActualOrder[]>(`${this.baseUrl}/vendor-deliveries/${id}/orders`))
-      ]);
-      return { ...delivery, actualOrders };
-    }));
+    const pendingVendorDeliveries = (await Promise.all(pendingVendorDeliveryIds.map(async (deliveryId) => {
+      const vendorDeliveryId = this.parseId(deliveryId);
+      try {
+        const [delivery, actualOrders] = await Promise.all([
+          firstValueFrom(this.http.get<ApiVendorDelivery>(`${this.baseUrl}/vendor-deliveries/${vendorDeliveryId}`)),
+          firstValueFrom(this.http.get<ApiActualOrder[]>(`${this.baseUrl}/vendor-deliveries/${vendorDeliveryId}/orders`)).catch((error) => {
+            console.warn(`Unable to load orders for vendor delivery ${vendorDeliveryId}.`, error);
+            return [];
+          })
+        ]);
+        return { ...delivery, actualOrders };
+      } catch (error) {
+        console.warn(`Unable to load vendor delivery ${vendorDeliveryId} for trip ${tripId}.`, error);
+        return null;
+      }
+    }))).filter((delivery): delivery is ApiVendorDelivery => delivery !== null);
+
     const destinationsById = new Map(details.vendorDestinations.map((destination) =>
       [String(destination['vendorDestinationId']), destination] as const
     ));
@@ -323,22 +365,23 @@ export class TripApiService {
       if (delivery.isDeleted === true) continue;
       const sellingPartyId = String(delivery.sellingParty?.id ?? delivery.sellingPartyId ?? '');
       const destination = destinationsById.get(sellingPartyId);
-      if (!destination) {
-        throw new Error('A saved vendor delivery does not belong to this trip.');
-      }
+      // Ignore orphaned or stale links instead of failing the entire page.
+      if (!destination) continue;
       deliveriesById.set(String(delivery.id ?? ''), this.actualDeliveryRecord({
         ...delivery,
         sellingParty: delivery.sellingParty ?? { id: Number(sellingPartyId), name: String(destination['vendorName'] ?? '') }
       }, orderNames));
     }
+
     const deliveries = [...deliveriesById.values()];
-    const tripMortalities = mortalities.filter((item) => item.isDeleted !== true);
-    const mortalityRecords = tripMortalities.map((record) => ({
-      _demoId: String(record.id ?? ''),
-      quantity: Number(record.combinedMortality ?? 0),
-      remarks: String(record.reason ?? ''),
-      recordedAt: String(record.createDate ?? '')
-    }));
+    const mortalityRecords = mortalities
+      .filter((record) => record.isDeleted !== true)
+      .map((record) => ({
+        _demoId: String(record.id ?? ''),
+        quantity: Number(record.combinedMortality ?? 0),
+        remarks: String(record.reason ?? ''),
+        recordedAt: String(record.createDate ?? '')
+      }));
     const loadedBroiler = supplierReceipts.reduce((sum, receipt) => sum + Number(receipt['broilerQuantity'] ?? 0), 0);
     const loadedCulls = supplierReceipts.reduce((sum, receipt) => sum + Number(receipt['cullsQuantity'] ?? 0), 0);
     return {
