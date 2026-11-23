@@ -149,7 +149,7 @@ export class UsersRolesComponent implements OnInit {
 
   addUser(): void {
     this.error = '';
-    this.success = '';
+
     const name = this.newUser.name.trim();
     const email = this.newUser.email.trim().toLowerCase();
     if (!this.rolePermissions.canManageRoles()) return;
