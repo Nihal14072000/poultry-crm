@@ -1,0 +1,36 @@
+<main class="login-page">
+  <section class="login-card">
+    <a class="brand" href="/" aria-label="EasyLedger home"><span class="brand-mark"><i></i><i></i><i></i></span><span>EasyLedger<small>OPERATIONS</small></span></a>
+    <div class="eyebrow">NEW ORGANIZATION</div>
+    <h1>Create your workspace</h1>
+    <p class="intro">Register your organization and create its first administrator account.</p>
+
+    @if (created) {
+      <p class="success" role="status">Your organization has been created. Sign in with the administrator username and password you registered.</p>
+      <p class="security-note"><a href="/login">Continue to sign in</a></p>
+    } @else {
+      <form (ngSubmit)="register()">
+        <label>Organization name
+          <input type="text" name="companyName" [(ngModel)]="companyName" maxlength="150" required placeholder="Example Poultry Ltd">
+        </label>
+        <label>Administrator name
+          <input type="text" name="ownerName" [(ngModel)]="ownerName" maxlength="250" required placeholder="Your full name">
+        </label>
+        <label>Username
+          <input type="text" name="username" [(ngModel)]="username" maxlength="100" autocomplete="username" required placeholder="Choose a username">
+        </label>
+        <label>Password
+          <input type="password" name="password" [(ngModel)]="password" minlength="12" maxlength="72" autocomplete="new-password" required placeholder="At least 12 characters">
+        </label>
+        <label>Confirm password
+          <input type="password" name="confirmPassword" [(ngModel)]="confirmPassword" minlength="12" maxlength="72" autocomplete="new-password" required placeholder="Re-enter your password">
+        </label>
+        @if (error) { <p class="error" role="alert">{{ error }}</p> }
+        <button type="submit" [disabled]="loading || !companyName.trim() || !ownerName.trim() || !username.trim() || !password || !confirmPassword">
+          {{ loading ? 'Creating workspace…' : 'Create organization' }} <span>→</span>
+        </button>
+      </form>
+      <p class="security-note">Already registered? <a href="/login">Sign in</a>. Use HTTPS outside local development.</p>
+    }
+  </section>
+</main>

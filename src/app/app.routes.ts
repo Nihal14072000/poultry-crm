@@ -123,6 +123,7 @@ function sectionRoute(path: string, pages: DirectoryPage[], extraChildren: Route
 }
 
 export const routes: Routes = [
+  { path: 'register-organization', canActivate: [signedOutOnlyGuard], loadComponent: () => import('./features/identity/register-organization/register-organization.component').then((module) => module.RegisterOrganizationComponent) },
   { path: 'login', canActivate: [signedOutOnlyGuard], loadComponent: () => import('./features/identity/login/login.component').then((module) => module.LoginComponent) },
   { path: 'access-denied', canActivate: [requireSessionGuard, redirectToAccessibleRouteGuard], loadComponent: () => import('./features/identity/access-denied/access-denied.component').then((module) => module.AccessDeniedComponent) },
   { path: '', pathMatch: 'full', redirectTo: 'workspace/overview' },

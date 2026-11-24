@@ -14,6 +14,7 @@
       @if (error) { <p class="error" role="alert">{{ error }}</p> }
       <button type="submit" [disabled]="loading || !username || !password">{{ loading ? 'Signing in…' : 'Sign in' }} <span>→</span></button>
     </form>
+    <p class="security-note">New organization? <a href="/register-organization">Create an organization</a></p>
     <p class="security-note">Your sign-in stays active for this browser tab, including after a refresh, and is cleared when you sign out or close the tab. Use HTTPS outside local development.</p>
   </section>
 </main>
