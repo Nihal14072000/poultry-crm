@@ -3,9 +3,9 @@
 @if (auth.currentUser; as user) {
 <div class="app-shell">
   <aside class="sidebar" id="mobile-navigation" [class.mobile-open]="mobileNavigationOpen">
-    <a class="brand" routerLink="/workspace/overview" aria-label="Flockwise home" (click)="closeNavigation()">
+    <a class="brand" routerLink="/workspace/overview" aria-label="EasyLedger home" (click)="closeNavigation()">
       <span class="brand-mark"><span></span><span></span><span></span></span>
-      <span class="brand-name">flockwise<span>OPERATIONS</span></span>
+      <span class="brand-name">EasyLedger<span>OPERATIONS</span></span>
     </a>
     <button class="sidebar-close" type="button" aria-label="Close navigation" (click)="closeMobileNavigation()">×</button>
 
@@ -41,7 +41,7 @@
     </nav>
 
     <div class="sidebar-bottom">
-      <a class="help-card" href="mailto:support@flockwise.example">
+      <a class="help-card" href="mailto:support@easyledger.example">
         <span class="help-icon">?</span>
         <span><strong>Need a hand?</strong><small>Visit the help center</small></span>
         <span class="help-arrow">↗</span>
