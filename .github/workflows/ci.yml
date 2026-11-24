@@ -21,4 +21,4 @@ jobs:
       - uses: browser-actions/setup-chrome@v1
       - run: npm ci
       - run: npm run build -- --configuration production
-      - run: npm test -- --watch=false --browsers=ChromeHeadless --ts-config=tsconfig.saas.spec.json
+      - run: npm run test:saas

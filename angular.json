@@ -91,6 +91,32 @@
             ],
             "scripts": []
           }
+        },
+        "test-saas": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "tsconfig.saas.spec.json",
+            "assets": [
+              "src/favicon.ico",
+              "src/assets"
+            ],
+            "styles": [
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "node_modules/ag-grid-community/styles/ag-grid.css",
+              "node_modules/ag-grid-community/styles/ag-theme-quartz.css",
+              "node_modules/@ng-select/ng-select/themes/default.theme.css",
+              "src/styles.css",
+              "node_modules/ngx-toastr/toastr.css"
+            ],
+            "scripts": [],
+            "include": [
+              "src/app/common/services/api-data.adapter.spec.ts"
+            ]
+          }
         }
       }
     }
