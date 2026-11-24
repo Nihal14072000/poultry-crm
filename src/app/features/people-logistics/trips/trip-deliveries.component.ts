@@ -82,6 +82,7 @@ export class TripDeliveriesComponent implements OnInit {
   paymentMethod: PaymentMethod = 'UPI';
   paymentReference = '';
   showPaymentForm = false;
+  showQrCodeModal = false;
   editingPaymentId = '';
 
   constructor(private readonly service: TripService, private readonly finance: FinanceApiService, private readonly expensesApi: ExpenseApiService, private readonly tripApi: TripApiService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService, readonly rolePermissions: RolePermissionService, private readonly toast: ToastService) {}
@@ -438,6 +439,9 @@ export class TripDeliveriesComponent implements OnInit {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([method, amount]) => ({ method, label: labels[method] ?? method.replace(/_/g, ' '), amount }));
   }
+  openQrCodeModal(): void { this.showQrCodeModal = true; }
+  closeQrCodeModal(): void { this.showQrCodeModal = false; }
+
   totalPaymentReceived(): number {
     return this.tripPayments
       .filter((payment) => payment['paymentType'] === 'BUYER_RECEIPT' && payment['status'] === 'COMPLETED' && payment['isDeleted'] !== true)
