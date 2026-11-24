@@ -89,7 +89,9 @@ function pageRoute(page: DirectoryPage): Route {
   return {
     path: page.path,
     canActivate: [requirePermissionGuard],
-    loadComponent: page.resource === 'expenses'
+    loadComponent: page.resource === 'reports'
+      ? () => import('./features/insights/reports/reports.component').then((module) => module.ReportsComponent)
+      : page.resource === 'expenses'
       ? () => import('./features/finance/expenses/expenses.component').then((module) => module.ExpensesComponent)
       : page.resource === 'users-roles'
       ? () => import('./features/identity/users-roles/users-roles.component').then((module) => module.UsersRolesComponent)

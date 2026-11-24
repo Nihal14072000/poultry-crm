@@ -1,0 +1,145 @@
+<main class="reports-page">
+  <header class="page-heading">
+    <div>
+      <div class="eyebrow">INSIGHTS <span>/</span> REPORTING</div>
+      <h1>Reports</h1>
+      <p>Generate, track and download business reports as PDF files.</p>
+    </div>
+    <button class="button button-secondary" type="button" (click)="refreshReports()" [disabled]="loading">
+      <span aria-hidden="true">↻</span> Refresh history
+    </button>
+  </header>
+
+  @if (errorMessage) { <p class="feedback error" role="alert">{{ errorMessage }}</p> }
+  @if (successMessage) { <p class="feedback success" role="status">{{ successMessage }}</p> }
+
+  <section class="panel generator-panel">
+    <div class="section-heading">
+      <div><span class="step">NEW REPORT</span><h2>Report configuration</h2></div>
+      <span class="format-label">PDF FORMAT</span>
+    </div>
+
+    <form (ngSubmit)="generateReport()">
+      <div class="form-grid">
+        <label class="field field-wide">
+          <span>Report type</span>
+          <select name="reportType" [(ngModel)]="reportType">
+            @for (type of reportTypes; track type.value) {
+              <option [value]="type.value">{{ type.label }}</option>
+            }
+          </select>
+          <small>{{ selectedReportDescription }}</small>
+        </label>
+
+        @if (isTripSummary) {
+          <label class="field">
+            <span>Trip ID <b>*</b></span>
+            <input name="tripId" type="number" min="1" step="1" [(ngModel)]="tripId" placeholder="Enter trip ID" required>
+            <small>Trip date is read automatically by the backend.</small>
+          </label>
+        } @else {
+          <label class="field">
+            <span>From date <b>*</b></span>
+            <input name="fromDate" type="date" [(ngModel)]="fromDate" required>
+          </label>
+          <label class="field">
+            <span>To date <b>*</b></span>
+            <input name="toDate" type="date" [(ngModel)]="toDate" required>
+          </label>
+        }
+
+        @if (!isTripSummary && supportsTripFilter) {
+          <label class="field">
+            <span>Trip ID <small>(optional)</small></span>
+            <input name="tripFilter" type="number" min="1" step="1" [(ngModel)]="tripId" placeholder="All trips">
+          </label>
+        }
+        @if (supportsPartyFilter) {
+          <label class="field">
+            <span>Party ID <small>(optional)</small></span>
+            <input name="partyId" type="number" min="1" step="1" [(ngModel)]="partyId" placeholder="All parties">
+          </label>
+        }
+        @if (supportsPaymentFilters) {
+          <label class="field">
+            <span>Payment type</span>
+            <select name="paymentType" [(ngModel)]="paymentType">
+              <option value="">All payment types</option>
+              <option value="BUYER_RECEIPT">Buyer receipt</option>
+              <option value="SELLER_PAYOUT">Seller payout</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Payment status</span>
+            <select name="paymentStatus" [(ngModel)]="paymentStatus">
+              <option value="">All statuses</option>
+              <option value="PENDING">Pending</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="FAILED">Failed</option>
+              <option value="VOID">Void</option>
+            </select>
+          </label>
+        }
+      </div>
+
+      <div class="form-footer">
+        <p>Reports are generated in the background. You can leave this page and download them later from report history.</p>
+        <button class="button button-primary" type="submit" [disabled]="generating">
+          @if (generating) { <span class="spinner" aria-hidden="true"></span> Queuing… }
+          @else { Generate PDF report }
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel history-panel">
+    <div class="section-heading">
+      <div><span class="step">REPORT JOBS</span><h2>Report history</h2></div>
+      <span class="history-count">{{ reports.length }} {{ reports.length === 1 ? 'report' : 'reports' }}</span>
+    </div>
+
+    @if (loading) {
+      <div class="empty-state">Loading report history…</div>
+    } @else if (!reports.length) {
+      <div class="empty-state">
+        <strong>No reports generated yet</strong>
+        <span>Choose a report type above and generate your first PDF.</span>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>REPORT</th><th>PERIOD</th><th>REQUESTED</th><th>STATUS</th><th>COMPLETED</th><th class="actions-heading">ACTIONS</th></tr>
+          </thead>
+          <tbody>
+            @for (report of reports; track report.id) {
+              <tr>
+                <td><strong>{{ report.reportType.replace('_', ' ') }}</strong><small>#{{ report.id }} · {{ report.format }}</small>
+                  @if (report.errorMessage) { <small class="row-error">{{ report.errorMessage }}</small> }
+                </td>
+                <td>{{ reportPeriod(report) }}</td>
+                <td>{{ formatDate(report.createdAt) }}</td>
+                <td><span class="status-pill" [ngClass]="statusClass(report.status)">{{ report.status }}</span></td>
+                <td>{{ formatDate(report.completedAt) }}</td>
+                <td class="actions">
+                  @if (report.status === 'COMPLETED') {
+                    <button class="text-action" type="button" (click)="downloadReport(report)" [disabled]="downloadingId === report.id">
+                      {{ downloadingId === report.id ? 'Preparing…' : 'Download PDF' }}
+                    </button>
+                  } @else if (report.status === 'FAILED') {
+                    <button class="text-action" type="button" (click)="retryReport(report)" [disabled]="retryingId === report.id">
+                      {{ retryingId === report.id ? 'Queuing…' : 'Retry' }}
+                    </button>
+                  } @else if (isActive(report.status)) {
+                    <span class="processing-label">Generating…</span>
+                  } @else { <span>—</span> }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+  <p class="privacy-note">Report history and PDF downloads are restricted to the signed-in user who requested each report.</p>
+</main>
