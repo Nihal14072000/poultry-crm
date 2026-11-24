@@ -33,7 +33,7 @@ export class ApiDataAdapter extends DataAdapter {
   }
 
   private resourceUrl(resource: string): string {
-    const normalized = resource.trim();
+    const normalized = resource.trim().toLowerCase();
     if (!/^[a-z][a-z0-9-]{0,63}$/i.test(normalized)) {
       throw new Error('A valid API resource name is required.');
     }
