@@ -1,0 +1,85 @@
+<main class="help-page">
+  <section class="help-hero">
+    <div class="hero-copy">
+      <span class="eyebrow">BILAL POULTRY SUPPORT</span>
+      <h1>How can we help?</h1>
+      <p>Our support team is here to help you keep your poultry operations running smoothly. Choose a contact option or send us a request.</p>
+    </div>
+    <div class="hero-art" aria-hidden="true"><span class="art-circle">?</span><span class="art-dot dot-one"></span><span class="art-dot dot-two"></span></div>
+  </section>
+
+  <section class="contact-grid" aria-label="Contact support options">
+    <article class="contact-card">
+      <div class="contact-icon">✉</div>
+      <h2>Email support</h2>
+      <p>For account, access, reports and general product questions.</p>
+      <a href="mailto:support@bilalpoultry.example">support@bilalpoultry.example</a>
+      <small>Typical response: within 1 business day</small>
+    </article>
+    <article class="contact-card">
+      <div class="contact-icon">☎</div>
+      <h2>Call our team</h2>
+      <p>Speak with a support coordinator for time-sensitive assistance.</p>
+      <a href="tel:+910000000000">+91 00000 00000</a>
+      <small>Monday–Saturday · 9:00 AM–6:00 PM IST</small>
+    </article>
+    <article class="contact-card">
+      <div class="contact-icon">◷</div>
+      <h2>Support hours</h2>
+      <p>Our team is available during standard business hours.</p>
+      <strong>9:00 AM – 6:00 PM IST</strong>
+      <small>Sunday and public holidays: closed</small>
+    </article>
+  </section>
+
+  <section class="help-content">
+    <div class="request-panel">
+      <div class="section-heading">
+        <span class="eyebrow">CONTACT THE TEAM</span>
+        <h2>Send us a help request</h2>
+        <p>Share a few details and our team will follow up.</p>
+      </div>
+      @if (!submitted) {
+        <form (ngSubmit)="submitRequest()" #helpForm="ngForm">
+          <div class="form-row">
+            <label>Your name<input name="name" [(ngModel)]="name" required placeholder="Enter your name"></label>
+            <label>Work email<input type="email" name="email" [(ngModel)]="email" required email placeholder="you@company.com"></label>
+          </div>
+          <label>What do you need help with?
+            <select name="topic" [(ngModel)]="topic">
+              <option>General question</option>
+              <option>Login or access issue</option>
+              <option>Farm and flock operations</option>
+              <option>Inventory or stock</option>
+              <option>Orders, sales or dispatch</option>
+              <option>Reports and finance</option>
+              <option>Technical issue</option>
+            </select>
+          </label>
+          <label>How can we help?<textarea name="message" [(ngModel)]="message" required rows="5" placeholder="Describe the issue and include any relevant reference number..."></textarea></label>
+          <button type="submit" [disabled]="helpForm.invalid">Submit request <span>→</span></button>
+          <small class="form-note">Demo page: this form does not send or store requests yet.</small>
+        </form>
+      } @else {
+        <div class="success-state" role="status">
+          <span class="success-mark">✓</span>
+          <h3>Request details captured</h3>
+          <p>This is a demo form only. No request was sent. Please email <a href="mailto:support@bilalpoultry.example">support@bilalpoultry.example</a> to contact the team.</p>
+          <button type="button" class="secondary-button" (click)="submitted = false">Submit another request</button>
+        </div>
+      }
+    </div>
+
+    <aside class="quick-help">
+      <span class="eyebrow">BEFORE YOU CONTACT US</span>
+      <h2>Help us resolve it faster</h2>
+      <ul>
+        <li><span>01</span><div><strong>Tell us where it happened</strong><p>Mention the page or module you were using.</p></div></li>
+        <li><span>02</span><div><strong>Include the reference</strong><p>Share an order, batch, farm or transaction ID if relevant.</p></div></li>
+        <li><span>03</span><div><strong>Add a screenshot</strong><p>Include the error message, but hide passwords and sensitive data.</p></div></li>
+      </ul>
+      <div class="urgent-note"><strong>Urgent operational issue?</strong><p>Call the support number above and mention that operations are blocked.</p></div>
+    </aside>
+  </section>
+  <p class="placeholder-note">Contact information shown on this page is sample data. Replace it with your official support details before production use.</p>
+</main>
