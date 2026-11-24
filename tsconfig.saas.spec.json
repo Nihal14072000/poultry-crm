@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "include": [
+    "src/app/common/services/api-data.adapter.spec.ts",
+    "src/**/*.d.ts"
+  ]
+}
