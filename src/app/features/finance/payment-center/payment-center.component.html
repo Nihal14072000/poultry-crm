@@ -105,9 +105,9 @@
         </tr> }</tbody>
     </table>
   </section>
-  @if (showQrCodeModal) {
-    <div class="dialog-backdrop" (click)="closeQrCodeModal()">
-      <  <section class="payment-dialog" role="dialog" aria-modal="true" aria-labelledby="edit-payment-title" (click)="$event.stopPropagation()">
+  @if (editingPaymentId) {
+    <div class="dialog-backdrop" (click)="closePaymentEditor()">
+      <section class="payment-dialog" role="dialog" aria-modal="true" aria-labelledby="edit-payment-title" (click)="$event.stopPropagation()">
         <h2 id="edit-payment-title">Edit payment</h2>
         <div class="form-grid">
           <label>Payment type<select [(ngModel)]="form.paymentType" (ngModelChange)="setPaymentType($event)" [disabled]="saving"><option value="BUYER_RECEIPT">Buyer receipt</option><option value="SELLER_PAYOUT">Seller payout</option></select></label>
