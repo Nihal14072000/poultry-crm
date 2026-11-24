@@ -35,67 +35,64 @@ jobs:
           set -euo pipefail
           test -d dist/my-app/browser || {
             echo "Expected Angular browser output at dist/my-app/browser was not found."
-            echo "Check angular.json outputPath and the build output."
             exit 1
           }
           tar -czf frontend-dist.tar.gz -C dist/my-app/browser .
 
-      - name: Configure SSH
+      - name: Configure deployment target
         env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
-          test -n "$SSH_PRIVATE_KEY" || { echo "Missing SSH_PRIVATE_KEY secret in the dev environment"; exit 1; }
-          test -n "$SSH_KNOWN_HOSTS" || { echo "Missing SSH_KNOWN_HOSTS secret in the dev environment"; exit 1; }
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_PATH SSH_PRIVATE_KEY SSH_KNOWN_HOSTS; do
+            test -n "${!name}" || { echo "Missing ${name} in the dev environment"; exit 1; }
+          done
+          [[ "$DEPLOY_PATH" =~ ^/[A-Za-z0-9_./-]+$ ]] || { echo "DEPLOY_PATH must be an absolute path without shell metacharacters"; exit 1; }
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+          echo "DEPLOY_HOST=$DEPLOY_HOST" >> "$GITHUB_ENV"
+          echo "DEPLOY_USER=$DEPLOY_USER" >> "$GITHUB_ENV"
+          echo "DEPLOY_PATH=$DEPLOY_PATH" >> "$GITHUB_ENV"
 
-      - name: Copy frontend bundle to Oracle VM
+      - name: Copy frontend bundle
         run: |
           set -euo pipefail
-          scp -i ~/.ssh/deploy_key frontend-dist.tar.gz "ubuntu@129.225.90.181:/home/ubuntu/frontend-dist.tar.gz"
+          scp -i ~/.ssh/deploy_key frontend-dist.tar.gz "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/frontend-dist.tar.gz"
 
       - name: Replace Nginx frontend files
         run: |
           set -euo pipefail
-          ssh -i ~/.ssh/deploy_key "ubuntu@129.225.90.181" 'bash -s' <<'REMOTE'
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" "APP_PATH='$DEPLOY_PATH' bash -s" <<'REMOTE'
           set -euo pipefail
 
-          APP_PATH="/home/ubuntu/poultry-crm"
+          APP_PATH="${APP_PATH:?APP_PATH is required}"
           DEPLOY_PATH="$APP_PATH/dist/my-app/browser"
           STAGING_PATH="$APP_PATH/dist/my-app/browser-staging"
           PREVIOUS_PATH="$APP_PATH/dist/my-app/browser.previous"
-          ARCHIVE="/home/ubuntu/frontend-dist.tar.gz"
+          ARCHIVE="$APP_PATH/frontend-dist.tar.gz"
 
           test -f "$ARCHIVE"
           rm -rf "$STAGING_PATH"
-          mkdir -p "$APP_PATH/dist/my-app"
-          mkdir -p "$STAGING_PATH"
+          mkdir -p "$APP_PATH/dist/my-app" "$STAGING_PATH"
           tar -xzf "$ARCHIVE" -C "$STAGING_PATH"
-
-          # Ensure Nginx can read the deployed static files.
           find "$STAGING_PATH" -type d -exec chmod 755 {} +
           find "$STAGING_PATH" -type f -exec chmod 644 {} +
 
-          # Keep the currently deployed frontend as a rollback copy.
           rm -rf "$PREVIOUS_PATH"
-          if [ -e "$DEPLOY_PATH" ]; then
-            mv "$DEPLOY_PATH" "$PREVIOUS_PATH"
-          fi
-
+          if [ -e "$DEPLOY_PATH" ]; then mv "$DEPLOY_PATH" "$PREVIOUS_PATH"; fi
           if mv "$STAGING_PATH" "$DEPLOY_PATH"; then
             rm -f "$ARCHIVE"
-            echo "Frontend files replaced successfully at $DEPLOY_PATH"
-            echo "Previous version retained at $PREVIOUS_PATH"
+            echo "Frontend deployed at $DEPLOY_PATH"
           else
-            if [ -e "$PREVIOUS_PATH" ]; then
-              mv "$PREVIOUS_PATH" "$DEPLOY_PATH"
-            fi
+            if [ -e "$PREVIOUS_PATH" ]; then mv "$PREVIOUS_PATH" "$DEPLOY_PATH"; fi
             echo "Deployment failed; previous frontend restored."
             exit 1
           fi

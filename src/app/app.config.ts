@@ -7,7 +7,7 @@ import { provideClientHydration } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideToastr } from 'ngx-toastr';
 import { DATA_ADAPTER } from './common/services/business-data.service';
-import { JsonFileAdapter } from './common/services/json-file.adapter';
+import { ApiDataAdapter } from './common/services/api-data.adapter';
 import { authInterceptor } from './common/services/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
@@ -26,6 +26,6 @@ export const appConfig: ApplicationConfig = {
       maxOpened: 3,
       autoDismiss: true
     }),
-    { provide: DATA_ADAPTER, useClass: JsonFileAdapter }
+    { provide: DATA_ADAPTER, useClass: ApiDataAdapter }
   ]
 };
