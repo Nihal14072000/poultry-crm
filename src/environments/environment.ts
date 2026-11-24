@@ -12,5 +12,5 @@ const defaultApiUrl = typeof window === 'undefined'
   : '/api';
 
 export const environment = {
-  apiUrl: (browserApiUrl?.trim() || serverApiUrl?.trim() || defaultApiUrl).replace(/\\/+$/, '')
+  apiUrl: (browserApiUrl?.trim() || serverApiUrl?.trim() || defaultApiUrl).replace(/\/+$/, '')
 };
