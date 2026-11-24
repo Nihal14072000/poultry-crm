@@ -18,7 +18,7 @@ type PaymentTrend = { label: string; month: string; receipts: number; payouts: n
 
 @Component({ selector: 'app-payment-center', standalone: true, imports: [CommonModule, LoadingSkeletonComponent, InfoPopoverComponent, FormsModule, RouterLink, CurrencyPipe, StatusPillPipe], templateUrl: './payment-center.component.html', styleUrl: './payment-center.component.css' })
 export class PaymentCenterComponent implements OnInit {
-  view: View = 'overview'; loading = true; saving = false; error = ''; query = ''; statusFilter = ''; tripId = ''; partyId = ''; paymentPartyFilter = '';
+  view: View = 'overview'; loading = true; saving = false; showQrCodeModal = false; error = ''; query = ''; statusFilter = ''; tripId = ''; partyId = ''; paymentPartyFilter = '';
   trips: TripRecord[] = []; parties: TripRecord[] = []; paymentParties: PaymentPartyOption[] = []; records: FinanceRecord[] = []; payments: FinanceRecord[] = []; settlements: FinanceRecord[] = []; summary?: FinanceRecord; financeSummary?: FinanceRecord;
   selectedPaymentId = ''; allocations: Record<string, number> = {}; editingPaymentId = ''; deleteCandidate?: FinanceRecord;
   readonly methods: PaymentMethod[] = ['BANK_TRANSFER', 'CASH', 'CHEQUE', 'UPI', 'CARD', 'OTHER'];
@@ -218,6 +218,8 @@ export class PaymentCenterComponent implements OnInit {
     finally { this.saving = false; }
   }
   async submitAllocations(): Promise<void> { if (!this.selectedPayment || !this.permissions.can('payments','update')) return; const rows = Object.entries(this.allocations).filter(([, amount]) => Number(amount)>0); if (!rows.length || this.paymentRemaining < 0) { this.error='Enter allocations within the remaining payment amount.'; return; } for (const [id, amount] of rows) { const settlement = this.settlements.find(s=>this.id(s)===id); if (!settlement || Number(amount)>this.money(settlement,'outstandingBalance','balance')) { this.error='An allocation exceeds its settlement balance.'; return; } } this.saving=true; this.error=''; try { for (const [settlementId, amount] of rows) await this.api.allocate({paymentId:Number(this.id(this.selectedPayment)),settlementId:Number(settlementId),amount:Number(amount)}); this.toast.success('Payment allocation saved successfully.'); this.allocations={}; await this.load(); } catch(e) { this.toast.error(e instanceof Error?e.message:'Allocation could not be saved.'); } finally { this.saving=false; } }
+  openQrCodeModal(): void { this.showQrCodeModal = true; }
+  closeQrCodeModal(): void { this.showQrCodeModal = false; }
   changeTrip(): void { void this.load(); }
   validForm(): boolean { const f=this.form; if (!f.partyId || !Number.isFinite(Number(f.amount)) || Number(f.amount)<=0 || !/^\d{4}-\d{2}-\d{2}$/.test(f.paymentDate)) { this.error='Party, positive amount, and payment date are required.'; return false; } return true; }
   id(row?: FinanceRecord): string { return String(row?.['id'] ?? row?.['paymentId'] ?? row?.['settlementId'] ?? ''); }
