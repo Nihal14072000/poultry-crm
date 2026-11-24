@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { GeneratedReport, GenerateReportRequest, ReportsApiService } from '../../common/services/reports-api.service';
+import { GeneratedReport, GenerateReportRequest, ReportsApiService } from '../../../common/services/reports-api.service';
 
 type ReportType = 'SALES' | 'PURCHASE' | 'PAYMENTS' | 'OUTSTANDING' | 'DELIVERIES' | 'TRIP_SUMMARY';
 
@@ -133,7 +133,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   }
 
   async refreshReports(): Promise<void> {
-    this.errorMessage = this.errorMessage && !this.loading ? this.errorMessage : '';
+    this.errorMessage = '';
     try {
       this.reports = await this.reportsApi.list();
       this.reports.sort((left, right) => right.id - left.id);
