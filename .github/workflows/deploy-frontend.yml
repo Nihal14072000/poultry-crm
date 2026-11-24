@@ -65,6 +65,7 @@ jobs:
       - name: Copy frontend bundle
         run: |
           set -euo pipefail
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_PATH'"
           scp -i ~/.ssh/deploy_key frontend-dist.tar.gz "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/frontend-dist.tar.gz"
 
       - name: Replace Nginx frontend files
