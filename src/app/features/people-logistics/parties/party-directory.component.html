@@ -14,9 +14,6 @@
   @if (actionError && !editorOpen && !deleteCandidate) { <div class="page-error" role="alert">{{ actionError }}</div> }
 
   <div class="directory-card">
-    <div class="directory-toolbar">
-      <div class="record-count"><strong>{{ records.length }}</strong> records <span>·</span> Updated just now</div>
-    </div>
     @if (loading && !records.length) {
       <app-party-loading-skeleton variant="directory" />
     } @else if (errorMessage) {
@@ -48,6 +45,22 @@
             }
           </tbody>
         </table>
+      </div>
+      <div class="pagination-bar" aria-label="Parties pagination">
+        <span class="pagination-summary">Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalElements }} records</span>
+        <div class="pagination-controls">
+          <label class="page-size-label">
+            Rows
+            <select [value]="pageSize" (change)="changePageSize($any($event.target).value)">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </label>
+          <button class="page-btn" type="button" (click)="loadParties(page - 1)" [disabled]="loading || page <= 0">Previous</button>
+          <span class="page-indicator">Page {{ totalPages ? page + 1 : 0 }} of {{ totalPages }}</span>
+          <button class="page-btn" type="button" (click)="loadParties(page + 1)" [disabled]="loading || page + 1 >= totalPages">Next</button>
+        </div>
       </div>
     }
   </div>

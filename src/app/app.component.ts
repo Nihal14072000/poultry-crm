@@ -22,11 +22,17 @@ export class AppComponent {
   ) {}
 
   readonly expandedGroups: Record<string, boolean> = Object.fromEntries(
-    ['Farm operations', 'Inventory', 'Customer relations', 'People & logistics', 'Finance']
+    ['Platform', 'Logistics', 'Entities', 'Farm operations', 'Inventory', 'Customer relations', 'Finance', 'Administration']
       .map((label) => [label, false])
   );
 
   readonly navigation = [
+    {
+      label: 'Platform',
+      links: [
+        { label: 'Tenants', path: '/tenants', icon: 'organization' }
+      ]
+    },
     {
       label: 'Farm operations',
       links: [
@@ -63,15 +69,19 @@ export class AppComponent {
       ]
     },
     {
-      label: 'People & logistics',
+      label: 'Logistics',
       links: [
         { label: 'Overview', path: '/people-logistics/overview', icon: 'dispatch' },
-        { label: 'Employees', path: '/people-logistics/employees', icon: 'employees' },
-        { label: 'Buying parties', path: '/people-logistics/buying-parties', icon: 'suppliers' },
-        { label: 'Selling parties', path: '/people-logistics/selling-parties', icon: 'customers' },
-        { label: 'Vehicles', path: '/people-logistics/vehicles', icon: 'fleet' },
         { label: 'Trips', path: '/people-logistics/trips', icon: 'dispatch' },
         { label: 'Deliveries', path: '/people-logistics/deliveries', icon: 'dispatch' }
+      ]
+    },
+    {
+      label: 'Entities',
+      links: [
+        { label: 'Buying parties', path: '/people-logistics/buying-parties', icon: 'suppliers' },
+        { label: 'Selling parties', path: '/people-logistics/selling-parties', icon: 'customers' },
+        { label: 'Vehicles', path: '/people-logistics/vehicles', icon: 'fleet' }
       ]
     },
     {
@@ -85,6 +95,13 @@ export class AppComponent {
         { label: 'Expenses', path: '/finance/expenses', icon: 'expenses' },
         { label: 'Profitability', path: '/finance/profitability', icon: 'profitability' }
       ]
+    },
+    {
+      label: 'Administration',
+      links: [
+        { label: 'Employees', path: '/people-logistics/employees', icon: 'employees' },
+        { label: 'Roles & permissions', path: '/roles', icon: 'users' }
+      ]
     }
   ];
 
@@ -97,6 +114,14 @@ export class AppComponent {
         )
       }))
       .filter((group) => group.links.length > 0);
+  }
+
+  get organizationName(): string {
+    return this.auth.currentUser?.tenantName?.trim() || 'Product Owner';
+  }
+
+  get organizationInitial(): string {
+    return this.organizationName.charAt(0).toUpperCase();
   }
 
   get userInitials(): string {

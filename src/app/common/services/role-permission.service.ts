@@ -16,7 +16,12 @@ export class RolePermissionService {
 
   can(resource: string, action: PermissionAction = 'read'): boolean {
     const user = this.auth.currentUser;
-    return !!user && user.status.toLowerCase() === 'active' && canRoleAccess(user.role, resource, action);
+    if (!user || user.status.toLowerCase() !== 'active') return false;
+    if (Array.isArray(user.resources)) {
+      if (!user.resources.includes(resource)) return false;
+      return action === 'read' || !!user.actions?.[action]?.includes(resource);
+    }
+    return canRoleAccess(user.role, resource, action);
   }
 
   canAccessRoute(resource: string): boolean {
@@ -25,7 +30,12 @@ export class RolePermissionService {
 
   getDefaultRoute(): string {
     const user = this.auth.currentUser;
-    const route = user ? getDefaultRouteForRole(user.role) : '/access-denied';
+    if (!user) return '/access-denied';
+    if (Array.isArray(user.resources)) {
+      return Object.entries(navigationScreenResources)
+        .find(([, resource]) => this.canAccessRoute(resource))?.[0] ?? '/access-denied';
+    }
+    const route = getDefaultRouteForRole(user.role);
     const resource = navigationScreenResources[route];
     return resource && this.canAccessRoute(resource) ? route : '/access-denied';
   }

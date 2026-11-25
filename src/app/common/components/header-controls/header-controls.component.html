@@ -31,24 +31,4 @@
       </section>
     }
   </div>
-  <div class="topbar-divider"></div>
-  <div class="header-control">
-    <button class="date-button" type="button" [attr.aria-expanded]="dateRangeOpen" (click)="toggleDateRange()"><span class="calendar-icon"></span><span>{{ selectedRangeLabel }}</span><span class="down-caret">⌄</span></button>
-    @if (dateRangeOpen) {
-      <section class="header-popover date-popover" aria-label="Select date range">
-        <div class="popover-heading"><div><h2>Date range</h2><p>Select the reporting period</p></div><button type="button" class="popover-close" aria-label="Close date range" (click)="dateRangeOpen = false">×</button></div>
-        <div class="date-presets">
-          <button type="button" (click)="selectDatePreset('today')">Today</button>
-          <button type="button" (click)="selectDatePreset('last-seven-days')">Last 7 days</button>
-          <button type="button" (click)="selectDatePreset('this-month')">This month</button>
-        </div>
-        <div class="date-fields">
-          <label>From<input type="date" [(ngModel)]="rangeStart"></label>
-          <label>To<input type="date" [(ngModel)]="rangeEnd"></label>
-        </div>
-        @if (dateRangeError) { <p class="date-error" role="alert">{{ dateRangeError }}</p> }
-        <div class="date-actions"><button type="button" class="date-cancel" (click)="dateRangeOpen = false">Cancel</button><button type="button" class="date-apply" (click)="applyDateRange()">Apply</button></div>
-      </section>
-    }
-  </div>
 </div>

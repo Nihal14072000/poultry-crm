@@ -55,7 +55,7 @@
               <table>
                 <thead><tr><th>TRIP</th><th>DATE</th><th>ROUTE</th><th>DRIVER</th><th>VEHICLE</th><th>STATUS</th></tr></thead>
                 <tbody>
-                  @for (trip of trips.slice(0, 8); track trip['_demoId']) {
+                  @for (trip of trips.slice(0, 5); track trip['_demoId']) {
                     <tr>
                       <td><strong>{{ trip['tripNumber'] || 'Trip' }}</strong></td>
                       <td>{{ trip['tripDate'] || '—' }}</td>

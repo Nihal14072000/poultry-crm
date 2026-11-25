@@ -1,0 +1,30 @@
+.roles-page { animation: arrive .2s ease-out; }
+.page-heading { margin-bottom: 16px; }
+.page-heading h1 { color: #26372d; font-size: 25px; margin: 8px 0 4px; }
+.page-heading p { color: #858f87; font-size: 12px; margin: 0; }
+.eyebrow { color: #8c978e; font-size: 9px; font-weight: 700; letter-spacing: .95px; }
+.eyebrow span { color: #c1c9c1; padding: 0 5px; }
+.panel { background: #fff; border: 1px solid #e9ece7; border-radius: 9px; margin-bottom: 14px; padding: 18px 20px; }
+.panel h2 { color: #334239; font-size: 15px; font-weight: 700; margin: 0 0 14px; }
+.role-form { display: grid; gap: 16px; }
+.name-field { color: #536157; display: flex; flex-direction: column; font-size: 11px; font-weight: 600; gap: 6px; max-width: 360px; }
+.required { color: #b65f50; }
+input[type="text"], input:not([type]) { background: #fff; border: 1px solid #dfe5dd; border-radius: 5px; color: #34443a; font: inherit; min-height: 37px; padding: 8px 10px; width: 100%; }
+.group-label { color: #536157; display: block; font-size: 11px; font-weight: 600; margin-bottom: 8px; }
+.checks-grid { display: grid; gap: 8px 14px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+.check { align-items: center; color: #405047; display: flex; font-size: 11px; gap: 7px; }
+.form-actions { display: flex; gap: 10px; }
+.button { align-items: center; border: 0; border-radius: 6px; cursor: pointer; display: inline-flex; font-size: 11px; font-weight: 650; justify-content: center; min-height: 37px; padding: 0 16px; }
+.button-primary { background: #315f45; color: #fff; }
+.button-secondary { background: #fff; border: 1px solid #dfe5dd; color: #536157; }
+.button:disabled { cursor: not-allowed; opacity: .55; }
+.feedback.error { background: #fff3ef; border-radius: 6px; color: #a25243; font-size: 11px; margin: 12px 0 0; padding: 10px 12px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; text-align: left; width: 100%; }
+th, td { border-bottom: 1px solid #f0f2ef; color: #536157; font-size: 11px; padding: 11px 9px; }
+thead th { color: #4a504b; font-size: 9px; font-weight: 700; letter-spacing: .4px; }
+.link-button { background: transparent; border: 0; color: #315f45; cursor: pointer; font: inherit; font-size: 11px; font-weight: 700; padding: 4px 0; }
+.link-button + .link-button { margin-left: 12px; }
+.link-button.danger { color: #a25243; }
+.truncate-cell { display: block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.empty { color: #879289; font-size: 12px; padding: 18px 0; text-align: center; }

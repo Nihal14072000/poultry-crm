@@ -188,6 +188,30 @@ export class TripApiService {
     };
   }
 
+  async getPartiesPage(partyType: 'buying' | 'selling', page = 0, size = 10): Promise<{
+    items: PartyDirectoryRecord[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  }> {
+    const endpoint = partyType === 'buying' ? 'buying-parties' : 'selling-parties';
+    const paged = await firstValueFrom(this.http.get<{
+      items: ApiParty[];
+      page: number;
+      size: number;
+      totalElements: number;
+      totalPages: number;
+    }>(`${this.baseUrl}/${endpoint}/paged`, { params: { page, size } }));
+    return {
+      items: (paged.items ?? []).map((party) => this.partyDirectoryRecord(party)),
+      page: paged.page,
+      size: paged.size,
+      totalElements: paged.totalElements,
+      totalPages: paged.totalPages
+    };
+  }
+
   async getBuyingParties(): Promise<PartyDirectoryRecord[]> {
     const parties = await firstValueFrom(this.http.get<ApiParty[]>(`${this.baseUrl}/buying-parties`));
     return parties.map((party) => this.partyDirectoryRecord(party));
@@ -242,6 +266,44 @@ export class TripApiService {
     const endpoint = type === 'buying' ? 'buying-parties' : 'selling-parties';
     const partyId = this.parseId(id);
     await firstValueFrom(this.http.put(`${this.baseUrl}/${endpoint}/${partyId}`, { ...party, id: partyId }));
+  }
+
+  async getTripsPage(page = 0, size = 10): Promise<{
+    items: TripRecord[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  }> {
+    const user = this.auth.currentUser;
+    const role = user?.role.toLowerCase() ?? '';
+    const userId = user?.id ?? user?._demoId;
+    const params: Record<string, string | number> = { page, size };
+    if (role.includes('driver') && userId !== undefined) params['driverId'] = Number(userId);
+    if (role.includes('supervisor') && userId !== undefined) params['supervisorId'] = Number(userId);
+
+    const [paged, vehicles, drivers] = await Promise.all([
+      firstValueFrom(this.http.get<{
+        items: ApiTrip[];
+        page: number;
+        size: number;
+        totalElements: number;
+        totalPages: number;
+      }>(`${this.baseUrl}/trips/paged`, { params })),
+      firstValueFrom(this.http.get<ApiEntity[]>(`${this.baseUrl}/vehicles`)),
+      firstValueFrom(this.http.get<Employee[]>(`${this.baseUrl}/drivers`))
+    ]);
+    const vehicleById = new Map(vehicles.map((vehicle) => [String(vehicle.id), vehicle]));
+    const driverById = new Map(drivers.map((driver) => [String(driver.id), driver]));
+    return {
+      items: (paged.items ?? [])
+        .filter((trip) => !trip['isDeleted'])
+        .map((trip) => this.tripRecord(trip, vehicleById, driverById)),
+      page: paged.page,
+      size: paged.size,
+      totalElements: paged.totalElements,
+      totalPages: paged.totalPages
+    };
   }
 
   async getTrips(): Promise<TripRecord[]> {

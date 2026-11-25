@@ -60,6 +60,22 @@
           </tbody>
         </table>
       </div>
+      <div class="pagination-bar" aria-label="Trips pagination">
+        <span class="pagination-summary">Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalElements }} trips</span>
+        <div class="pagination-controls">
+          <label class="page-size-label">
+            Rows
+            <select [value]="pageSize" (change)="changePageSize($any($event.target).value)">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </label>
+          <button class="page-btn" type="button" (click)="loadPage(page - 1)" [disabled]="loading || page <= 0">Previous</button>
+          <span class="page-indicator">Page {{ totalPages ? page + 1 : 0 }} of {{ totalPages }}</span>
+          <button class="page-btn" type="button" (click)="loadPage(page + 1)" [disabled]="loading || page + 1 >= totalPages">Next</button>
+        </div>
+      </div>
     }
   </section>
   <p class="demo-note">Trips and their nested buying and selling orders are managed by the backend.</p>

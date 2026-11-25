@@ -22,6 +22,10 @@ export class PartyDirectoryComponent implements OnInit {
   records: PartyDirectoryRecord[] = [];
   loading = true;
   errorMessage = '';
+  page = 0;
+  pageSize = 10;
+  totalElements = 0;
+  totalPages = 0;
   saving = false;
   editorOpen = false;
   editorMode: 'create' | 'edit' = 'create';
@@ -170,13 +174,29 @@ export class PartyDirectoryComponent implements OnInit {
     }
   }
 
-  async loadParties(): Promise<void> {
+  get rangeStart(): number {
+    return this.totalElements === 0 ? 0 : this.page * this.pageSize + 1;
+  }
+
+  get rangeEnd(): number {
+    return Math.min((this.page + 1) * this.pageSize, this.totalElements);
+  }
+
+  async changePageSize(size: number): Promise<void> {
+    this.pageSize = Number(size) || 10;
+    await this.loadParties(0);
+  }
+
+  async loadParties(targetPage = this.page): Promise<void> {
     this.loading = true;
     this.errorMessage = '';
     try {
-      this.records = this.partyType === 'buying'
-        ? await this.tripApi.getBuyingParties()
-        : await this.tripApi.getSellingParties();
+      const result = await this.tripApi.getPartiesPage(this.partyType, targetPage, this.pageSize);
+      this.records = result.items;
+      this.page = result.page;
+      this.pageSize = result.size;
+      this.totalElements = result.totalElements;
+      this.totalPages = result.totalPages;
     } catch {
       this.errorMessage = `We could not load ${this.title.toLowerCase()}. Please refresh to try again.`;
     } finally {

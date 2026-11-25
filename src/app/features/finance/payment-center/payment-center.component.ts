@@ -19,6 +19,7 @@ type PaymentTrend = { label: string; month: string; receipts: number; payouts: n
 @Component({ selector: 'app-payment-center', standalone: true, imports: [CommonModule, LoadingSkeletonComponent, InfoPopoverComponent, FormsModule, RouterLink, CurrencyPipe, StatusPillPipe], templateUrl: './payment-center.component.html', styleUrl: './payment-center.component.css' })
 export class PaymentCenterComponent implements OnInit {
   view: View = 'overview'; loading = true; saving = false; error = ''; query = ''; statusFilter = ''; tripId = ''; partyId = ''; paymentPartyFilter = '';
+  page = 0; pageSize = 10; totalElements = 0; totalPages = 0;
   trips: TripRecord[] = []; parties: TripRecord[] = []; paymentParties: PaymentPartyOption[] = []; records: FinanceRecord[] = []; payments: FinanceRecord[] = []; settlements: FinanceRecord[] = []; summary?: FinanceRecord; financeSummary?: FinanceRecord;
   selectedPaymentId = ''; allocations: Record<string, number> = {}; editingPaymentId = ''; deleteCandidate?: FinanceRecord;
   readonly methods: PaymentMethod[] = ['BANK_TRANSFER', 'CASH', 'CHEQUE', 'UPI', 'CARD', 'OTHER'];
@@ -42,7 +43,7 @@ export class PaymentCenterComponent implements OnInit {
       }
       if (this.view === 'receivables') this.records = await this.api.receivables({ tripId: this.tripId || undefined, buyingPartyId: this.partyId || undefined });
       else if (this.view === 'payables') this.records = await this.api.payables({ tripId: this.tripId || undefined, sellingPartyId: this.partyId || undefined });
-      else if (this.view === 'payments') this.payments = await this.api.payments();
+      else if (this.view === 'payments') await this.fetchPaymentsPage(0);
       else if (this.view === 'allocate') {
         const [payments, receivables, payables] = await Promise.all([
           this.api.payments(),
@@ -57,6 +58,39 @@ export class PaymentCenterComponent implements OnInit {
     } catch (e) { this.error = e instanceof Error ? e.message : 'Finance data could not be loaded.'; } finally { this.loading = false; }
   }
   get filtered(): FinanceRecord[] { const q = this.query.trim().toLowerCase(); const [partyType, partyId] = this.paymentPartyFilter.split(':'); return (this.view === 'payments' ? this.payments : this.records).filter(row => (!q || Object.values(row).some(v => String(v ?? '').toLowerCase().includes(q))) && (!this.statusFilter || this.text(row, 'status') === this.statusFilter) && (this.view !== 'payments' || !this.paymentPartyFilter || (this.text(row, 'paymentType', 'type') === partyType && this.text(row, 'partyId', 'buyingPartyId', 'sellingPartyId') === partyId))); }
+  get rangeStart(): number { return this.totalElements === 0 ? 0 : this.page * this.pageSize + 1; }
+  get rangeEnd(): number { return Math.min((this.page + 1) * this.pageSize, this.totalElements); }
+  async fetchPaymentsPage(targetPage: number): Promise<void> {
+    const [paymentType, partyId] = this.paymentPartyFilter ? this.paymentPartyFilter.split(':') : ['', ''];
+    const result = await this.api.paymentsPage({
+      page: targetPage,
+      size: this.pageSize,
+      tripId: this.tripId || undefined,
+      status: this.statusFilter || undefined,
+      paymentType: paymentType || undefined,
+      partyId: partyId || undefined,
+      query: this.query.trim() || undefined
+    });
+    this.payments = result.items;
+    this.page = result.page;
+    this.pageSize = result.size;
+    this.totalElements = result.totalElements;
+    this.totalPages = result.totalPages;
+  }
+  async applyPaymentFilters(): Promise<void> {
+    if (this.view !== 'payments') return;
+    this.loading = true; this.error = '';
+    try { await this.fetchPaymentsPage(0); }
+    catch (e) { this.error = e instanceof Error ? e.message : 'Payments could not be loaded.'; }
+    finally { this.loading = false; }
+  }
+  async setPage(target: number): Promise<void> {
+    this.loading = true; this.error = '';
+    try { await this.fetchPaymentsPage(target); }
+    catch (e) { this.error = e instanceof Error ? e.message : 'Payments could not be loaded.'; }
+    finally { this.loading = false; }
+  }
+  async changePageSize(size: number): Promise<void> { this.pageSize = Number(size) || 10; await this.setPage(0); }
   get completedPayments(): FinanceRecord[] { return this.payments.filter(p => p['isDeleted'] !== true && this.text(p, 'status') === 'COMPLETED'); }
   get selectedPayment(): FinanceRecord | undefined { return this.completedPayments.find(p => this.id(p) === this.selectedPaymentId); }
   get paymentRemaining(): number { return this.money(this.selectedPayment, 'remainingAmount', 'unallocatedAmount', 'amount') - Object.values(this.allocations).reduce((a, b) => a + (Number(b) || 0), 0); }

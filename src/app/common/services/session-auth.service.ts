@@ -42,14 +42,26 @@ export class SessionAuthService {
   signIn(username: string, password: string): Observable<UserSession> {
     const normalizedUsername = this.normalizeUsername(username);
     const header = `Basic ${this.encodeCredentials(normalizedUsername, password)}`;
-    return this.http.get<{ id?: string | number; _demoId?: string | number; name: string; username?: string; role: string }>(`${environment.apiUrl}/auth/me`, {
+    return this.http.get<{
+      id?: string | number;
+      _demoId?: string | number;
+      name: string;
+      username?: string;
+      tenantName?: string;
+      role: string;
+      resources?: string[];
+      actions?: Record<string, string[]>;
+    }>(`${environment.apiUrl}/auth/me`, {
       headers: { Authorization: header }
     }).pipe(map(account => {
       const session: UserSession = {
         id: account.id ?? account._demoId,
         name: account.name,
         email: account.username ?? account.name,
+        tenantName: account.tenantName,
         role: account.role,
+        resources: account.resources,
+        actions: account.actions,
         permissions: '',
         businessUnit: '',
         status: 'Active',

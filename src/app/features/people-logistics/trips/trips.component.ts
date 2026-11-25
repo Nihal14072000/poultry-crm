@@ -21,6 +21,10 @@ export class TripsComponent implements OnInit {
   loading = true;
   errorMessage = '';
   deletingTripId: string | null = null;
+  page = 0;
+  pageSize = 10;
+  totalElements = 0;
+  totalPages = 0;
 
   constructor(
     private readonly tripService: TripApiService,
@@ -62,13 +66,37 @@ export class TripsComponent implements OnInit {
     }
   }
 
-  async ngOnInit(): Promise<void> {
+  get rangeStart(): number {
+    return this.totalElements === 0 ? 0 : this.page * this.pageSize + 1;
+  }
+
+  get rangeEnd(): number {
+    return Math.min((this.page + 1) * this.pageSize, this.totalElements);
+  }
+
+  async changePageSize(size: number): Promise<void> {
+    this.pageSize = Number(size) || 10;
+    await this.loadPage(0);
+  }
+
+  async loadPage(targetPage: number): Promise<void> {
+    this.loading = true;
+    this.errorMessage = '';
     try {
-      this.trips = await this.tripService.getTrips();
+      const result = await this.tripService.getTripsPage(targetPage, this.pageSize);
+      this.trips = result.items;
+      this.page = result.page;
+      this.pageSize = result.size;
+      this.totalElements = result.totalElements;
+      this.totalPages = result.totalPages;
     } catch {
       this.errorMessage = 'Trips could not be loaded. Refresh the page to try again.';
     } finally {
       this.loading = false;
     }
+  }
+
+  async ngOnInit(): Promise<void> {
+    await this.loadPage(0);
   }
 }

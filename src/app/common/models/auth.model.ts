@@ -11,6 +11,9 @@ export interface DemoUser {
 
 export interface UserSession extends DemoUser {
   authenticatedAt: string;
+  tenantName?: string;
+  resources?: string[];
+  actions?: Record<string, string[]>;
 }
 
 export type PermissionAction = 'read' | 'create' | 'update' | 'delete' | 'transition' | 'approve' | 'export' | 'manage';

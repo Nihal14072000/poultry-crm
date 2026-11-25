@@ -15,7 +15,7 @@
   @if (view !== 'record') { <div class="toolbar"><label>Trip<select [(ngModel)]="tripId" (ngModelChange)="changeTrip()">
         <option value="">All trips</option>@for (trip of trips; track trip['_demoId']) { <option
           [value]="trip['_demoId']">{{ trip['tripNumber'] }} · {{ trip['tripDate'] }}</option> }
-      </select></label>@if (view === 'payments') { <label>Party<select [(ngModel)]="paymentPartyFilter">
+      </select></label>@if (view === 'payments') { <label>Party<select [(ngModel)]="paymentPartyFilter" (ngModelChange)="applyPaymentFilters()">
         <option value="">All parties</option>@for (party of paymentParties; track party['_demoId']) { <option
           [value]="party['_demoId']">{{ party['name'] }} · {{ party.paymentType === 'BUYER_RECEIPT' ? 'Buyer receipt' : 'Seller payout' }}</option> }
       </select></label> } @if (view === 'receivables' || view === 'payables') { <label>Party<select [(ngModel)]="partyId"
@@ -23,8 +23,8 @@
         <option value="">All parties</option>@for (party of parties; track party['_demoId']) { <option
           [value]="party['_demoId']">{{ party['name'] }}</option> }
       </select></label> } @if (view !== 'trip-summary' && view !== 'allocate') { <label class="search">Search<input
-        type="search" [(ngModel)]="query" placeholder="Search transactions"></label> } @if (view === 'payments') {
-    <label>Status<select [(ngModel)]="statusFilter">
+        type="search" [(ngModel)]="query" (ngModelChange)="applyPaymentFilters()" placeholder="Search transactions"></label> } @if (view === 'payments') {
+    <label>Status<select [(ngModel)]="statusFilter" (ngModelChange)="applyPaymentFilters()">
         <option value="">All statuses</option>@for (status of statuses; track status) { <option [value]="status">{{
           status }}</option> }
       </select></label> }</div> }
@@ -87,7 +87,7 @@
           <th>ACTIONS</th>
         </tr>
       </thead>
-      <tbody>@for (payment of filtered; track id(payment)) { <tr>
+      <tbody>@for (payment of payments; track id(payment)) { <tr>
           <td>{{ paymentPartyName(payment) }}</td>
           <td>@if (paymentTrip(payment); as trip) { <a class="text-link" [routerLink]="['/people-logistics/trips', trip['_demoId']]">{{ trip['tripNumber'] }}</a> } @else { {{ text(payment,'tripId') || '—' }} }</td>
           <td class="money">{{ money(payment,'amount') | currency:'INR':'symbol':'1.0-0':'en-IN' }}</td>
@@ -104,6 +104,24 @@
           <td colspan="8" class="empty">No payment transactions match the current filters.</td>
         </tr> }</tbody>
     </table>
+    @if (payments.length) {
+      <div class="pagination-bar" aria-label="Payment history pagination">
+        <span class="pagination-summary">Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalElements }} transactions</span>
+        <div class="pagination-controls">
+          <label class="page-size-label">
+            Rows
+            <select [value]="pageSize" (change)="changePageSize($any($event.target).value)">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </label>
+          <button class="page-btn" type="button" (click)="setPage(page - 1)" [disabled]="loading || page <= 0">Previous</button>
+          <span class="page-indicator">Page {{ totalPages ? page + 1 : 0 }} of {{ totalPages }}</span>
+          <button class="page-btn" type="button" (click)="setPage(page + 1)" [disabled]="loading || page + 1 >= totalPages">Next</button>
+        </div>
+      </div>
+    }
   </section>
   @if (editingPaymentId) {
     <div class="dialog-backdrop" (click)="closePaymentEditor()">
