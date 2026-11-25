@@ -159,12 +159,23 @@ export const roleVisibility: Record<string, RoleVisibility> = {
       transition: ['leads', 'opportunities', 'follow-ups', 'complaints']
     }
   },
-  'Super Admin': { resources: [] },
+  'Super Admin': {
+    resources: screenResources,
+    actions: {
+      create: screenResources,
+      update: screenResources,
+      delete: screenResources,
+      transition: screenResources,
+      approve: screenResources,
+      export: screenResources,
+      manage: screenResources
+    }
+  },
   'Read Only': { resources: allScreens.filter((resource) => !['users-roles', 'administration', 'employees', 'audit'].includes(resource)) },
   Authenticated: { resources: allScreens, actions: { create: ['employees'] } },
 };
 
-export const recordScopeBypassRoles = ['Organization Admin', 'Owner'];
+export const recordScopeBypassRoles = ['Organization Admin', 'Owner', 'Super Admin'];
 
 const employeeRoles: Record<string, string> = {
   DRIVER: 'Driver',

@@ -46,11 +46,13 @@
         <span><strong>Need a hand?</strong><small>Visit the help center</small></span>
         <span class="help-arrow">↗</span>
       </a>
-      <button class="profile-button" type="button" (click)="auth.signOut()" aria-label="Sign out">
-        <span class="profile-avatar">{{ userInitials }}</span>
-        <span class="profile-copy"><strong>{{ user.name }}</strong><small>{{ user.role }} · Sign out</small></span>
-        <span class="profile-menu">↪</span>
-      </button>
+      <div class="profile-row">
+        <a class="profile-button" routerLink="/profile" (click)="closeNavigation()" aria-label="Open profile">
+          <span class="profile-avatar">{{ userInitials }}</span>
+          <span class="profile-copy"><strong>{{ user.name }}</strong><small>{{ user.role }} · Profile</small></span>
+        </a>
+        <button class="signout-icon-button" type="button" (click)="auth.signOut()" aria-label="Sign out" title="Sign out">↪</button>
+      </div>
     </div>
   </aside>
 

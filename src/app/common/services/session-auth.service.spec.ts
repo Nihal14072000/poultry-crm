@@ -36,11 +36,7 @@ describe('SessionAuthService', () => {
 
     const loginRequest = http.expectOne(`${environment.apiUrl}/auth/me`);
     expect(loginRequest.request.headers.get('Authorization')).toBe('Basic YWRtaW46YWRtaW4=');
-    loginRequest.flush({ id: 7, name: 'admin', role: 'ADMIN' });
-    const employeesRequest = http.expectOne(`${environment.apiUrl}/employees`);
-    expect(employeesRequest.request.method).toBe('GET');
-    expect(employeesRequest.request.headers.get('Authorization')).toBe('Basic YWRtaW46YWRtaW4=');
-    employeesRequest.flush([]);
+    loginRequest.flush({ id: 7, name: 'admin', username: 'admin', role: 'Organization Admin' });
 
     expect(signedIn).toBeTrue();
     expect(auth.currentUser?.name).toBe('admin');
@@ -63,31 +59,27 @@ describe('SessionAuthService', () => {
   it('uses configured employee role names returned by the authentication API', () => {
     auth.signIn('manager', 'password').subscribe();
     http.expectOne(`${environment.apiUrl}/auth/me`).flush({ name: 'manager', role: 'Farm Manager' });
-    http.expectOne(`${environment.apiUrl}/employees`).flush([]);
 
     expect(auth.currentUser?.role).toBe('Farm Manager');
   });
 
-  it('uses the matching employee type as the account role', () => {
+  it('uses the server-resolved role and employee id from /auth/me', () => {
     auth.signIn('driver', 'password').subscribe();
-    http.expectOne(`${environment.apiUrl}/auth/me`).flush({ id: 4, name: 'driver', role: 'Authenticated' });
-    http.expectOne(`${environment.apiUrl}/employees`).flush([
-      { id: 9, name: 'someone else', type: 'ACCOUNTANT' },
-      { id: 12, name: 'driver', type: 'SUPERVISOR' }
-    ]);
+    http.expectOne(`${environment.apiUrl}/auth/me`).flush({ id: 12, name: 'driver', username: 'driver', role: 'Supervisor' });
 
     expect(auth.currentUser?.role).toBe('Supervisor');
     expect(auth.currentUser?.id).toBe(12);
   });
 
-  it('treats accounts whose name contains admin as organization admins', () => {
-    auth.signIn('support', 'password').subscribe();
-    http.expectOne(`${environment.apiUrl}/auth/me`).flush({ name: 'Support Admin', role: 'Authenticated' });
-    http.expectOne(`${environment.apiUrl}/employees`).flush([
-      { name: 'Support Admin', type: 'DRIVER' }
-    ]);
+  it('normalizes login username by removing spaces and ignoring case', () => {
+    auth.signIn(' John  Doe ', 'johndoe').subscribe();
+    const loginRequest = http.expectOne(`${environment.apiUrl}/auth/me`);
+    expect(loginRequest.request.headers.get('Authorization')).toBe('Basic am9obmRvZTpqb2huZG9l');
+    loginRequest.flush({ id: 15, name: 'John Doe', username: 'johndoe', role: 'Driver' });
 
-    expect(auth.currentUser?.role).toBe('Organization Admin');
+    expect(auth.currentUser?.role).toBe('Driver');
+    expect(auth.currentUser?.id).toBe(15);
+    expect(auth.currentUser?.email).toBe('johndoe');
   });
 
   it('discards an invalid stored session', () => {
@@ -102,8 +94,7 @@ describe('SessionAuthService', () => {
 
   it('clears authentication and returns to login after an API 401', () => {
     auth.signIn('admin', 'admin').subscribe();
-    http.expectOne(`${environment.apiUrl}/auth/me`).flush({ name: 'admin', role: 'ADMIN' });
-    http.expectOne(`${environment.apiUrl}/employees`).flush([]);
+    http.expectOne(`${environment.apiUrl}/auth/me`).flush({ name: 'admin', role: 'Organization Admin' });
 
     TestBed.inject(HttpClient).get(`${environment.apiUrl}/employees`).subscribe({ error: () => undefined });
     const request = http.expectOne(`${environment.apiUrl}/employees`);
@@ -118,8 +109,7 @@ describe('SessionAuthService', () => {
 
   it('keeps authentication and shows access denied after an API 403', () => {
     auth.signIn('admin', 'admin').subscribe();
-    http.expectOne(`${environment.apiUrl}/auth/me`).flush({ name: 'admin', role: 'ADMIN' });
-    http.expectOne(`${environment.apiUrl}/employees`).flush([]);
+    http.expectOne(`${environment.apiUrl}/auth/me`).flush({ name: 'admin', role: 'Organization Admin' });
 
     TestBed.inject(HttpClient).get(`${environment.apiUrl}/employees`).subscribe({ error: () => undefined });
     http.expectOne(`${environment.apiUrl}/employees`).flush({}, { status: 403, statusText: 'Forbidden' });
