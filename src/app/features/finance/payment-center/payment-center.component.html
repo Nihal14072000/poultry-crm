@@ -72,7 +72,7 @@
       *ngTemplateOutlet="settlementTable; context: {$implicit: filtered}"></ng-container></section>
   } @else if (view === 'payments') { <section class="panel">
     <div class="panel-head">
-      <h2>Transactions</h2><a class="text-link" routerLink="/finance/allocate">Allocate completed payment</a>
+      <h2>Transactions</h2><div class="payment-panel-actions"><a class="text-link" routerLink="/finance/allocate">Allocate completed payment</a></div>
     </div>
     <table>
       <thead>

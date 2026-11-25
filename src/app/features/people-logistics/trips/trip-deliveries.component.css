@@ -111,3 +111,12 @@ td small { color:#879289; margin-top:3px; }
   font-weight:700;
 }
 .table-total-row td strong { color:#34443a; }
+
+.payment-edit-actions { align-items:center; display:flex; justify-content:space-between; gap:12px; margin-top:12px; width:100%; }
+
+.trip-payment-card-actions{align-items:center;display:flex;gap:10px}
+.qr-dialog{max-width:390px}.qr-dialog-heading{align-items:center;display:flex;justify-content:space-between}.qr-dialog-heading h2{margin:0}.qr-close{background:transparent;border:0;color:#69766d;cursor:pointer;font-size:24px;line-height:1;padding:0 3px}.qr-placeholder{align-items:center;display:flex;flex-direction:column;gap:12px;padding:22px 12px 12px}.dummy-qr{background:#fff;border:1px solid #edf0eb;border-radius:8px;height:220px;padding:10px;shape-rendering:crispEdges;width:220px}.qr-placeholder p{color:#879289;font-size:11px;margin:0;text-align:center}.qr-placeholder .qr-warning{color:#a25243;font-weight:700}@media(max-width:700px){.trip-payment-card-actions{align-items:flex-end;flex-direction:column;gap:8px}}
+
+.dialog-backdrop{align-items:center;background:rgba(20,35,27,.42);display:flex;inset:0;justify-content:center;padding:18px;position:fixed;z-index:1000}
+.payment-dialog{background:#fff;border:1px solid #e6ebe4;border-radius:10px;box-shadow:0 20px 70px rgba(17,39,26,.2);max-height:86vh;max-width:760px;overflow-y:auto;padding:20px;width:100%}
+.payment-dialog h2{color:#334239;font-size:16px;margin:0 0 16px}
