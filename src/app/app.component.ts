@@ -22,17 +22,11 @@ export class AppComponent {
   ) {}
 
   readonly expandedGroups: Record<string, boolean> = Object.fromEntries(
-    ['Workspace', 'Farm operations', 'Inventory', 'Customer relations', 'People & logistics', 'Finance']
+    ['Farm operations', 'Inventory', 'Customer relations', 'People & logistics', 'Finance']
       .map((label) => [label, false])
   );
 
   readonly navigation = [
-    {
-      label: 'Workspace',
-      links: [
-        { label: 'People & logistics', path: '/workspace/people-logistics', icon: 'dispatch' }
-      ]
-    },
     {
       label: 'Farm operations',
       links: [
@@ -71,6 +65,7 @@ export class AppComponent {
     {
       label: 'People & logistics',
       links: [
+        { label: 'Overview', path: '/people-logistics/overview', icon: 'dispatch' },
         { label: 'Employees', path: '/people-logistics/employees', icon: 'employees' },
         { label: 'Buying parties', path: '/people-logistics/buying-parties', icon: 'suppliers' },
         { label: 'Selling parties', path: '/people-logistics/selling-parties', icon: 'customers' },
