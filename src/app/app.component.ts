@@ -30,7 +30,6 @@ export class AppComponent {
     {
       label: 'Workspace',
       links: [
-        { label: 'Overview', path: '/workspace/overview', icon: 'overview' },
         { label: 'People & logistics', path: '/workspace/people-logistics', icon: 'dispatch' }
       ]
     },
@@ -76,7 +75,6 @@ export class AppComponent {
         { label: 'Buying parties', path: '/people-logistics/buying-parties', icon: 'suppliers' },
         { label: 'Selling parties', path: '/people-logistics/selling-parties', icon: 'customers' },
         { label: 'Vehicles', path: '/people-logistics/vehicles', icon: 'fleet' },
-        { label: 'Vehicle assignments', path: '/people-logistics/vehicle-assignments', icon: 'dispatch' },
         { label: 'Trips', path: '/people-logistics/trips', icon: 'dispatch' },
         { label: 'Deliveries', path: '/people-logistics/deliveries', icon: 'dispatch' }
       ]

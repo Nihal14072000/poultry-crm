@@ -113,13 +113,12 @@ export const routes: Routes = [
   { path: 'login', canActivate: [signedOutOnlyGuard], loadComponent: () => import('./features/identity/login/login.component').then((module) => module.LoginComponent) },
   { path: 'profile', canActivate: [requireSessionGuard], loadComponent: () => import('./features/identity/profile/profile.component').then((module) => module.ProfileComponent) },
   { path: 'access-denied', canActivate: [requireSessionGuard, redirectToAccessibleRouteGuard], loadComponent: () => import('./features/identity/access-denied/access-denied.component').then((module) => module.AccessDeniedComponent) },
-  { path: '', pathMatch: 'full', redirectTo: 'workspace/overview' },
+  { path: '', pathMatch: 'full', redirectTo: 'workspace/people-logistics' },
   {
     path: 'workspace',
     canActivate: [requireSessionGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'overview' },
-      { path: 'overview', canActivate: [requirePermissionGuard], data: { resource: 'dashboard' }, loadComponent: () => import('./features/workspace/dashboard/dashboard.component').then((module) => module.DashboardComponent) },
+      { path: '', pathMatch: 'full', redirectTo: 'people-logistics' },
       { path: 'people-logistics', canActivate: [requirePermissionGuard], data: { resource: 'dashboard' }, loadComponent: () => import('./features/workspace/people-logistics-overview/people-logistics-overview.component').then((module) => module.PeopleLogisticsOverviewComponent) }
     ]
   },
@@ -138,7 +137,6 @@ export const routes: Routes = [
     { path: 'buying-parties/:partyId', canActivate: [requirePermissionGuard], data: { resource: 'suppliers', partyType: 'buying' }, loadComponent: () => import('./features/people-logistics/parties/party-details.component').then((module) => module.PartyDetailsComponent) },
     { path: 'selling-parties', canActivate: [requirePermissionGuard], data: { resource: 'vendor-destinations', title: 'Selling parties', partyType: 'selling' }, loadComponent: () => import('./features/people-logistics/parties/party-directory.component').then((module) => module.PartyDirectoryComponent) },
     { path: 'selling-parties/:partyId', canActivate: [requirePermissionGuard], data: { resource: 'vendor-destinations', partyType: 'selling' }, loadComponent: () => import('./features/people-logistics/parties/party-details.component').then((module) => module.PartyDetailsComponent) },
-    { path: 'vehicle-assignments', canActivate: [requirePermissionGuard], data: { resource: 'vehicle-assignments' }, loadComponent: () => import('./features/people-logistics/vehicle-assignments/vehicle-assignments.component').then((module) => module.VehicleAssignmentsComponent) },
     { path: 'vendors/onboard', canActivate: [requirePermissionGuard], data: { resource: 'suppliers' }, loadComponent: () => import('./features/people-logistics/vendor-onboarding/vendor-onboarding.component').then((module) => module.VendorOnboardingComponent) },
     { path: 'deliveries', canActivate: [requirePermissionGuard], data: { resource: 'deliveries' }, loadComponent: () => import('./features/people-logistics/trips/trip-deliveries.component').then((module) => module.TripDeliveriesComponent) },
     { path: 'trips/new', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/create-trip.component').then((module) => module.CreateTripComponent) },
@@ -179,7 +177,6 @@ export const routes: Routes = [
   { path: 'fleet', redirectTo: 'people-logistics/vehicles', pathMatch: 'full' },
   { path: 'vehicles', redirectTo: 'people-logistics/vehicles', pathMatch: 'full' },
   { path: 'drivers', redirectTo: 'people-logistics/employees', pathMatch: 'full' },
-  { path: 'vehicle-assignments', redirectTo: 'people-logistics/vehicle-assignments', pathMatch: 'full' },
   { path: 'trips', redirectTo: 'people-logistics/trips', pathMatch: 'full' },
   { path: 'receivables', redirectTo: 'finance/receivables', pathMatch: 'full' },
   { path: 'payables', redirectTo: 'finance/payables', pathMatch: 'full' },
@@ -195,5 +192,5 @@ export const routes: Routes = [
   { path: 'audit', redirectTo: 'insights-admin/audit', pathMatch: 'full' },
   { path: 'administration', redirectTo: 'insights-admin/administration', pathMatch: 'full' },
   { path: 'help', canActivate: [requireSessionGuard], loadComponent: () => import('./features/help/help.component').then((module) => module.HelpComponent) },
-  { path: '**', redirectTo: 'workspace/overview' }
+  { path: '**', redirectTo: 'workspace/people-logistics' }
 ];

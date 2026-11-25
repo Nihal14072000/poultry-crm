@@ -3,7 +3,7 @@
 @if (auth.currentUser; as user) {
 <div class="app-shell">
   <aside class="sidebar" id="mobile-navigation" [class.mobile-open]="mobileNavigationOpen">
-    <a class="brand" routerLink="/workspace/overview" aria-label="EasyLedger home" (click)="closeNavigation()">
+    <a class="brand" routerLink="/workspace/people-logistics" aria-label="EasyLedger home" (click)="closeNavigation()">
       <span class="brand-mark"><span></span><span></span><span></span></span>
       <span class="brand-name">EasyLedger<span>OPERATIONS</span></span>
     </a>
@@ -29,7 +29,7 @@
           </button>
           <div class="nav-group-links" [class.collapsed]="!expandedGroups[group.label]" [id]="'nav-group-' + $index">
             @for (link of group.links; track link.path) {
-              <a class="nav-link" [routerLink]="link.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: link.path === '/workspace/overview' }" [attr.aria-label]="link.label" [attr.title]="link.label" (click)="closeNavigation()">
+              <a class="nav-link" [routerLink]="link.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: link.path === '/workspace/people-logistics' }" [attr.aria-label]="link.label" [attr.title]="link.label" (click)="closeNavigation()">
                 <span class="nav-icon" [attr.data-icon]="link.icon"></span>
                 <span>{{ link.label }}</span>
                 @if (link.path === '/farm-operations/daily-operations') { <span class="nav-ping"></span> }

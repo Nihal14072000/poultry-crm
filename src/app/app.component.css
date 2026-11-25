@@ -63,7 +63,7 @@
 .profile-avatar { align-items: center; background: #dcb784; border-radius: 50%; color: #513c27; display: flex; font-size: 10px; font-weight: 700; height: 30px; justify-content: center; width: 30px; }
 .profile-menu { color: #9cb0a4; letter-spacing: 1px; }
 .main-area { margin-left: 248px; min-height: 100vh; }
-.topbar { align-items: center; background: rgba(255,255,255,.94); border-bottom: 1px solid #e9ece7; display: flex; height: 66px; justify-content: space-between; padding: 0 35px; position: sticky; top: 0; z-index: 4; }
+.topbar { align-items: center; background: rgba(255,255,255,.94); border-bottom: 1px solid #e9ece7; box-shadow: 0 2px 10px rgba(35,55,40,.07); display: flex; height: 66px; justify-content: space-between; padding: 0 35px; position: sticky; top: 0; z-index: 4; }
 .breadcrumbs { align-items: center; color: #8b938d; display: flex; font-size: 11px; gap: 11px; }
 .breadcrumbs strong { color: #38453d; font-weight: 600; }
 .crumb-divider { color: #c7cec8; }
