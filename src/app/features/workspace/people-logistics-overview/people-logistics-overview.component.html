@@ -8,92 +8,42 @@
       <div>
         <div class="eyebrow">WORKSPACE <span>/</span> PEOPLE & LOGISTICS</div>
         <h1>People & logistics overview</h1>
-        <p>A live summary of your team, fleet, and trips.</p>
+        <p>A live summary of your team, fleet, trips, and party dues.</p>
       </div>
-      <nav aria-label="People and logistics pages">
-        @if (canSeeEmployees) { <a routerLink="/people-logistics/employees">Employees <span>→</span></a> }
-        @if (canSeeVehicles) { <a routerLink="/people-logistics/vehicles">Vehicles <span>→</span></a> }
-        @if (canSeeTrips) { <a routerLink="/people-logistics/trips">Trips <span>→</span></a> }
-      </nav>
     </header>
 
     <section class="metric-grid" aria-label="People and logistics summary">
       @if (canSeeEmployees) {
         <article class="metric-card">
           <span class="metric-label">TEAM MEMBERS</span>
-          <strong>{{ employees.length }}</strong>
+          <a class="metric-count" routerLink="/people-logistics/employees"><strong>{{ employees.length }}</strong></a>
           <small>{{ activeEmployees }} active</small>
-        </article>
-      }
-      @if (canSeeVehicles) {
-        <article class="metric-card">
-          <span class="metric-label">FLEET VEHICLES</span>
-          <strong>{{ vehicles.length }}</strong>
-          <small>{{ activeVehicles }} active</small>
         </article>
       }
       @if (canSeeTrips) {
         <article class="metric-card">
           <span class="metric-label">TRIPS</span>
-          <strong>{{ trips.length }}</strong>
+          <a class="metric-count" routerLink="/people-logistics/trips"><strong>{{ trips.length }}</strong></a>
           <small>{{ activeTrips }} active</small>
+        </article>
+      }
+      @if (canSeeSellingParties) {
+        <article class="metric-card">
+          <span class="metric-label">SELLING PARTY DUES</span>
+          <button type="button" class="metric-count metric-scroll" (click)="scrollToSection('selling-party-dues')"><strong>{{ totalSellingPartyDues | currency:'INR':'symbol':'1.0-2' }}</strong></button>
+          <small>{{ sellingPartiesWithDues.length }} parties due</small>
+        </article>
+      }
+      @if (canSeeBuyingParties) {
+        <article class="metric-card">
+          <span class="metric-label">BUYING PARTY CLEARANCE</span>
+          <button type="button" class="metric-count metric-scroll" (click)="scrollToSection('buying-party-clearance')"><strong>{{ totalBuyingPartyClearance | currency:'INR':'symbol':'1.0-2' }}</strong></button>
+          <small>{{ buyingPartiesToClear.length }} parties payable</small>
         </article>
       }
     </section>
 
     <section class="data-grid">
-      @if (canSeeEmployees) {
-        <article class="panel">
-          <header class="panel-heading">
-            <div><h2>Team</h2><p>{{ employees.length }} employees</p></div>
-            <a routerLink="/people-logistics/employees">View all <span>→</span></a>
-          </header>
-          @if (employees.length) {
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>NAME</th><th>TYPE</th><th>PHONE</th><th>STATUS</th></tr></thead>
-                <tbody>
-                  @for (employee of employees; track employee['_demoId']) {
-                    <tr>
-                      <td><strong>{{ employee['name'] || '—' }}</strong></td>
-                      <td>{{ employee['type'] || '—' }}</td>
-                      <td>{{ employee['number'] || '—' }}</td>
-                      <td><span class="status status-pill" [ngClass]="employee['status'] | statusPill">{{ employee['status'] || '—' }}</span></td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          } @else { <p class="empty">No team members found.</p> }
-        </article>
-      }
-
-      @if (canSeeVehicles) {
-        <article class="panel">
-          <header class="panel-heading">
-            <div><h2>Fleet</h2><p>{{ vehicles.length }} vehicles</p></div>
-            <a routerLink="/people-logistics/vehicles">View all <span>→</span></a>
-          </header>
-          @if (vehicles.length) {
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>VEHICLE</th><th>TYPE</th><th>REGISTRATION</th><th>STATUS</th></tr></thead>
-                <tbody>
-                  @for (vehicle of vehicles; track vehicle['_demoId']) {
-                    <tr>
-                      <td><strong>{{ vehicle['vehicle'] || '—' }}</strong></td>
-                      <td>{{ vehicle['type'] || '—' }}</td>
-                      <td>{{ vehicle['registrationNo'] || '—' }}</td>
-                      <td><span class="status status-pill" [ngClass]="vehicle['status'] | statusPill">{{ vehicle['status'] || '—' }}</span></td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          } @else { <p class="empty">No vehicles found.</p> }
-        </article>
-      }
-
       @if (canSeeTrips) {
         <article class="panel trip-panel">
           <header class="panel-heading">
@@ -122,7 +72,55 @@
         </article>
       }
 
-      @if (!canSeeEmployees && !canSeeVehicles && !canSeeTrips) {
+      @if (canSeeSellingParties) {
+        <article class="panel party-panel" id="selling-party-dues">
+          <header class="panel-heading">
+            <div><h2>Selling parties with dues</h2><p>{{ sellingPartiesWithDues.length }} parties with positive due</p></div>
+            <a routerLink="/people-logistics/selling-parties">View all <span>→</span></a>
+          </header>
+          @if (sellingPartiesWithDues.length) {
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>SELLING PARTY</th><th>DUE AMOUNT</th></tr></thead>
+                <tbody>
+                  @for (party of sellingPartiesWithDues; track party.id) {
+                    <tr>
+                      <td><a class="party-link" [routerLink]="['/people-logistics/selling-parties', party.id]"><strong>{{ party.name || '—' }}</strong></a></td>
+                      <td><strong>{{ party.due | currency:'INR':'symbol':'1.0-2' }}</strong></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="empty">No selling parties with positive dues.</p> }
+        </article>
+      }
+
+      @if (canSeeBuyingParties) {
+        <article class="panel party-panel" id="buying-party-clearance">
+          <header class="panel-heading">
+            <div><h2>Buying party clearance</h2><p>{{ buyingPartiesToClear.length }} parties with payments due</p></div>
+            <a routerLink="/people-logistics/buying-parties">View all <span>→</span></a>
+          </header>
+          @if (buyingPartiesToClear.length) {
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>BUYING PARTY</th><th>DUE AMOUNT</th></tr></thead>
+                <tbody>
+                  @for (party of buyingPartiesToClear; track party.id) {
+                    <tr>
+                      <td><a class="party-link" [routerLink]="['/people-logistics/buying-parties', party.id]"><strong>{{ party.name || '—' }}</strong></a></td>
+                      <td><strong>{{ party.due | currency:'INR':'symbol':'1.0-2' }}</strong></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else { <p class="empty">No buying parties with pending clearance.</p> }
+        </article>
+      }
+
+      @if (!canSeeEmployees && !canSeeTrips && !canSeeSellingParties && !canSeeBuyingParties) {
         <p class="empty">You don't have access to people or logistics records.</p>
       }
     </section>
