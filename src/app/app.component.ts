@@ -22,7 +22,7 @@ export class AppComponent {
   ) {}
 
   readonly expandedGroups: Record<string, boolean> = Object.fromEntries(
-    ['Workspace', 'Farm operations', 'Inventory', 'Trading', 'Customer relations', 'People & logistics', 'Finance']
+    ['Workspace', 'Farm operations', 'Inventory', 'Customer relations', 'People & logistics', 'Finance']
       .map((label) => [label, false])
   );
 
@@ -58,19 +58,6 @@ export class AppComponent {
         { label: 'Inventory', path: '/inventory/stock', icon: 'inventory' },
         { label: 'Stock transfers', path: '/inventory/transfers', icon: 'transfer' },
         { label: 'Stock ledger', path: '/inventory/stock-ledger', icon: 'ledger' }
-      ]
-    },
-    {
-      label: 'Trading',
-      links: [
-        { label: 'Customers', path: '/trading/customers', icon: 'customers' },
-        { label: 'Suppliers', path: '/trading/suppliers', icon: 'suppliers' },
-        { label: 'Sales & dispatch', path: '/trading/sales', icon: 'sales' },
-        { label: 'Order desk', path: '/trading/order-desk', icon: 'orders' },
-        { label: 'Quotations', path: '/trading/quotations', icon: 'quotes' },
-        { label: 'Orders', path: '/trading/orders', icon: 'orders' },
-        { label: 'Procurement', path: '/trading/procurement', icon: 'procurement' },
-        { label: 'Dispatch', path: '/trading/dispatch', icon: 'dispatch' }
       ]
     },
     {

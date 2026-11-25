@@ -1,10 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, map, Observable, switchMap } from 'rxjs';
+import { BehaviorSubject, map, Observable } from 'rxjs';
 import { UserSession } from '../models/auth.model';
 import { environment } from '../../../environments/environment';
-import { resolveAccountRole } from '../config/screen-visibility.config';
 
 interface StoredAuthentication {
   authorization: string;
@@ -41,19 +40,16 @@ export class SessionAuthService {
   }
 
   signIn(username: string, password: string): Observable<UserSession> {
-    const header = `Basic ${this.encodeCredentials(username, password)}`;
-    return this.http.get<{ id?: string | number; _demoId?: string | number; name: string; role: string }>(`${environment.apiUrl}/auth/me`, {
+    const normalizedUsername = this.normalizeUsername(username);
+    const header = `Basic ${this.encodeCredentials(normalizedUsername, password)}`;
+    return this.http.get<{ id?: string | number; _demoId?: string | number; name: string; username?: string; role: string }>(`${environment.apiUrl}/auth/me`, {
       headers: { Authorization: header }
-    }).pipe(switchMap(account => this.http.get<{ id?: string | number; _demoId?: string | number; name: string; type: string }[]>(
-      `${environment.apiUrl}/employees`,
-      { headers: { Authorization: header } }
-    ).pipe(map(employees => {
-      const employee = employees.find((item) => item.name === account.name);
+    }).pipe(map(account => {
       const session: UserSession = {
-        id: employee?.id ?? employee?._demoId ?? account.id ?? account._demoId,
+        id: account.id ?? account._demoId,
         name: account.name,
-        email: account.name,
-        role: resolveAccountRole(account.name.toLowerCase().includes('admin') ? 'ADMIN' : employee?.type ?? account.role),
+        email: account.username ?? account.name,
+        role: account.role,
         permissions: '',
         businessUnit: '',
         status: 'Active',
@@ -63,12 +59,26 @@ export class SessionAuthService {
       this.authorizationHeader = header;
       this.sessionSubject.next(session);
       return session;
-    }))));
+    }));
   }
 
   signOut(): void {
     this.clearAuthentication();
     void this.router.navigate(['/login']);
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.http.put<void>(`${environment.apiUrl}/auth/password`, {
+      currentPassword,
+      newPassword
+    }).pipe(map(() => {
+      const session = this.currentUser;
+      if (session) {
+        const updatedHeader = `Basic ${this.encodeCredentials(this.normalizeUsername(session.email), newPassword)}`;
+        this.persistAuthentication(updatedHeader, session);
+        this.authorizationHeader = updatedHeader;
+      }
+    }));
   }
 
   clearAuthentication(): void {
@@ -120,6 +130,10 @@ export class SessionAuthService {
       'permissions' in session && typeof session.permissions === 'string' &&
       'status' in session && typeof session.status === 'string' &&
       'authenticatedAt' in session && typeof session.authenticatedAt === 'string';
+  }
+
+  private normalizeUsername(value: string): string {
+    return value.replace(/\s+/g, '').toLowerCase();
   }
 
   private encodeCredentials(username: string, password: string): string {

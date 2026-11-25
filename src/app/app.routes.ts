@@ -34,17 +34,6 @@ const inventoryPages: DirectoryPage[] = [
   { path: 'stock-ledger', title: 'Stock ledger', description: 'Review auditable inventory movements and running balances.', resource: 'stock-ledger', mode: 'append-only', columns: [{ key: 'reference', label: 'REFERENCE' }, { key: 'date', label: 'DATE' }, { key: 'product', label: 'PRODUCT' }, { key: 'warehouse', label: 'WAREHOUSE' }, { key: 'movement', label: 'MOVEMENT' }, { key: 'quantity', label: 'QUANTITY' }, { key: 'status', label: 'STATUS' }] }
 ];
 
-const tradingPages: DirectoryPage[] = [
-  { path: 'customers', title: 'Customers', description: 'Know your customers, recent orders and outstanding balances.', resource: 'customers', columns: [{ key: 'code', label: 'CUSTOMER CODE' }, { key: 'name', label: 'CUSTOMER' }, { key: 'type', label: 'TYPE' }, { key: 'phone', label: 'PHONE' }, { key: 'orders', label: 'ORDERS' }, { key: 'outstanding', label: 'OUTSTANDING' }, { key: 'status', label: 'STATUS' }] },
-  { path: 'suppliers', title: 'Suppliers', description: 'Review supplier contacts and purchasing relationships.', resource: 'suppliers', columns: [{ key: 'code', label: 'SUPPLIER CODE' }, { key: 'name', label: 'SUPPLIER' }, { key: 'category', label: 'CATEGORY' }, { key: 'phone', label: 'PHONE' }, { key: 'orders', label: 'ORDERS' }, { key: 'outstanding', label: 'OUTSTANDING' }, { key: 'status', label: 'STATUS' }] },
-  { path: 'vendor-destinations', title: 'Delivery vendors', description: 'Maintain the vendor locations that receive supplier-sourced birds.', resource: 'vendor-destinations', columns: [{ key: 'code', label: 'VENDOR CODE' }, { key: 'name', label: 'DELIVERY VENDOR' }, { key: 'address', label: 'DELIVERY ADDRESS' }, { key: 'contact', label: 'RECEIVING CONTACT' }, { key: 'phone', label: 'PHONE' }, { key: 'status', label: 'STATUS' }] },
-  { path: 'sales', title: 'Sales & dispatch', description: 'Review sales orders, payment status and delivery progress.', resource: 'sales', columns: [{ key: 'order', label: 'ORDER' }, { key: 'customer', label: 'CUSTOMER' }, { key: 'date', label: 'DATE' }, { key: 'items', label: 'ITEMS' }, { key: 'total', label: 'TOTAL' }, { key: 'payment', label: 'PAYMENT' }, { key: 'status', label: 'STATUS' }] },
-  { path: 'quotations', title: 'Quotations', description: 'Track customer quotations and their conversion progress.', resource: 'quotations', columns: [{ key: 'quotation', label: 'QUOTATION' }, { key: 'customer', label: 'CUSTOMER' }, { key: 'date', label: 'DATE' }, { key: 'validUntil', label: 'VALID UNTIL' }, { key: 'total', label: 'TOTAL' }, { key: 'owner', label: 'OWNER' }, { key: 'status', label: 'STATUS' }] },
-  { path: 'orders', title: 'Sales orders', description: 'Review customer orders, fulfillment and payment progress.', resource: 'orders', columns: [{ key: 'order', label: 'ORDER' }, { key: 'customer', label: 'CUSTOMER' }, { key: 'date', label: 'DATE' }, { key: 'items', label: 'ITEMS' }, { key: 'total', label: 'TOTAL' }, { key: 'payment', label: 'PAYMENT' }, { key: 'status', label: 'STATUS' }] },
-  { path: 'procurement', title: 'Procurement', description: 'Track supplier orders, receipts and purchasing activity.', resource: 'procurement', columns: [{ key: 'order', label: 'PURCHASE ORDER' }, { key: 'supplier', label: 'SUPPLIER' }, { key: 'date', label: 'ORDER DATE' }, { key: 'items', label: 'ITEMS' }, { key: 'total', label: 'TOTAL' }, { key: 'received', label: 'RECEIVED' }, { key: 'status', label: 'STATUS' }] },
-  { path: 'dispatch', title: 'Dispatch & delivery', description: 'Track delivery schedules, vehicle assignments and proof of delivery.', resource: 'dispatch', columns: [{ key: 'delivery', label: 'DELIVERY' }, { key: 'order', label: 'ORDER' }, { key: 'customer', label: 'CUSTOMER' }, { key: 'vehicle', label: 'VEHICLE' }, { key: 'driver', label: 'DRIVER' }, { key: 'scheduled', label: 'SCHEDULED' }, { key: 'status', label: 'STATUS' }] }
-];
-
 const crmPages: DirectoryPage[] = [
   { path: 'leads', title: 'CRM leads', description: 'Review potential customers and their qualification progress.', resource: 'leads', columns: [{ key: 'lead', label: 'LEAD' }, { key: 'company', label: 'BUSINESS' }, { key: 'contact', label: 'CONTACT' }, { key: 'source', label: 'SOURCE' }, { key: 'owner', label: 'OWNER' }, { key: 'nextFollowUp', label: 'NEXT FOLLOW-UP' }, { key: 'status', label: 'STATUS' }] },
   { path: 'opportunities', title: 'Opportunities', description: 'Review pipeline value and the next customer decision.', resource: 'opportunities', columns: [{ key: 'opportunity', label: 'OPPORTUNITY' }, { key: 'customer', label: 'CUSTOMER' }, { key: 'value', label: 'VALUE' }, { key: 'stage', label: 'STAGE' }, { key: 'owner', label: 'OWNER' }, { key: 'closeDate', label: 'EXPECTED CLOSE' }, { key: 'status', label: 'STATUS' }] },
@@ -97,8 +86,6 @@ function pageRoute(page: DirectoryPage): Route {
       ? () => import('./features/identity/users-roles/users-roles.component').then((module) => module.UsersRolesComponent)
       : ['finance', 'receivables', 'payables', 'payments'].includes(page.resource)
       ? () => import('./features/finance/payment-center/payment-center.component').then((module) => module.PaymentCenterComponent)
-      : ['quotations', 'orders', 'sales', 'dispatch'].includes(page.resource)
-      ? () => import('./features/trading/trading-desk/trading-desk.component').then((module) => module.TradingDeskComponent)
       : page.production
       ? page.resource === 'broiler'
         ? () => import('./features/farm-operations/broiler/broiler.component').then((module) => module.BroilerComponent)
@@ -124,6 +111,7 @@ function sectionRoute(path: string, pages: DirectoryPage[], extraChildren: Route
 
 export const routes: Routes = [
   { path: 'login', canActivate: [signedOutOnlyGuard], loadComponent: () => import('./features/identity/login/login.component').then((module) => module.LoginComponent) },
+  { path: 'profile', canActivate: [requireSessionGuard], loadComponent: () => import('./features/identity/profile/profile.component').then((module) => module.ProfileComponent) },
   { path: 'access-denied', canActivate: [requireSessionGuard, redirectToAccessibleRouteGuard], loadComponent: () => import('./features/identity/access-denied/access-denied.component').then((module) => module.AccessDeniedComponent) },
   { path: '', pathMatch: 'full', redirectTo: 'workspace/overview' },
   {
@@ -142,11 +130,6 @@ export const routes: Routes = [
     { path: 'daily-operations', canActivate: [requirePermissionGuard], data: { resource: 'daily-operations' }, loadComponent: () => import('./features/farm-operations/daily-operations/daily-operations.component').then((module) => module.DailyOperationsComponent) }
   ]),
   sectionRoute('inventory', inventoryPages, [{ path: '', pathMatch: 'full', redirectTo: 'stock' }]),
-  sectionRoute('trading', tradingPages, [
-    { path: '', pathMatch: 'full', redirectTo: 'customers' },
-    { path: 'onboarding', canActivate: [requirePermissionGuard], data: { resource: 'suppliers' }, loadComponent: () => import('./features/trading/vendor-onboarding/vendor-onboarding.component').then((module) => module.VendorOnboardingComponent) },
-    { path: 'order-desk', canActivate: [requirePermissionGuard], data: { resource: 'orders' }, loadComponent: () => import('./features/trading/trading-desk/trading-desk.component').then((module) => module.TradingDeskComponent) }
-  ]),
   sectionRoute('customer-relations', crmPages, [{ path: '', pathMatch: 'full', redirectTo: 'leads' }]),
   sectionRoute('people-logistics', peoplePages, [
     { path: '', pathMatch: 'full', redirectTo: 'employees' },
@@ -156,7 +139,7 @@ export const routes: Routes = [
     { path: 'selling-parties', canActivate: [requirePermissionGuard], data: { resource: 'vendor-destinations', title: 'Selling parties', partyType: 'selling' }, loadComponent: () => import('./features/people-logistics/parties/party-directory.component').then((module) => module.PartyDirectoryComponent) },
     { path: 'selling-parties/:partyId', canActivate: [requirePermissionGuard], data: { resource: 'vendor-destinations', partyType: 'selling' }, loadComponent: () => import('./features/people-logistics/parties/party-details.component').then((module) => module.PartyDetailsComponent) },
     { path: 'vehicle-assignments', canActivate: [requirePermissionGuard], data: { resource: 'vehicle-assignments' }, loadComponent: () => import('./features/people-logistics/vehicle-assignments/vehicle-assignments.component').then((module) => module.VehicleAssignmentsComponent) },
-    { path: 'vendors/onboard', canActivate: [requirePermissionGuard], data: { resource: 'suppliers' }, loadComponent: () => import('./features/trading/vendor-onboarding/vendor-onboarding.component').then((module) => module.VendorOnboardingComponent) },
+    { path: 'vendors/onboard', canActivate: [requirePermissionGuard], data: { resource: 'suppliers' }, loadComponent: () => import('./features/people-logistics/vendor-onboarding/vendor-onboarding.component').then((module) => module.VendorOnboardingComponent) },
     { path: 'deliveries', canActivate: [requirePermissionGuard], data: { resource: 'deliveries' }, loadComponent: () => import('./features/people-logistics/trips/trip-deliveries.component').then((module) => module.TripDeliveriesComponent) },
     { path: 'trips/new', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/create-trip.component').then((module) => module.CreateTripComponent) },
     { path: 'trips/deliveries/:tripId', canActivate: [requirePermissionGuard], data: { resource: 'deliveries' }, loadComponent: () => import('./features/people-logistics/trips/trip-deliveries.component').then((module) => module.TripDeliveriesComponent) },
@@ -188,16 +171,6 @@ export const routes: Routes = [
   { path: 'warehouses', redirectTo: 'inventory/warehouses', pathMatch: 'full' },
   { path: 'transfers', redirectTo: 'inventory/transfers', pathMatch: 'full' },
   { path: 'stock-ledger', redirectTo: 'inventory/stock-ledger', pathMatch: 'full' },
-  { path: 'customers', redirectTo: 'trading/customers', pathMatch: 'full' },
-  { path: 'suppliers', redirectTo: 'trading/suppliers', pathMatch: 'full' },
-  { path: 'vendor-destinations', redirectTo: 'trading/vendor-destinations', pathMatch: 'full' },
-  { path: 'vendor-onboarding', redirectTo: 'trading/onboarding', pathMatch: 'full' },
-  { path: 'onboarding', redirectTo: 'trading/onboarding', pathMatch: 'full' },
-  { path: 'sales', redirectTo: 'trading/sales', pathMatch: 'full' },
-  { path: 'quotations', redirectTo: 'trading/quotations', pathMatch: 'full' },
-  { path: 'orders', redirectTo: 'trading/orders', pathMatch: 'full' },
-  { path: 'procurement', redirectTo: 'trading/procurement', pathMatch: 'full' },
-  { path: 'dispatch', redirectTo: 'trading/dispatch', pathMatch: 'full' },
   { path: 'leads', redirectTo: 'customer-relations/leads', pathMatch: 'full' },
   { path: 'opportunities', redirectTo: 'customer-relations/opportunities', pathMatch: 'full' },
   { path: 'follow-ups', redirectTo: 'customer-relations/follow-ups', pathMatch: 'full' },
