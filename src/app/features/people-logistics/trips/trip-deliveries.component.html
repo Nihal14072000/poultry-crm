@@ -60,7 +60,7 @@
             <button class="link-button" type="button" (click)="cancelEntry()">Cancel</button>
           </div>
           <p class="readonly">Proposed: {{ currentDestination?.['orderedBroiler'] }} broiler · {{ currentDestination?.['orderedBroilerWeight'] }} kg; {{ currentDestination?.['orderedCulls'] }} culls · {{ currentDestination?.['orderedCullsWeight'] }} kg; {{ currentDestination?.['orderedFeed'] }} {{ trip['feedUnit'] }} feed · {{ currentDestination?.['orderedFeedWeight'] }} kg. Proposed sales: {{ currentDestination?.['deliveryTotal'] | currency:'INR':'symbol':'1.2-2' }}. Previously delivered: {{ delivered(activeOrderId,'broiler') }} broiler · {{ delivered(activeOrderId,'culls') }} culls · {{ delivered(activeOrderId,'feed') }} {{ trip['feedUnit'] }} feed · {{ deliveredWeight(activeOrderId,'broiler') + deliveredWeight(activeOrderId,'culls') + deliveredWeight(activeOrderId,'feed') }} kg · {{ deliveryRevenue(activeOrderId) | currency:'INR':'symbol':'1.2-2' }} actual sales.</p>
-          <div class="form-grid">
+          <div class="form-grid delivery-entry-grid">
             <label>Broiler delivered<input name="broiler" type="number" min="0" step="1" inputmode="numeric" [(ngModel)]="broiler"></label>
             <label>Broiler weight (kg)<input name="broilerWeight" type="number" min="0" step="0.01" inputmode="decimal" [(ngModel)]="broilerWeight"></label>
             @if (editingDeliveryId) { <label>Broiler rate<input name="broilerRate" type="number" min="0" step="0.01" inputmode="decimal" [(ngModel)]="broilerRate"></label> }
@@ -170,7 +170,7 @@
             @if (editingPaymentId === paymentId(payment)) {
               <tr class="destination-details-row payment-edit-row"><td colspan="8">
                 <div class="inline-entry">
-                  <div class="form-grid">
+                  <div class="form-grid delivery-entry-grid">
                     <label>Type<select name="paymentType" [(ngModel)]="paymentType" (ngModelChange)="changePaymentType()" [disabled]="saving"><option value="BUYER_RECEIPT">Payment received</option><option value="SELLER_PAYOUT">Supplier payment made</option></select></label>
                     <label>Party<select name="paymentParty" [(ngModel)]="paymentPartyId" [disabled]="saving"><option value="">Select party</option>@for (party of paymentParties; track party.id) { <option [value]="party.id">{{ party.name }}</option> }</select></label>
                     <label>Amount<input name="paymentAmount" type="number" min="0.01" step="0.01" [(ngModel)]="paymentAmount" [disabled]="saving"></label>
