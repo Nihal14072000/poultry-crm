@@ -41,14 +41,16 @@ export class SessionAuthService {
   }
 
   signIn(username: string, password: string): Observable<UserSession> {
-    const header = `Basic ${this.encodeCredentials(username, password)}`;
+    const normalizedUsername = this.normalizeUsername(username);
+    const header = `Basic ${this.encodeCredentials(normalizedUsername, password)}`;
     return this.http.get<{ id?: string | number; _demoId?: string | number; name: string; role: string }>(`${environment.apiUrl}/auth/me`, {
       headers: { Authorization: header }
     }).pipe(switchMap(account => this.http.get<{ id?: string | number; _demoId?: string | number; name: string; type: string }[]>(
       `${environment.apiUrl}/employees`,
       { headers: { Authorization: header } }
     ).pipe(map(employees => {
-      const employee = employees.find((item) => item.name === account.name);
+      const normalizedAccountName = this.normalizeUsername(account.name);
+      const employee = employees.find((item) => this.normalizeUsername(item.name) === normalizedAccountName);
       const session: UserSession = {
         id: employee?.id ?? employee?._demoId ?? account.id ?? account._demoId,
         name: account.name,
@@ -69,6 +71,20 @@ export class SessionAuthService {
   signOut(): void {
     this.clearAuthentication();
     void this.router.navigate(['/login']);
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.http.put<void>(`${environment.apiUrl}/auth/password`, {
+      currentPassword,
+      newPassword
+    }).pipe(map(() => {
+      const session = this.currentUser;
+      if (session) {
+        const updatedHeader = `Basic ${this.encodeCredentials(this.normalizeUsername(session.email), newPassword)}`;
+        this.persistAuthentication(updatedHeader, session);
+        this.authorizationHeader = updatedHeader;
+      }
+    }));
   }
 
   clearAuthentication(): void {
@@ -120,6 +136,10 @@ export class SessionAuthService {
       'permissions' in session && typeof session.permissions === 'string' &&
       'status' in session && typeof session.status === 'string' &&
       'authenticatedAt' in session && typeof session.authenticatedAt === 'string';
+  }
+
+  private normalizeUsername(value: string): string {
+    return value.replace(/\s+/g, '').toLowerCase();
   }
 
   private encodeCredentials(username: string, password: string): string {

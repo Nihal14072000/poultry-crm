@@ -122,6 +122,7 @@ function sectionRoute(path: string, pages: DirectoryPage[], extraChildren: Route
 
 export const routes: Routes = [
   { path: 'login', canActivate: [signedOutOnlyGuard], loadComponent: () => import('./features/identity/login/login.component').then((module) => module.LoginComponent) },
+  { path: 'profile', canActivate: [requireSessionGuard], loadComponent: () => import('./features/identity/profile/profile.component').then((module) => module.ProfileComponent) },
   { path: 'access-denied', canActivate: [requireSessionGuard, redirectToAccessibleRouteGuard], loadComponent: () => import('./features/identity/access-denied/access-denied.component').then((module) => module.AccessDeniedComponent) },
   { path: '', pathMatch: 'full', redirectTo: 'workspace/overview' },
   {

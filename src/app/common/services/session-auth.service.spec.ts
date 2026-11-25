@@ -80,6 +80,19 @@ describe('SessionAuthService', () => {
     expect(auth.currentUser?.id).toBe(12);
   });
 
+  it('normalizes login username by removing spaces and ignoring case', () => {
+    auth.signIn(' John  Doe ', 'johndoe').subscribe();
+    const loginRequest = http.expectOne(`${environment.apiUrl}/auth/me`);
+    expect(loginRequest.request.headers.get('Authorization')).toBe('Basic am9obmRvZTpqb2huZG9l');
+    loginRequest.flush({ id: 21, name: 'johndoe', role: 'EMPLOYEE' });
+    http.expectOne(`${environment.apiUrl}/employees`).flush([
+      { id: 15, name: 'John Doe', type: 'DRIVER' }
+    ]);
+
+    expect(auth.currentUser?.role).toBe('Driver');
+    expect(auth.currentUser?.id).toBe(15);
+  });
+
   it('treats accounts whose name contains admin as organization admins', () => {
     auth.signIn('support', 'password').subscribe();
     http.expectOne(`${environment.apiUrl}/auth/me`).flush({ name: 'Support Admin', role: 'Authenticated' });

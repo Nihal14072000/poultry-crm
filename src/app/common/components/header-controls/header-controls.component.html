@@ -1,31 +1,33 @@
 <div class="header-controls">
   <div class="header-control">
     <button class="icon-button notification-button" type="button" aria-label="Notifications" [attr.aria-expanded]="notificationsOpen" (click)="toggleNotifications($event)">
-      <span class="bell-icon"></span><i></i>
+      <span class="bell-icon"></span>@if (activeTripsCount > 0) {<i></i>}
     </button>
     @if (notificationsOpen) {
-      <section class="header-popover notification-popover" aria-label="All notifications" [style.top.px]="notificationPopoverTop">
-        <div class="popover-heading"><div><h2>Notifications</h2><p>{{ unreadNotificationsCount }} unread · {{ notifications.length }} total</p></div><button type="button" class="popover-close" aria-label="Close notifications" (click)="notificationsOpen = false">×</button></div>
+      <section class="header-popover notification-popover" aria-label="Current trips" [style.top.px]="notificationPopoverTop">
+        <div class="popover-heading"><div><h2>Current trips</h2><p>{{ activeTripsCount }} active · {{ tripNotifications.length }} shown</p></div><button type="button" class="popover-close" aria-label="Close notifications" (click)="notificationsOpen = false">×</button></div>
         @if (notificationsLoading) {
-          <div class="popover-state">Loading notifications…</div>
+          <div class="popover-state">Loading current trips…</div>
         } @else if (notificationsError) {
           <div class="popover-state error" role="alert">{{ notificationsError }}<button type="button" (click)="loadNotifications()">Retry</button></div>
-        } @else if (notifications.length) {
+        } @else if (tripNotifications.length) {
           <div class="notification-list">
-            @for (notification of notifications; track notification['alert']) {
-              <article class="notification-item">
-                <span class="notification-severity" [ngClass]="notificationSeverityClass(notification)"></span>
-                <div><strong>{{ notification['alert'] }}</strong><p>{{ notification['relatedTo'] }} · {{ notification['category'] }}</p><small>{{ notification['created'] }} · {{ notification['status'] }}</small></div>
-                @if (isUnreadNotification(notification)) {
-                  <button type="button" class="notification-action" (click)="acknowledgeNotification(notification)">Mark read</button>
-                }
-              </article>
+            @for (trip of tripNotifications; track trip['_demoId']) {
+              <a class="notification-item trip-notification-link" [routerLink]="tripRoute(trip)" (click)="notificationsOpen = false">
+                <span class="notification-severity" [ngClass]="tripStatusClass(trip['status'] + '')"></span>
+                <div>
+                  <strong>{{ trip['tripNumber'] }} · {{ trip['route'] }}</strong>
+                  <p>{{ tripParticipants(trip) }}</p>
+                  <small>{{ trip['tripDate'] }}</small>
+                </div>
+                <span class="notification-status-pill" [ngClass]="tripStatusClass(trip['status'] + '')">{{ trip['status'] }}</span>
+              </a>
             }
           </div>
         } @else {
-          <div class="popover-state">No notifications to show.</div>
+          <div class="popover-state">No current trips for your account.</div>
         }
-        <a class="popover-footer" routerLink="/insights-admin/notifications" (click)="notificationsOpen = false">Open notification center <span>→</span></a>
+        <a class="popover-footer" [routerLink]="tripsOverviewRoute" (click)="notificationsOpen = false">View all trips <span>→</span></a>
       </section>
     }
   </div>

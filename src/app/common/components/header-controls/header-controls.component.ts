@@ -1,8 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { DirectoryService } from '../../services/directory.service';
+import { TripRecord } from '../../models/trip.model';
+import { RolePermissionService } from '../../services/role-permission.service';
+import { SessionAuthService } from '../../services/session-auth.service';
+import { TripApiService } from '../../services/trip-api.service';
 
 @Component({
   selector: 'app-header-controls',
@@ -11,11 +14,11 @@ import { DirectoryService } from '../../services/directory.service';
   templateUrl: './header-controls.component.html',
   styleUrl: './header-controls.component.css'
 })
-export class HeaderControlsComponent {
+export class HeaderControlsComponent implements OnInit {
   notificationsOpen = false;
   notificationsLoading = false;
   notificationsError = '';
-  notifications: Record<string, string | number>[] = [];
+  tripNotifications: TripRecord[] = [];
   notificationsLoaded = false;
   notificationPopoverTop: number | null = null;
   dateRangeOpen = false;
@@ -25,7 +28,17 @@ export class HeaderControlsComponent {
   selectedRangeStart = this.rangeStart;
   selectedRangeEnd = this.rangeEnd;
 
-  constructor(private readonly directories: DirectoryService) {}
+  constructor(
+    private readonly tripApi: TripApiService,
+    private readonly auth: SessionAuthService,
+    private readonly rolePermissions: RolePermissionService
+  ) {}
+
+  ngOnInit(): void {
+    if (this.auth.isAuthenticated) {
+      void this.loadNotifications();
+    }
+  }
 
   toggleNotifications(event: MouseEvent): void {
     const button = event.currentTarget;
@@ -37,25 +50,34 @@ export class HeaderControlsComponent {
     }
     this.notificationsOpen = !this.notificationsOpen;
     this.dateRangeOpen = false;
-    if (this.notificationsOpen && !this.notificationsLoaded && !this.notificationsLoading) {
-      this.loadNotifications();
+    if (this.notificationsOpen && !this.notificationsLoading) {
+      void this.loadNotifications();
     }
   }
 
-  loadNotifications(): void {
+  async loadNotifications(): Promise<void> {
     this.notificationsLoading = true;
     this.notificationsError = '';
-    this.directories.getDirectory('notifications').subscribe({
-      next: (response) => {
-        this.notifications = response.records;
-        this.notificationsLoaded = true;
-        this.notificationsLoading = false;
-      },
-      error: () => {
-        this.notificationsError = 'Notifications could not be loaded. Please try again.';
-        this.notificationsLoading = false;
-      }
-    });
+    try {
+      const trips = await this.tripApi.getTrips();
+      const user = this.auth.currentUser;
+      const userId = user?.id ?? user?._demoId;
+      const userTrips = userId !== undefined
+        ? trips.filter((trip) =>
+          String(trip['driverId'] ?? '') === String(userId) ||
+          String(trip['supervisorId'] ?? '') === String(userId) ||
+          String(trip['labourId'] ?? '') === String(userId)
+        )
+        : [];
+      const scopedTrips = userTrips.length > 0 ? userTrips : trips;
+      const activeTrips = scopedTrips.filter((trip) => !this.isCompletedStatus(String(trip['status'] ?? '')));
+      this.tripNotifications = activeTrips.length > 0 ? activeTrips : scopedTrips.slice(0, 5);
+      this.notificationsLoaded = true;
+    } catch {
+      this.notificationsError = 'Current trips could not be loaded. Please try again.';
+    } finally {
+      this.notificationsLoading = false;
+    }
   }
 
   toggleDateRange(): void {
@@ -90,29 +112,46 @@ export class HeaderControlsComponent {
     return `${this.formatDate(this.selectedRangeStart)} – ${this.formatDate(this.selectedRangeEnd)}`;
   }
 
-  get unreadNotificationsCount(): number {
-    return this.notifications.filter((notification) => this.isUnreadNotification(notification)).length;
+  get activeTripsCount(): number {
+    return this.tripNotifications.filter((trip) => !this.isCompletedStatus(String(trip['status'] ?? ''))).length;
   }
 
-  isUnreadNotification(notification: Record<string, string | number>): boolean {
-    return String(notification['status'] ?? '').toLowerCase() === 'unread';
+  get tripsOverviewRoute(): string {
+    return this.rolePermissions.canAccessRoute('trips')
+      ? '/people-logistics/trips'
+      : '/people-logistics/deliveries';
   }
 
-  notificationSeverityClass(notification: Record<string, string | number>): string {
-    return String(notification['severity'] ?? '').toLowerCase();
+  tripRoute(trip: TripRecord): string[] {
+    const id = String(trip['_demoId'] ?? '');
+    if (!id) return [this.tripsOverviewRoute];
+    return this.rolePermissions.canAccessRoute('trips')
+      ? ['/people-logistics/trips', id]
+      : ['/people-logistics/trips/deliveries', id];
   }
 
-  acknowledgeNotification(notification: Record<string, string | number>): void {
-    const id = String(notification['_demoId'] ?? '');
-    if (!id || !this.isUnreadNotification(notification)) return;
-    this.directories.updateRecord('notifications', id, { ...notification, status: 'Read' }).subscribe({
-      next: (updated) => {
-        this.notifications = this.notifications.map((item) => String(item['_demoId'] ?? '') === id ? updated : item);
-      },
-      error: () => {
-        this.notificationsError = 'This notification could not be marked as read.';
-      }
-    });
+  tripParticipants(trip: TripRecord): string {
+    const driver = String(trip['driverName'] ?? '').trim();
+    const supervisor = String(trip['supervisorName'] ?? '').trim();
+    const vehicle = String(trip['vehicleName'] ?? '').trim();
+    const parts = [
+      driver ? `Driver: ${driver}` : '',
+      supervisor ? `Supervisor: ${supervisor}` : '',
+      vehicle ? `Vehicle: ${vehicle}` : ''
+    ].filter(Boolean);
+    return parts.join(' · ') || 'Unassigned';
+  }
+
+  tripStatusClass(status: string): string {
+    const normalized = status.trim().toLowerCase();
+    if (normalized === 'completed') return 'low';
+    if (normalized.includes('progress') || normalized === 'assigned' || normalized === 'in transit') return 'medium';
+    return 'high';
+  }
+
+  private isCompletedStatus(status: string): boolean {
+    const normalized = status.trim().toLowerCase();
+    return normalized === 'completed' || normalized === 'cancelled' || normalized === 'deleted';
   }
 
   private toDateInput(date: Date): string {

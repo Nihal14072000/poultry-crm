@@ -1,0 +1,92 @@
+<section class="profile-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">ACCOUNT</p>
+      <h1>My profile</h1>
+      <p class="subtitle">Review your account details and update your sign-in password.</p>
+    </div>
+    <button class="signout-button" type="button" (click)="auth.signOut()">Sign out</button>
+  </header>
+
+  @if (auth.currentUser; as user) {
+    <div class="profile-grid">
+      <article class="card summary-card">
+        <div class="avatar-row">
+          <div class="avatar">{{ userInitials }}</div>
+          <div>
+            <h2>{{ user.name }}</h2>
+            <p>{{ user.role }}</p>
+          </div>
+        </div>
+        <dl class="detail-list">
+          <div>
+            <dt>Username</dt>
+            <dd>{{ user.email }}</dd>
+          </div>
+          <div>
+            <dt>Role</dt>
+            <dd>{{ user.role }}</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd><span class="status-pill">{{ user.status }}</span></dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="card password-card">
+        <h2>Update password</h2>
+        <p class="card-intro">Choose a new password with 6 to 72 characters. Your current session will stay active.</p>
+
+        <form (ngSubmit)="updatePassword()" class="password-form">
+          <label>
+            Current password
+            <input
+              type="password"
+              name="currentPassword"
+              [(ngModel)]="currentPassword"
+              autocomplete="current-password"
+              required
+              placeholder="Enter current password">
+          </label>
+
+          <label>
+            New password
+            <input
+              type="password"
+              name="newPassword"
+              [(ngModel)]="newPassword"
+              autocomplete="new-password"
+              minlength="6"
+              maxlength="72"
+              required
+              placeholder="Enter new password">
+          </label>
+
+          <label>
+            Confirm new password
+            <input
+              type="password"
+              name="confirmPassword"
+              [(ngModel)]="confirmPassword"
+              autocomplete="new-password"
+              minlength="6"
+              maxlength="72"
+              required
+              placeholder="Re-enter new password">
+          </label>
+
+          @if (error) {
+            <p class="error" role="alert">{{ error }}</p>
+          }
+
+          <div class="form-actions">
+            <button type="submit" [disabled]="saving || !currentPassword || !newPassword || !confirmPassword">
+              {{ saving ? 'Updating…' : 'Update password' }}
+            </button>
+          </div>
+        </form>
+      </article>
+    </div>
+  }
+</section>
