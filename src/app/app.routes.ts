@@ -113,15 +113,7 @@ export const routes: Routes = [
   { path: 'login', canActivate: [signedOutOnlyGuard], loadComponent: () => import('./features/identity/login/login.component').then((module) => module.LoginComponent) },
   { path: 'profile', canActivate: [requireSessionGuard], loadComponent: () => import('./features/identity/profile/profile.component').then((module) => module.ProfileComponent) },
   { path: 'access-denied', canActivate: [requireSessionGuard, redirectToAccessibleRouteGuard], loadComponent: () => import('./features/identity/access-denied/access-denied.component').then((module) => module.AccessDeniedComponent) },
-  { path: '', pathMatch: 'full', redirectTo: 'workspace/people-logistics' },
-  {
-    path: 'workspace',
-    canActivate: [requireSessionGuard],
-    children: [
-      { path: '', pathMatch: 'full', redirectTo: 'people-logistics' },
-      { path: 'people-logistics', canActivate: [requirePermissionGuard], data: { resource: 'dashboard' }, loadComponent: () => import('./features/workspace/people-logistics-overview/people-logistics-overview.component').then((module) => module.PeopleLogisticsOverviewComponent) }
-    ]
-  },
+  { path: '', pathMatch: 'full', redirectTo: 'people-logistics/overview' },
   sectionRoute('farm-operations', farmOperations, [
     { path: '', pathMatch: 'full', redirectTo: 'farms' },
     { path: 'farms/:farmCode', canActivate: [requirePermissionGuard], data: { resource: 'farms' }, loadComponent: () => import('./features/farm-operations/farm-detail/farm-detail.component').then((module) => module.FarmDetailComponent) },
@@ -131,7 +123,8 @@ export const routes: Routes = [
   sectionRoute('inventory', inventoryPages, [{ path: '', pathMatch: 'full', redirectTo: 'stock' }]),
   sectionRoute('customer-relations', crmPages, [{ path: '', pathMatch: 'full', redirectTo: 'leads' }]),
   sectionRoute('people-logistics', peoplePages, [
-    { path: '', pathMatch: 'full', redirectTo: 'employees' },
+    { path: '', pathMatch: 'full', redirectTo: 'overview' },
+    { path: 'overview', canActivate: [requirePermissionGuard], data: { resource: 'dashboard' }, loadComponent: () => import('./features/workspace/people-logistics-overview/people-logistics-overview.component').then((module) => module.PeopleLogisticsOverviewComponent) },
     { path: 'fleet', redirectTo: 'vehicles', pathMatch: 'full' },
     { path: 'buying-parties', canActivate: [requirePermissionGuard], data: { resource: 'suppliers', title: 'Buying parties', partyType: 'buying' }, loadComponent: () => import('./features/people-logistics/parties/party-directory.component').then((module) => module.PartyDirectoryComponent) },
     { path: 'buying-parties/:partyId', canActivate: [requirePermissionGuard], data: { resource: 'suppliers', partyType: 'buying' }, loadComponent: () => import('./features/people-logistics/parties/party-details.component').then((module) => module.PartyDetailsComponent) },
@@ -192,5 +185,5 @@ export const routes: Routes = [
   { path: 'audit', redirectTo: 'insights-admin/audit', pathMatch: 'full' },
   { path: 'administration', redirectTo: 'insights-admin/administration', pathMatch: 'full' },
   { path: 'help', canActivate: [requireSessionGuard], loadComponent: () => import('./features/help/help.component').then((module) => module.HelpComponent) },
-  { path: '**', redirectTo: 'workspace/people-logistics' }
+  { path: '**', redirectTo: 'people-logistics/overview' }
 ];

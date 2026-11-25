@@ -192,7 +192,7 @@ export function resolveAccountRole(role: string): string {
 }
 
 export const navigationScreenResources: Record<string, ScreenResource> = {
-  '/workspace/people-logistics': 'dashboard',
+  '/people-logistics/overview': 'dashboard',
   '/farm-operations/farms': 'farms',
   '/farm-operations/sheds': 'sheds',
   '/farm-operations/batches': 'batches',
