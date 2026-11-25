@@ -89,7 +89,9 @@ function pageRoute(page: DirectoryPage): Route {
   return {
     path: page.path,
     canActivate: [requirePermissionGuard],
-    loadComponent: page.resource === 'expenses'
+    loadComponent: page.resource === 'reports'
+      ? () => import('./features/insights/reports/reports.component').then((module) => module.ReportsComponent)
+      : page.resource === 'expenses'
       ? () => import('./features/finance/expenses/expenses.component').then((module) => module.ExpensesComponent)
       : page.resource === 'users-roles'
       ? () => import('./features/identity/users-roles/users-roles.component').then((module) => module.UsersRolesComponent)
@@ -219,5 +221,6 @@ export const routes: Routes = [
   { path: 'documents', redirectTo: 'insights-admin/documents', pathMatch: 'full' },
   { path: 'audit', redirectTo: 'insights-admin/audit', pathMatch: 'full' },
   { path: 'administration', redirectTo: 'insights-admin/administration', pathMatch: 'full' },
+  { path: 'help', canActivate: [requireSessionGuard], loadComponent: () => import('./features/help/help.component').then((module) => module.HelpComponent) },
   { path: '**', redirectTo: 'workspace/overview' }
 ];

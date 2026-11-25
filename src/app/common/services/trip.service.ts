@@ -261,12 +261,14 @@ export class TripService {
       culls: { quantity: input.culls, weight: input.cullsWeight, rate: planned.culls.rate },
       feed: { quantity: input.feed, weight: input.feedWeight, rate: planned.feed.rate } }, feedUnit, planned.vendorName);
     const existing = data.supplierReceipts.find((receipt) => String(receipt['vendorId'] ?? '') === vendorId);
-    return this.tripApi.saveSupplierPickup(vendorId, {
+    const pickupId = await this.tripApi.saveSupplierPickup(vendorId, {
       broiler: actual.broiler.quantity, broilerWeight: actual.broiler.weight, broilerRate: actual.broiler.rate,
       culls: actual.culls.quantity, cullsWeight: actual.culls.weight, cullsRate: actual.culls.rate,
       feed: actual.feed.quantity, feedWeight: actual.feed.weight, feedRate: actual.feed.rate,
       note: input.reason
     }, existing ? String(existing['_demoId'] ?? '') : undefined);
+    await this.tripApi.linkSupplierPickups(tripId, [pickupId]);
+    return pickupId;
   }
 
   async saveDelivery(tripId: string, vendorDestinationId: string, input: { broiler: number; broilerWeight: number; broilerRate?: number; culls: number; cullsWeight: number; cullsRate?: number; feed: number; feedWeight: number; feedRate?: number; remarks: string; reason: string }, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = [], existingDeliveryId?: string): Promise<string> {
@@ -308,12 +310,14 @@ export class TripService {
     const broilerRate = input.broilerRate ?? Number(destination['broilerRate'] ?? 0);
     const cullsRate = input.cullsRate ?? Number(destination['cullsRate'] ?? 0);
     const feedRate = input.feedRate ?? Number(destination['feedRate'] ?? 0);
-    return this.tripApi.saveVendorDelivery(vendorDestinationId, {
+    const deliveryId = await this.tripApi.saveVendorDelivery(vendorDestinationId, {
       broiler: input.broiler, broilerWeight, broilerRate,
       culls: input.culls, cullsWeight, cullsRate,
       feed, feedWeight, feedRate,
       note: [input.reason.trim(), input.remarks.trim()].filter(Boolean).join(' · ')
     }, existingDeliveryId);
+    await this.tripApi.linkVendorDeliveries(tripId, [deliveryId]);
+    return deliveryId;
   }
 
   async completeTripWhenDeliveriesSubmitted(tripId: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<boolean> {

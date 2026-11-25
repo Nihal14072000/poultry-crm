@@ -82,6 +82,7 @@ export class TripDeliveriesComponent implements OnInit {
   paymentMethod: PaymentMethod = 'UPI';
   paymentReference = '';
   showPaymentForm = false;
+  showQrCodeModal = false;
   editingPaymentId = '';
 
   constructor(private readonly service: TripService, private readonly finance: FinanceApiService, private readonly expensesApi: ExpenseApiService, private readonly tripApi: TripApiService, private readonly route: ActivatedRoute, private readonly router: Router, readonly auth: SessionAuthService, readonly rolePermissions: RolePermissionService, private readonly toast: ToastService) {}
@@ -235,7 +236,7 @@ export class TripDeliveriesComponent implements OnInit {
     return String(directoryName ?? tripName ?? payment['partyName'] ?? payment['buyingPartyName'] ?? payment['sellingPartyName'] ?? partyId ?? '—');
   }
   togglePaymentForm(): void {
-    if (this.showPaymentForm) this.cancelPaymentEdit();
+    if (this.showPaymentForm || this.editingPaymentId) this.cancelPaymentEdit();
     else this.showPaymentForm = true;
   }
   toggleExpenseForm(): void {
@@ -336,7 +337,10 @@ export class TripDeliveriesComponent implements OnInit {
     this.paymentDate = String(payment['paymentDate'] ?? '').slice(0, 10);
     this.paymentMethod = payment['paymentMethod'] as PaymentMethod;
     this.paymentReference = String(payment['reference'] ?? payment['externalReference'] ?? '');
-    this.showPaymentForm = true;
+    this.showPaymentForm = false;
+  }
+  paymentId(payment: FinanceRecord): string {
+    return String(payment['id'] ?? payment['paymentId'] ?? '');
   }
   cancelPaymentEdit(): void {
     this.editingPaymentId = '';
@@ -435,6 +439,9 @@ export class TripDeliveriesComponent implements OnInit {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([method, amount]) => ({ method, label: labels[method] ?? method.replace(/_/g, ' '), amount }));
   }
+  openQrCodeModal(): void { this.showQrCodeModal = true; }
+  closeQrCodeModal(): void { this.showQrCodeModal = false; }
+
   totalPaymentReceived(): number {
     return this.tripPayments
       .filter((payment) => payment['paymentType'] === 'BUYER_RECEIPT' && payment['status'] === 'COMPLETED' && payment['isDeleted'] !== true)
@@ -460,8 +467,11 @@ export class TripDeliveriesComponent implements OnInit {
       this.number(form.cullsWeight) * this.number(planned?.culls.rate) +
       this.number(form.feedWeight) * this.number(planned?.feed.rate);
   }
+  completedSupplierPickups(): number { return this.supplierReceiptForms.filter((form) => !!this.supplierReceipt(form.vendorId)).length; }
   completedDestinations(): number { return this.destinations.filter((destination) => this.destinationStatus(destination) === 'Delivered').length; }
-  progress(): number { return this.destinations.length ? Math.round(this.completedDestinations() * 100 / this.destinations.length) : 0; }
+  totalProgressItems(): number { return this.supplierReceiptForms.length + this.destinations.length; }
+  completedProgressItems(): number { return this.completedSupplierPickups() + this.completedDestinations(); }
+  progress(): number { return this.totalProgressItems() ? Math.round(this.completedProgressItems() * 100 / this.totalProgressItems()) : 0; }
   destinationStatus(destination: TripRecord): string {
     const id = this.id(destination); const destinationEntries = this.entries(id); const count = destinationEntries.length;
     if (!count) return 'Pending';
