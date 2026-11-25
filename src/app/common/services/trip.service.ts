@@ -231,6 +231,21 @@ export class TripService {
       : firstValueFrom(this.directories.createRecord('trips', tripRecord));
   }
 
+  async getDeliveryTripsPage(page = 0, size = 5): Promise<{
+    items: TripRecord[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+  }> {
+    this.assertDeliveryRole();
+    const res = await this.tripApi.getTripsPage(page, size);
+    return {
+      ...res,
+      items: res.items.filter((trip) => trip['status'] !== 'Deleted')
+    };
+  }
+
   async getDeliveryTrips(): Promise<TripRecord[]> {
     this.assertDeliveryRole();
     return (await this.tripApi.getTrips()).filter((trip) => trip['status'] !== 'Deleted');

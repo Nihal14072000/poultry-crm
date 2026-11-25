@@ -1,7 +1,7 @@
 import { LoadingSkeletonComponent } from '../../../common/components/loading-skeleton/loading-skeleton.component';
 import { InfoPopoverComponent } from '../../../common/components/info-popover/info-popover.component';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TripRecord, TripVendorPickup } from '../../../common/models/trip.model';
@@ -27,6 +27,9 @@ interface SupplierReceiptForm {
 })
 export class TripDeliveriesComponent implements OnInit {
   trips: TripRecord[] = [];
+  tripsPage = 0;
+  tripsTotalPages = 0;
+  loadingMoreTrips = false;
   trip?: TripRecord;
   destinations: TripRecord[] = [];
   deliveries: TripRecord[] = [];
@@ -126,9 +129,38 @@ export class TripDeliveriesComponent implements OnInit {
           };
         });
         this.loadedBroiler = data.loadedBroiler; this.loadedCulls = data.loadedCulls;
-      } else this.trips = await this.service.getDeliveryTrips();
+      } else {
+        await this.loadDeliveryTripsPage(0, true);
+      }
     } catch (e) { this.error = e instanceof Error ? e.message : 'Trip delivery data could not be loaded.'; }
     finally { this.loading = false; }
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    if (this.trip || this.loading || this.loadingMoreTrips || this.tripsPage + 1 >= this.tripsTotalPages) {
+      return;
+    }
+    const threshold = 200;
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - threshold) {
+      void this.loadDeliveryTripsPage(this.tripsPage + 1, false);
+    }
+  }
+
+  async loadDeliveryTripsPage(targetPage: number, reset: boolean): Promise<void> {
+    if (!reset) {
+      this.loadingMoreTrips = true;
+    }
+    try {
+      const result = await this.service.getDeliveryTripsPage(targetPage, 5);
+      this.trips = reset ? result.items : [...this.trips, ...result.items];
+      this.tripsPage = result.page;
+      this.tripsTotalPages = result.totalPages;
+    } catch (e) {
+      this.error = e instanceof Error ? e.message : 'Trip delivery data could not be loaded.';
+    } finally {
+      this.loadingMoreTrips = false;
+    }
   }
 
   get filteredTrips(): TripRecord[] {

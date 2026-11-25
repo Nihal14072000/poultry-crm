@@ -34,7 +34,6 @@
 
   <div class="directory-card">
     <div class="directory-toolbar">
-      <div class="record-count"><strong>{{ filteredRecords.length }}</strong> records <span>·</span> Updated just now</div>
       <div class="filters">
         <label class="table-search"><span>⌕</span><input type="search" [ngModel]="query" (ngModelChange)="setQuery($event)" placeholder="Search {{ title.toLowerCase() }}..." aria-label="Search records"></label>
         <ng-select class="app-select compact-select" [ngModel]="statusFilter" (ngModelChange)="setStatus($event)" aria-label="Filter by status" [clearable]="false"><ng-option *ngFor="let status of statuses" [value]="status">{{ status }}</ng-option></ng-select>

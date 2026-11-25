@@ -71,7 +71,7 @@ export class HeaderControlsComponent implements OnInit {
         : [];
       const scopedTrips = userTrips.length > 0 ? userTrips : trips;
       const activeTrips = scopedTrips.filter((trip) => !this.isCompletedStatus(String(trip['status'] ?? '')));
-      this.tripNotifications = activeTrips.length > 0 ? activeTrips : scopedTrips.slice(0, 5);
+      this.tripNotifications = (activeTrips.length > 0 ? activeTrips : scopedTrips).slice(0, 3);
       this.notificationsLoaded = true;
     } catch {
       this.notificationsError = 'Current trips could not be loaded. Please try again.';

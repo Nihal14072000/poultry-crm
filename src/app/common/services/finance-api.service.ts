@@ -28,6 +28,36 @@ export class FinanceApiService {
   constructor(private readonly http: HttpClient) {}
 
   payments(): Promise<FinanceRecord[]> { return this.getList(`${this.baseUrl}/payments/retrieve`).then(rows => rows.map(row => this.paymentRow(row))); }
+  paymentsPage(filter: {
+    page?: number;
+    size?: number;
+    tripId?: string;
+    status?: string;
+    paymentType?: string;
+    partyId?: string;
+    query?: string;
+  } = {}): Promise<{ items: FinanceRecord[]; page: number; size: number; totalElements: number; totalPages: number }> {
+    return firstValueFrom(this.http.get<{
+      items: FinanceRecord[];
+      page: number;
+      size: number;
+      totalElements: number;
+      totalPages: number;
+    }>(`${this.baseUrl}/payments/retrieve/paged`, {
+      params: this.params({
+        page: filter.page !== undefined ? String(filter.page) : undefined,
+        size: filter.size !== undefined ? String(filter.size) : undefined,
+        tripId: filter.tripId,
+        status: filter.status,
+        paymentType: filter.paymentType,
+        partyId: filter.partyId,
+        query: filter.query
+      })
+    })).then(res => ({
+      ...res,
+      items: (res.items ?? []).map(row => this.paymentRow(row))
+    }));
+  }
   paymentsForParty(partyId: string, partyTyp: 'B' | 'S'): Promise<FinanceRecord[]> {
     return this.getList(`${this.baseUrl}/payments/retrieve`, { partyId, partyTyp }).then(rows => rows.map(row => this.paymentRow(row)));
   }

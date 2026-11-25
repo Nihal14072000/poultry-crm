@@ -23,6 +23,33 @@ export class ExpenseApiService {
 
   constructor(private readonly http: HttpClient) {}
 
+  async expensesPage(filter: { page?: number; size?: number; tripId?: string; query?: string } = {}): Promise<{
+    items: ExpenseRecord[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+    totalAmount: number;
+  }> {
+    const params: Record<string, string> = {};
+    if (filter.page !== undefined) params['page'] = String(filter.page);
+    if (filter.size !== undefined) params['size'] = String(filter.size);
+    if (filter.tripId) params['tripId'] = filter.tripId;
+    if (filter.query) params['query'] = filter.query;
+    const res = await firstValueFrom(this.http.get<{
+      items: ExpenseRecord[];
+      page: number;
+      size: number;
+      totalElements: number;
+      totalPages: number;
+      totalAmount: number;
+    }>(`${this.endpoint}/paged`, { params }));
+    return {
+      ...res,
+      items: (res.items ?? []).map((row) => this.camelCaseRow(row))
+    };
+  }
+
   async expenses(): Promise<ExpenseRecord[]> {
     const response = await firstValueFrom(this.http.get<ExpenseRecord[] | { items?: ExpenseRecord[]; data?: ExpenseRecord[] }>(this.endpoint));
     const rows = Array.isArray(response) ? response : response.items ?? response.data ?? [];

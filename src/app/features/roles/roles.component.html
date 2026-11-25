@@ -1,0 +1,90 @@
+<main class="roles-page">
+  <header class="page-heading">
+    <div>
+      <div class="eyebrow">ADMINISTRATION <span>/</span> ROLES</div>
+      <h1>Roles & permissions</h1>
+      <p>Manage tenant-specific roles and screen permissions.</p>
+    </div>
+  </header>
+
+  <section class="panel">
+    <h2>{{ editingId !== null ? 'Edit role' : 'Create role' }}</h2>
+    <form class="role-form" (ngSubmit)="saveRole()">
+      <label class="name-field">
+        <span>Role name <span class="required">*</span></span>
+        <input name="roleName" maxlength="100" [(ngModel)]="name" placeholder="e.g. Dispatch Manager" [disabled]="saving">
+      </label>
+
+      <div class="checks-group">
+        <span class="group-label">Allowed screens</span>
+        <div class="checks-grid">
+          @for (screen of availableScreens; track screen.key) {
+            <label class="check">
+              <input type="checkbox" [checked]="selectedResources.has(screen.key)" (change)="toggleResource(screen.key)" [disabled]="saving">
+              <span>{{ screen.label }}</span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <div class="checks-group">
+        <span class="group-label">Allowed actions</span>
+        <div class="checks-grid">
+          @for (action of availableActions; track action) {
+            <label class="check">
+              <input type="checkbox" [checked]="selectedActions.has(action)" (change)="toggleAction(action)" [disabled]="saving">
+              <span>{{ action }}</span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="button button-primary" type="submit" [disabled]="saving">
+          {{ saving ? 'Saving…' : editingId !== null ? 'Update role' : 'Create role' }}
+        </button>
+        @if (editingId !== null) {
+          <button class="button button-secondary" type="button" (click)="cancelEdit()" [disabled]="saving">Cancel</button>
+        }
+      </div>
+    </form>
+    @if (error) {
+      <p class="feedback error" role="alert">{{ error }}</p>
+    }
+  </section>
+
+  <section class="panel">
+    <h2>Tenant roles ({{ roles.length }})</h2>
+    @if (loading) {
+      <p class="empty">Loading roles…</p>
+    } @else if (!roles.length) {
+      <p class="empty">No roles configured for this tenant.</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ROLE</th>
+              <th>SCREENS</th>
+              <th>ACTIONS</th>
+              <th>ACTION</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (role of roles; track role.id) {
+              <tr>
+                <td><strong>{{ role.name }}</strong></td>
+                <td><span class="truncate-cell" [title]="screenNames(role)">{{ screenNames(role) }}</span></td>
+                <td><span class="truncate-cell" [title]="actionNames(role)">{{ actionNames(role) }}</span></td>
+                <td>
+                  <button class="link-button" type="button" (click)="startEdit(role)" [disabled]="saving">Edit</button>
+                  <button class="link-button danger" type="button" (click)="deleteRole(role)" [disabled]="saving">Delete</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</main>

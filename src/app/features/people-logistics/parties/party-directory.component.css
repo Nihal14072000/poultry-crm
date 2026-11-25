@@ -34,6 +34,13 @@
 .actions-heading,.row-actions { text-align: right; }
 .row-actions button { background: transparent; border: 0; color: #527c5b; cursor: pointer; font-size: 8px; padding: 4px 5px; }
 .row-actions .delete-action { color: #ab6859; }
+.pagination-bar { align-items: center; border-top: 1px solid #eef0ed; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; padding: 12px 17px; }
+.pagination-summary, .page-indicator, .page-size-label { color: #6d786f; font-size: 10px; }
+.pagination-controls { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; }
+.page-size-label { align-items: center; display: inline-flex; gap: 6px; }
+.page-size-label select { background: #fff; border: 1px solid #dfe5dd; border-radius: 5px; color: #34443a; font: inherit; padding: 4px 8px; }
+.page-btn { background: #fff; border: 1px solid #dfe5dd; border-radius: 5px; color: #315f45; cursor: pointer; font: inherit; font-size: 10px; font-weight: 700; padding: 6px 11px; }
+.page-btn:disabled { color: #a4ada6; cursor: not-allowed; opacity: .65; }
 .immutable-label { color: #9ba49d; font-size: 8px; }
 .state-panel { align-items: center; color: #89948c; display: flex; font-size: 11px; gap: 10px; justify-content: center; min-height: 220px; }
 .state-panel.error { align-items: flex-start; flex-direction: column; color: #7e5a51; padding: 30px; }

@@ -7,6 +7,8 @@
     @else {
       <section class="panel filters"><label>Trip date<input type="date" [(ngModel)]="dateFilter"></label><label>Vehicle<input [(ngModel)]="vehicleFilter" placeholder="Filter vehicle"></label><label>Route<input [(ngModel)]="routeFilter" placeholder="Filter route"></label><label>Status<select [(ngModel)]="statusFilter"><option value="">All statuses</option><option>Assigned</option><option>In transit</option><option>Delivery in progress</option><option>Pending reconciliation</option><option>Completed</option></select></label></section>
       <section class="trip-list">@for (item of filteredTrips; track id(item)) { <article class="panel trip-card"><div><h2>{{ item['tripNumber'] }}</h2><p>{{ item['tripDate'] }} · {{ item['vehicleName'] }} · {{ item['route'] }}</p><small>{{ item['deliveryVendorNames']}}</small></div><div class="trip-card-actions"><span class="status status-pill" [ngClass]="item['status'] | statusPill">{{ item['status'] }}</span><a class="button button-primary" [routerLink]="['/people-logistics/trips/deliveries', id(item)]">Open trip →</a></div></article> }</section>
+      @if (loadingMoreTrips) { <p class="empty">Loading more trips…</p> }
+      @else if (tripsPage + 1 < tripsTotalPages) { <p class="empty"><button class="button button-secondary" type="button" (click)="loadDeliveryTripsPage(tripsPage + 1, false)">Load more trips</button></p> }
       @if (!filteredTrips.length) { <section class="panel empty">No trips match these filters.</section> }
     }
   } @else {

@@ -10,8 +10,8 @@
     <button class="sidebar-close" type="button" aria-label="Close navigation" (click)="closeMobileNavigation()">×</button>
 
     <div class="organization-switcher">
-      <div class="org-avatar">G</div>
-      <div class="org-copy"><strong>Bilal Poultry</strong><span>Enterprise plan</span></div>
+      <div class="org-avatar">{{ organizationInitial }}</div>
+      <div class="org-copy"><strong>{{ organizationName }}</strong><span>Enterprise plan</span></div>
       <span class="switch-caret">⌄</span>
     </div>
 
@@ -63,11 +63,6 @@
       </button>
       <div class="breadcrumbs"><span>Bilal Poultry</span><span class="crumb-divider">/</span><strong>Operations</strong></div>
       <div class="topbar-actions">
-        <label class="global-search">
-          <span class="search-icon"></span>
-          <input type="search" placeholder="Search anything..." aria-label="Search anything">
-          <kbd>⌘ K</kbd>
-        </label>
         <app-header-controls></app-header-controls>
       </div>
     </header>

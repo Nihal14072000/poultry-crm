@@ -23,7 +23,7 @@ export const enabledFeatures = [
 ] as const;
 
 const allScreens: readonly ScreenResource[] = enabledFeatures;
-const organizationAdminScreens: readonly ScreenResource[] = [...allScreens, 'suppliers', 'vendor-destinations'];
+const organizationAdminScreens: readonly ScreenResource[] = [...allScreens, 'suppliers', 'vendor-destinations', 'users-roles'];
 const organizationAdminActions: ActionGrants = {
   create: organizationAdminScreens,
   update: organizationAdminScreens,
@@ -194,6 +194,7 @@ export function resolveAccountRole(role: string): string {
 export const navigationScreenResources: Record<string, ScreenResource> = {
   '/tenants': 'tenants',
   '/people-logistics/overview': 'dashboard',
+  '/roles': 'users-roles',
   '/farm-operations/farms': 'farms',
   '/farm-operations/sheds': 'sheds',
   '/farm-operations/batches': 'batches',

@@ -31,6 +31,11 @@ export class ExpensesComponent implements OnInit {
   tripFilter = '';
   expenses: ExpenseRecord[] = [];
   trips: TripRecord[] = [];
+  page = 0;
+  pageSize = 10;
+  totalElements = 0;
+  totalPages = 0;
+  totalExpensesAmount = 0;
   editingId = '';
   formOpen = false;
   readonly categories = ['TRANSPORT', 'LOADING', 'FUEL', 'MARKET_FEE', 'OTHER'];
@@ -51,8 +56,21 @@ export class ExpensesComponent implements OnInit {
     this.loading = true;
     this.error = '';
     try {
-      const [expenses, trips] = await Promise.all([this.api.expenses(), this.tripsApi.getTrips()]);
-      this.expenses = expenses.filter(row => row['isDeleted'] !== true && row['isActive'] !== false);
+      const [paged, trips] = await Promise.all([
+        this.api.expensesPage({
+          page: this.page,
+          size: this.pageSize,
+          tripId: this.tripFilter || undefined,
+          query: this.query.trim() || undefined
+        }),
+        this.trips.length ? Promise.resolve(this.trips) : this.tripsApi.getTrips()
+      ]);
+      this.expenses = paged.items;
+      this.page = paged.page;
+      this.pageSize = paged.size;
+      this.totalElements = paged.totalElements;
+      this.totalPages = paged.totalPages;
+      this.totalExpensesAmount = Number(paged.totalAmount ?? 0);
       this.trips = trips;
     } catch (error) {
       this.error = error instanceof Error ? error.message : 'Expenses could not be loaded.';
@@ -61,21 +79,32 @@ export class ExpensesComponent implements OnInit {
     }
   }
 
-  get filteredExpenses(): ExpenseRecord[] {
-    const query = this.query.trim().toLowerCase();
-    return this.expenses.filter(expense => {
-      const trip = this.tripFor(expense);
-      const matchesTrip = !this.tripFilter || String(expense['tripId'] ?? '') === this.tripFilter;
-      const matchesQuery = !query || [
-        expense['category'], expense['note'], expense['amount'], expense['expenseDate'],
-        trip?.['tripNumber'], expense['tripId']
-      ].some(value => String(value ?? '').toLowerCase().includes(query));
-      return matchesTrip && matchesQuery;
-    });
+  get rangeStart(): number {
+    return this.totalElements === 0 ? 0 : this.page * this.pageSize + 1;
+  }
+
+  get rangeEnd(): number {
+    return Math.min((this.page + 1) * this.pageSize, this.totalElements);
+  }
+
+  async applyFilters(): Promise<void> {
+    this.page = 0;
+    await this.load();
+  }
+
+  async setPage(target: number): Promise<void> {
+    this.page = target;
+    await this.load();
+  }
+
+  async changePageSize(size: number): Promise<void> {
+    this.pageSize = Number(size) || 10;
+    this.page = 0;
+    await this.load();
   }
 
   get totalAmount(): number {
-    return this.filteredExpenses.reduce((sum, expense) => sum + this.amount(expense), 0);
+    return this.totalExpensesAmount;
   }
 
   openCreate(): void {

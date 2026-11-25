@@ -14,7 +14,7 @@
 
   <div class="toolbar">
     <label>Trip
-      <select [(ngModel)]="tripFilter">
+      <select [(ngModel)]="tripFilter" (ngModelChange)="applyFilters()">
         <option value="">All trips</option>
         @for (trip of trips; track trip['_demoId']) {
           <option [value]="trip['_demoId']">{{ trip['tripNumber'] }} · {{ trip['tripDate'] }}</option>
@@ -22,7 +22,7 @@
       </select>
     </label>
     <label class="search">Search
-      <input type="search" [(ngModel)]="query" placeholder="Search category, note or trip">
+      <input type="search" [(ngModel)]="query" (ngModelChange)="applyFilters()" placeholder="Search category or note">
     </label>
   </div>
 
@@ -30,7 +30,7 @@
     <app-loading-skeleton variant="finance" />
   } @else {
     <section class="summary">
-      <span>{{ filteredExpenses.length }} expense records</span>
+      <span>{{ totalElements }} expense records</span>
       <strong>{{ totalAmount | currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong>
     </section>
     <section class="panel">
@@ -38,7 +38,7 @@
         <table>
           <thead><tr><th>TRIP</th><th>CATEGORY</th><th>DATE</th><th>NOTE</th><th>AMOUNT</th><th>ACTIONS</th></tr></thead>
           <tbody>
-            @for (expense of filteredExpenses; track expense['id']) {
+            @for (expense of expenses; track expense['id']) {
               <tr>
                 <td>{{ tripLabel(expense) }}</td>
                 <td>{{ categoryLabel(expense['category']) }}</td>
@@ -61,6 +61,24 @@
           </tbody>
         </table>
       </div>
+      @if (expenses.length) {
+        <div class="pagination-bar" aria-label="Expenses pagination">
+          <span class="pagination-summary">Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalElements }} expenses</span>
+          <div class="pagination-controls">
+            <label class="page-size-label">
+              Rows
+              <select [value]="pageSize" (change)="changePageSize($any($event.target).value)">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </label>
+            <button class="page-btn" type="button" (click)="setPage(page - 1)" [disabled]="loading || page <= 0">Previous</button>
+            <span class="page-indicator">Page {{ totalPages ? page + 1 : 0 }} of {{ totalPages }}</span>
+            <button class="page-btn" type="button" (click)="setPage(page + 1)" [disabled]="loading || page + 1 >= totalPages">Next</button>
+          </div>
+        </div>
+      }
     </section>
   }
 
