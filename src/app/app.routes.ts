@@ -110,6 +110,7 @@ function sectionRoute(path: string, pages: DirectoryPage[], extraChildren: Route
 }
 
 export const routes: Routes = [
+  { path: 'info', loadComponent: () => import('./features/public-info/info-page.component').then((module) => module.InfoPageComponent) },
   { path: 'login', canActivate: [signedOutOnlyGuard], loadComponent: () => import('./features/identity/login/login.component').then((module) => module.LoginComponent) },
   { path: 'profile', canActivate: [requireSessionGuard], loadComponent: () => import('./features/identity/profile/profile.component').then((module) => module.ProfileComponent) },
   { path: 'tenants', canActivate: [requireSessionGuard, requirePermissionGuard], data: { resource: 'tenants' }, loadComponent: () => import('./features/tenants/tenants.component').then((module) => module.TenantsComponent) },

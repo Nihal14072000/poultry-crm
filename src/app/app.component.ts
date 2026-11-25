@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { HeaderControlsComponent } from './common/components/header-controls/header-controls.component';
 import { ToastContainerComponent } from './common/components/toast-container/toast-container.component';
@@ -18,7 +19,8 @@ export class AppComponent {
 
   constructor(
     readonly auth: SessionAuthService,
-    private readonly rolePermissions: RolePermissionService
+    private readonly rolePermissions: RolePermissionService,
+    private readonly router: Router
   ) {}
 
   readonly expandedGroups: Record<string, boolean> = Object.fromEntries(
@@ -104,6 +106,10 @@ export class AppComponent {
       ]
     }
   ];
+
+  get showApplicationShell(): boolean {
+    return !!this.auth.currentUser && !this.router.url.startsWith('/info');
+  }
 
   get visibleNavigation(): typeof this.navigation {
     return this.navigation
