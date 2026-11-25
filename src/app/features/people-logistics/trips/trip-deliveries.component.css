@@ -62,6 +62,7 @@ td small { color:#879289; margin-top:3px; }
 .link-button + .link-button { margin-left:10px; }
 .readonly,.calculation { background:#f8faf7; border-radius:6px; color:#536157; font-size:11px; padding:10px 12px; }
 .form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.delivery-entry-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
 .form-grid .wide { grid-column:1/-1; }
 .payment-row { border-top:1px solid #edf0eb; padding:13px 0; }
 .payment-summary { align-items:center; display:flex; gap:12px; justify-content:space-between; }
@@ -91,7 +92,7 @@ td small { color:#879289; margin-top:3px; }
 .empty,.state { color:#879289; font-size:12px; padding:24px 8px; text-align:center; }
 @keyframes arrive { from { opacity:.7; transform:translateY(2px); } to { opacity:1; transform:translateY(0); } }
 @media(max-width:800px) { .details-grid,.summary-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .filters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media(max-width:560px) { .page-heading,.trip-card,.reconcile { align-items:stretch; flex-direction:column; } .trip-card-actions { align-items:flex-start; } .panel { padding:14px 12px; } .details-grid,.summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .destination-expanded-sections { grid-template-columns:1fr; } .filters,.form-grid,.payment-entry,.pickup-entry-grid { grid-template-columns:1fr; } .payment-summary,.pickup-receipt-heading { align-items:stretch; flex-direction:column; } .destination-edit-row { align-items:stretch; grid-template-columns:1fr; } .form-grid .wide,.pickup-entry-grid .wide { grid-column:auto; } .button { min-height:44px; } }
+@media(max-width:560px) { .page-heading,.trip-card,.reconcile { align-items:stretch; flex-direction:column; } .trip-card-actions { align-items:flex-start; } .panel { padding:14px 12px; } .details-grid,.summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .destination-expanded-sections { grid-template-columns:1fr; } .filters,.form-grid,.delivery-entry-grid,.payment-entry,.pickup-entry-grid { grid-template-columns:1fr; } .payment-summary,.pickup-receipt-heading { align-items:stretch; flex-direction:column; } .destination-edit-row { align-items:stretch; grid-template-columns:1fr; } .form-grid .wide,.pickup-entry-grid .wide { grid-column:auto; } .button { min-height:44px; } }
 
 .payment-method-breakdown { border-top:1px solid #e8ede6; margin-top:16px; padding-top:14px; }
 .payment-method-breakdown h3 { color:#536157; font-size:12px; font-weight:700; margin:0 0 10px; }
