@@ -112,6 +112,7 @@ function sectionRoute(path: string, pages: DirectoryPage[], extraChildren: Route
 export const routes: Routes = [
   { path: 'login', canActivate: [signedOutOnlyGuard], loadComponent: () => import('./features/identity/login/login.component').then((module) => module.LoginComponent) },
   { path: 'profile', canActivate: [requireSessionGuard], loadComponent: () => import('./features/identity/profile/profile.component').then((module) => module.ProfileComponent) },
+  { path: 'tenants', canActivate: [requireSessionGuard, requirePermissionGuard], data: { resource: 'tenants' }, loadComponent: () => import('./features/tenants/tenants.component').then((module) => module.TenantsComponent) },
   { path: 'access-denied', canActivate: [requireSessionGuard, redirectToAccessibleRouteGuard], loadComponent: () => import('./features/identity/access-denied/access-denied.component').then((module) => module.AccessDeniedComponent) },
   { path: '', pathMatch: 'full', redirectTo: 'people-logistics/overview' },
   sectionRoute('farm-operations', farmOperations, [

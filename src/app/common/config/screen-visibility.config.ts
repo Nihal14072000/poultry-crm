@@ -6,7 +6,7 @@ export const screenResources = [
   'stock-ledger', 'suppliers', 'vendor-destinations', 'procurement', 'customers', 'quotations', 'orders', 'sales', 'dispatch',
   'leads', 'opportunities', 'follow-ups', 'complaints', 'employees', 'fleet', 'vehicles', 'vehicle-assignments', 'trips', 'finance', 'receivables',
   'payables', 'payments', 'expenses', 'profitability', 'reports', 'analytics', 'notifications',
-  'organization', 'users-roles', 'documents', 'audit', 'administration' , 'deliveries'
+  'organization', 'users-roles', 'documents', 'audit', 'administration' , 'deliveries', 'tenants'
 ] as const;
 
 type ScreenResource = typeof screenResources[number];
@@ -192,6 +192,7 @@ export function resolveAccountRole(role: string): string {
 }
 
 export const navigationScreenResources: Record<string, ScreenResource> = {
+  '/tenants': 'tenants',
   '/people-logistics/overview': 'dashboard',
   '/farm-operations/farms': 'farms',
   '/farm-operations/sheds': 'sheds',

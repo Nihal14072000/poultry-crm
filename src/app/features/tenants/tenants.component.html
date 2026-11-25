@@ -1,0 +1,91 @@
+<main class="tenants-page">
+  <header class="page-heading">
+    <div>
+      <div class="eyebrow">PLATFORM <span>/</span> TENANTS</div>
+      <h1>Tenant onboarding</h1>
+      <p>Create isolated tenants and optionally provision their initial organization admin account.</p>
+    </div>
+  </header>
+
+  <section class="panel">
+    <h2>Onboard new tenant</h2>
+    <form class="tenant-form" (ngSubmit)="createTenant()">
+      <label>
+        <span>Tenant name <span class="required">*</span></span>
+        <input name="tenantName" maxlength="150" [(ngModel)]="name" placeholder="e.g. Green Valley Poultry" [disabled]="saving">
+      </label>
+      <label>
+        <span>Initial admin username (optional)</span>
+        <input name="adminUsername" maxlength="100" [(ngModel)]="adminUsername" placeholder="Defaults to tenantname_id" [disabled]="saving">
+      </label>
+      <label>
+        <span>Initial admin password (optional)</span>
+        <input name="adminPassword" type="password" maxlength="72" [(ngModel)]="adminPassword" placeholder="Defaults to username" [disabled]="saving">
+      </label>
+      <div class="form-actions">
+        <button class="button button-primary" type="submit" [disabled]="saving">
+          {{ saving ? 'Onboarding…' : 'Create tenant' }}
+        </button>
+      </div>
+    </form>
+    @if (error) {
+      <p class="feedback error" role="alert">{{ error }}</p>
+    }
+  </section>
+
+  <section class="panel">
+    <div class="section-heading">
+      <h2>Tenants ({{ tenants.length }})</h2>
+    </div>
+    @if (loading) {
+      <p class="empty">Loading tenants…</p>
+    } @else if (!tenants.length) {
+      <p class="empty">No tenants found.</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>TENANT NAME</th>
+              <th>STATUS</th>
+              <th>CREATED</th>
+              <th>ACTION</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (tenant of tenants; track tenant.id) {
+              <tr>
+                <td>{{ tenant.id }}</td>
+                <td>
+                  @if (editingId === tenant.id) {
+                    <input class="inline-edit-input" [name]="'edit-tenant-' + tenant.id" maxlength="150" [(ngModel)]="editName" [disabled]="saving">
+                  } @else {
+                    <strong>{{ tenant.name }}</strong>
+                  }
+                </td>
+                <td>
+                  <span class="status status-pill" [class.inactive]="!isTenantActive(tenant)">
+                    {{ isTenantActive(tenant) ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td>{{ tenant.createdAt ? (tenant.createdAt | date:'mediumDate') : '—' }}</td>
+                <td>
+                  @if (editingId === tenant.id) {
+                    <button class="link-button" type="button" (click)="saveEdit(tenant)" [disabled]="saving">Save</button>
+                    <button class="link-button muted" type="button" (click)="cancelEdit()" [disabled]="saving">Cancel</button>
+                  } @else {
+                    <button class="link-button" type="button" (click)="startEdit(tenant)" [disabled]="saving">Edit</button>
+                    <button class="link-button" type="button" (click)="toggleStatus(tenant)" [disabled]="saving">
+                      {{ isTenantActive(tenant) ? 'Deactivate' : 'Activate' }}
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</main>
