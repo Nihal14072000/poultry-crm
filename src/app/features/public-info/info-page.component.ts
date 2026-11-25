@@ -10,6 +10,7 @@ import { RouterLink } from '@angular/router';
   styleUrl: './info-page.component.css'
 })
 export class InfoPageComponent {
+  readonly currentYear = new Date().getFullYear();
   readonly modules = [
     { number: '01', icon: '↗', title: 'Trips & logistics', description: 'Coordinate trips, deliveries, vehicles and day-to-day movement from one workspace.', tone: 'sage' },
     { number: '02', icon: '◎', title: 'Business partners', description: 'Keep buying parties, selling parties, suppliers and business details organised.', tone: 'blue' },
