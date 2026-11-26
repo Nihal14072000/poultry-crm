@@ -125,7 +125,7 @@ export class PartyDirectoryComponent implements OnInit {
       }
       this.editorOpen = false;
       this.editingParty = undefined;
-      this.toast.success(`${this.partyType === 'buying' ? 'Buying party' : 'Selling party'} ${this.editorMode === 'edit' ? 'updated' : 'added'} successfully.`);
+      this.toast.success(`${this.title} ${this.editorMode === 'edit' ? 'updated' : 'added'} successfully.`);
       await this.loadParties();
     } catch {
       this.formError = `The party could not be ${this.editorMode === 'edit' ? 'updated' : 'saved'}. Please try again.`;
@@ -165,7 +165,7 @@ export class PartyDirectoryComponent implements OnInit {
         isDeleted: true
       });
       this.deleteCandidate = undefined;
-      this.toast.success(`${this.partyType === 'buying' ? 'Buying party' : 'Selling party'} deleted successfully.`);
+      this.toast.success(`${this.title} deleted successfully.`);
       await this.loadParties();
     } catch {
       this.actionError = 'The party could not be deleted. Please try again.';
