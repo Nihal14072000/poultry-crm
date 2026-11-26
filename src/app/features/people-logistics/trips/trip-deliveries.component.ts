@@ -231,16 +231,20 @@ export class TripDeliveriesComponent implements OnInit {
   get canEditActualDelivery(): boolean {
     return this.auth.currentUser?.role === 'Organization Admin' && this.canUpdateTrip;
   }
+  get canEditSupplierPickup(): boolean {
+    return String(this.trip?.['status'] ?? '') !== 'Completed' ||
+      (this.auth.currentUser?.role === 'Organization Admin' && this.canUpdateTrip);
+  }
   get paymentParties(): { id: string; name: string }[] {
     if (this.paymentType === 'BUYER_RECEIPT') {
       return this.allDeliveryVendors.map((party) => ({
         id: `SELLING:${this.directoryPartyId(party)}`,
-        name: `Vendor · ${String(party['name'] ?? party['vendorName'] ?? 'Unnamed vendor')}`
+        name: String(party['name'] ?? party['vendorName'] ?? 'Unnamed vendor')
       })).filter((party) => party.id !== 'SELLING:');
     }
     return this.allSuppliers.map((party) => ({
       id: `BUYING:${this.directoryPartyId(party)}`,
-      name: `Supplier · ${String(party['name'] ?? party['vendorName'] ?? 'Unnamed supplier')}`
+      name: String(party['name'] ?? party['vendorName'] ?? 'Unnamed supplier')
     })).filter((party) => party.id !== 'BUYING:');
   }
   private directoryPartyId(party: TripRecord): string {
@@ -449,6 +453,7 @@ export class TripDeliveriesComponent implements OnInit {
     return `${this.number(receipt?.[`${kind}Quantity`])} · ${this.number(receipt?.[`${kind}Weight`])} kg · ₹${this.number(receipt?.[`${kind}Total`]).toFixed(2)}`;
   }
   toggleSupplierReceiptForm(form: SupplierReceiptForm): void {
+    if (!this.canEditSupplierPickup || this.saving) return;
     this.activePickupVendorId = this.activePickupVendorId === form.vendorId ? '' : form.vendorId;
   }
   plannedSalesTotal(): number { return this.destinations.reduce((sum, destination) => sum + this.number(destination['deliveryTotal']), 0); }
@@ -662,7 +667,7 @@ export class TripDeliveriesComponent implements OnInit {
     finally { this.saving = false; }
   }
   async saveSupplierReceipt(form: SupplierReceiptForm): Promise<void> {
-    if (!this.trip || this.saving) return;
+    if (!this.trip || this.saving || !this.canEditSupplierPickup) return;
     this.saving = true; this.error = '';
     try {
       const tripId = this.id(this.trip);
