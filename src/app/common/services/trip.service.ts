@@ -268,14 +268,18 @@ export class TripService {
 
   async saveSupplierPickup(tripId: string, vendorId: string, input: { broiler: number; broilerWeight: number; culls: number; cullsWeight: number; feed: number; feedWeight: number; reason: string }, pendingSupplierPickupIds: string[] = []): Promise<string> {
     const data = await this.getDeliveryData(tripId, pendingSupplierPickupIds);
-    if (String(data.trip['status']) === 'Completed') throw new Error('Completed trip records are read-only.');
     const planned = data.supplierPickups.find((pickup) => pickup.vendorId === vendorId);
     if (!planned) throw new Error('This supplier is not assigned to the trip.');
+    const existing = data.supplierReceipts.find((receipt) => String(receipt['vendorId'] ?? '') === vendorId);
+    const isAdminEdit = !!existing && this.auth.currentUser?.role === 'Organization Admin' &&
+      this.rolePermissions.can('trips', 'update');
+    if (String(data.trip['status']) === 'Completed' && !isAdminEdit) {
+      throw new Error('Only Organization Admins can edit supplier pickups on a completed trip.');
+    }
     const feedUnit = String(data.trip['feedUnit'] ?? '');
     const actual = this.validatePickup({ vendorId, broiler: { quantity: input.broiler, weight: input.broilerWeight, rate: planned.broiler.rate },
       culls: { quantity: input.culls, weight: input.cullsWeight, rate: planned.culls.rate },
       feed: { quantity: input.feed, weight: input.feedWeight, rate: planned.feed.rate } }, feedUnit, planned.vendorName);
-    const existing = data.supplierReceipts.find((receipt) => String(receipt['vendorId'] ?? '') === vendorId);
     const pickupId = await this.tripApi.saveSupplierPickup(vendorId, {
       broiler: actual.broiler.quantity, broilerWeight: actual.broiler.weight, broilerRate: actual.broiler.rate,
       culls: actual.culls.quantity, cullsWeight: actual.culls.weight, cullsRate: actual.culls.rate,
