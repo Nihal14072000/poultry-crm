@@ -295,14 +295,14 @@ describe('TripDeliveriesComponent payments', () => {
     await component.ngOnInit();
     component.paymentType = 'SELLER_PAYOUT';
     expect(component.paymentParties).toEqual([
-      { id: 'BUYING:31', name: 'Supplier · Supplier' },
-      { id: 'BUYING:32', name: 'Supplier · Other Supplier' }
+      { id: 'BUYING:31', name: 'Supplier' },
+      { id: 'BUYING:32', name: 'Other Supplier' }
     ]);
 
     component.paymentType = 'BUYER_RECEIPT';
     expect(component.paymentParties).toEqual([
-      { id: 'SELLING:51', name: 'Vendor · Delivery vendor' },
-      { id: 'SELLING:52', name: 'Vendor · Other vendor' }
+      { id: 'SELLING:51', name: 'Delivery vendor' },
+      { id: 'SELLING:52', name: 'Other vendor' }
     ]);
   });
 
