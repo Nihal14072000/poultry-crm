@@ -3,7 +3,7 @@
     <div>
       <div class="eyebrow">Bilal Poultry <span>/</span> PEOPLE &amp; LOGISTICS</div>
       <h1>{{ title }}</h1>
-      <p>Review all {{ partyType }} parties and their contact details.</p>
+      <p>Review all {{ title.toLowerCase() }} and their contact details.</p>
     </div>
     <div class="heading-actions">
       <button class="button button-secondary" type="button" (click)="loadParties()" [disabled]="loading">↻ Refresh</button>
@@ -70,7 +70,7 @@
     <div class="dialog-backdrop" (click)="closeEditor()">
       <section class="record-dialog" role="dialog" aria-modal="true" [attr.aria-label]="(editorMode === 'create' ? 'Add ' : 'Edit ') + title" (click)="$event.stopPropagation()">
         <div class="dialog-heading">
-          <div><h2>{{ editorMode === 'create' ? 'Add' : 'Edit' }} {{ partyType }} party</h2><p>{{ title }} · Saved to the backend.</p></div>
+          <div><h2>{{ editorMode === 'create' ? 'Add' : 'Edit' }} {{ title }}</h2><p>{{ title }} · Saved to the backend.</p></div>
           <button type="button" class="dialog-close" aria-label="Close" (click)="closeEditor()">×</button>
         </div>
         <form (ngSubmit)="createParty()" #partyFormElement="ngForm">
