@@ -64,6 +64,10 @@ export class PartyDetailsComponent implements OnInit {
     }
   }
 
+  get partyLabel(): string {
+    return this.partyType === 'buying' ? 'Sundry Creditors' : 'Sundry Debtors';
+  }
+
   get paymentsTotal(): number {
     return this.partyPaymentTotal;
   }

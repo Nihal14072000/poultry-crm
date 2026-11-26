@@ -81,8 +81,8 @@ export class AppComponent {
     {
       label: 'Entities',
       links: [
-        { label: 'Buying parties', path: '/people-logistics/buying-parties', icon: 'suppliers' },
-        { label: 'Selling parties', path: '/people-logistics/selling-parties', icon: 'customers' },
+        { label: 'Sundry Creditors', path: '/people-logistics/buying-parties', icon: 'suppliers' },
+        { label: 'Sundry Debtors', path: '/people-logistics/selling-parties', icon: 'customers' },
         { label: 'Vehicles', path: '/people-logistics/vehicles', icon: 'fleet' }
       ]
     },

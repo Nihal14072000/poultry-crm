@@ -1,5 +1,5 @@
 <section class="party-page">
-  <a class="back-link" [routerLink]="['/people-logistics', partyType === 'buying' ? 'buying-parties' : 'selling-parties']">← Back to {{ partyType }} parties</a>
+  <a class="back-link" [routerLink]="['/people-logistics', partyType === 'buying' ? 'buying-parties' : 'selling-parties']">← Back to {{ partyLabel }}</a>
   @if (loading) {
     <app-party-loading-skeleton variant="details" />
   } @else if (errorMessage) {
@@ -7,7 +7,7 @@
   } @else if (party) {
     <header class="page-heading">
       <div>
-        <div class="eyebrow">PEOPLE &amp; LOGISTICS <span>/</span> {{ partyType === 'buying' ? 'BUYING' : 'SELLING' }} PARTY</div>
+        <div class="eyebrow">PEOPLE &amp; LOGISTICS <span>/</span> {{ partyLabel | uppercase }}</div>
         <h1>{{ party.name }}</h1>
         <p>{{ party.contact || 'No contact provided' }} · {{ party.location || 'No location provided' }}</p>
       </div>
