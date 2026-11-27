@@ -54,7 +54,7 @@
         </article>
       }
     </section>
-    <section class="panel"><div class="section-heading"><div><span class="step">ROUTE STOPS</span><h2>Vendor destinations <app-info-popover title="Vendor destinations" content="Each row represents a planned delivery stop. Compare proposed quantities, weights, rates and sales with actual handoffs recorded for that vendor. Actual sales are calculated from delivered weights and rates; use the delivery action to record or update a handoff." /></h2></div>@if (canUpdateTrip) { <button class="button button-secondary" type="button" (click)="toggleAddStopForm()" [disabled]="saving || trip['status'] === 'Completed'">{{ showAddStopForm ? 'Cancel' : '＋ Add stop' }}</button> }</div>
+    <section class="panel"><div class="section-heading"><div><span class="step">ROUTE STOPS</span><h2>Vendor destinations <app-info-popover title="Vendor destinations" content="Each row represents a planned delivery stop. Compare proposed quantities, weights, rates and sales with actual handoffs recorded for that vendor. Actual sales are calculated from delivered weights and rates; use the delivery action to record or update a handoff." /></h2></div>@if (canAddVendorStop) { <button class="button button-secondary" type="button" (click)="toggleAddStopForm()" [disabled]="saving || trip['status'] === 'Completed'">{{ showAddStopForm ? 'Cancel' : '＋ Add stop' }}</button> }</div>
       @if (showAddStopForm) {
         <div class="inline-entry">
           <div class="form-grid delivery-entry-grid">
