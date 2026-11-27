@@ -34,6 +34,12 @@ export class PeopleLogisticsOverviewComponent implements OnInit {
   buyingPartiesToClear: PartyDueSummary[] = [];
   loading = true;
   errorMessage = '';
+  tripsPage = 0;
+  tripsPageSize = 5;
+  sellingPage = 0;
+  sellingPageSize = 5;
+  buyingPage = 0;
+  buyingPageSize = 5;
 
   constructor(
     private readonly drivers: DriverDirectoryService,
@@ -73,6 +79,33 @@ export class PeopleLogisticsOverviewComponent implements OnInit {
   get activeTrips(): number {
     return this.trips.filter((trip) => !['completed', 'closed', 'deleted'].includes(String(trip['status']).toLowerCase())).length;
   }
+
+  get pagedTrips(): TripRecord[] {
+    return this.trips.slice(this.tripsPage * this.tripsPageSize, (this.tripsPage + 1) * this.tripsPageSize);
+  }
+  get tripsTotalPages(): number { return Math.ceil(this.trips.length / this.tripsPageSize); }
+  get tripsRangeStart(): number { return this.trips.length ? this.tripsPage * this.tripsPageSize + 1 : 0; }
+  get tripsRangeEnd(): number { return Math.min((this.tripsPage + 1) * this.tripsPageSize, this.trips.length); }
+  setTripsPage(page: number): void { this.tripsPage = Math.max(0, Math.min(page, Math.max(0, this.tripsTotalPages - 1))); }
+  changeTripsPageSize(size: number): void { this.tripsPageSize = Number(size) || 5; this.tripsPage = 0; }
+
+  get pagedSellingParties(): PartyDueSummary[] {
+    return this.sellingPartiesWithDues.slice(this.sellingPage * this.sellingPageSize, (this.sellingPage + 1) * this.sellingPageSize);
+  }
+  get sellingTotalPages(): number { return Math.ceil(this.sellingPartiesWithDues.length / this.sellingPageSize); }
+  get sellingRangeStart(): number { return this.sellingPartiesWithDues.length ? this.sellingPage * this.sellingPageSize + 1 : 0; }
+  get sellingRangeEnd(): number { return Math.min((this.sellingPage + 1) * this.sellingPageSize, this.sellingPartiesWithDues.length); }
+  setSellingPage(page: number): void { this.sellingPage = Math.max(0, Math.min(page, Math.max(0, this.sellingTotalPages - 1))); }
+  changeSellingPageSize(size: number): void { this.sellingPageSize = Number(size) || 5; this.sellingPage = 0; }
+
+  get pagedBuyingParties(): PartyDueSummary[] {
+    return this.buyingPartiesToClear.slice(this.buyingPage * this.buyingPageSize, (this.buyingPage + 1) * this.buyingPageSize);
+  }
+  get buyingTotalPages(): number { return Math.ceil(this.buyingPartiesToClear.length / this.buyingPageSize); }
+  get buyingRangeStart(): number { return this.buyingPartiesToClear.length ? this.buyingPage * this.buyingPageSize + 1 : 0; }
+  get buyingRangeEnd(): number { return Math.min((this.buyingPage + 1) * this.buyingPageSize, this.buyingPartiesToClear.length); }
+  setBuyingPage(page: number): void { this.buyingPage = Math.max(0, Math.min(page, Math.max(0, this.buyingTotalPages - 1))); }
+  changeBuyingPageSize(size: number): void { this.buyingPageSize = Number(size) || 5; this.buyingPage = 0; }
 
   scrollToSection(sectionId: string): void {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });

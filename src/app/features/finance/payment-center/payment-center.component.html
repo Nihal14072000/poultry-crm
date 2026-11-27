@@ -229,7 +229,7 @@
         <th>STATUS</th>
       </tr>
     </thead>
-    <tbody>@for (row of rows; track id(row)) { <tr>
+    <tbody>@for (row of rows; track text(row,'settlementType','type') + ':' + id(row) + ':' + $index) { <tr>
         <td>{{ text(row,'tripNumber','tripId') }}</td>
         <td>{{ text(row,'orderNumber','orderId') }}</td>
         <td>{{ text(row,'buyerName','buyingPartyName') }}</td>

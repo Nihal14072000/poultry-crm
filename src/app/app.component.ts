@@ -89,7 +89,6 @@ export class AppComponent {
     {
       label: 'Finance',
       links: [
-        { label: 'Finance overview', path: '/finance/overview', icon: 'finance' },
         { label: 'Receivables', path: '/finance/receivables', icon: 'receivables' },
         { label: 'Payables', path: '/finance/payables', icon: 'payables' },
         { label: 'Payments', path: '/finance/payments', icon: 'payments' },

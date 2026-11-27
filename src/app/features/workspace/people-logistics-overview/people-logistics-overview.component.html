@@ -55,7 +55,7 @@
               <table>
                 <thead><tr><th>TRIP</th><th>DATE</th><th>ROUTE</th><th>DRIVER</th><th>VEHICLE</th><th>STATUS</th></tr></thead>
                 <tbody>
-                  @for (trip of trips.slice(0, 5); track trip['_demoId']) {
+                  @for (trip of pagedTrips; track trip['_demoId']) {
                     <tr>
                       <td><strong>{{ trip['tripNumber'] || 'Trip' }}</strong></td>
                       <td>{{ trip['tripDate'] || '—' }}</td>
@@ -67,6 +67,22 @@
                   }
                 </tbody>
               </table>
+            </div>
+            <div class="pagination-bar" aria-label="Recent trips pagination">
+              <span class="pagination-summary">Showing {{ tripsRangeStart }}–{{ tripsRangeEnd }} of {{ trips.length }} trips</span>
+              <div class="pagination-controls">
+                <label class="page-size-label">
+                  Rows
+                  <select [value]="tripsPageSize" (change)="changeTripsPageSize($any($event.target).value)">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                  </select>
+                </label>
+                <button class="page-btn" type="button" (click)="setTripsPage(tripsPage - 1)" [disabled]="tripsPage <= 0">Previous</button>
+                <span class="page-indicator">Page {{ tripsTotalPages ? tripsPage + 1 : 0 }} of {{ tripsTotalPages }}</span>
+                <button class="page-btn" type="button" (click)="setTripsPage(tripsPage + 1)" [disabled]="tripsPage + 1 >= tripsTotalPages">Next</button>
+              </div>
             </div>
           } @else { <p class="empty">No trips found.</p> }
         </article>
@@ -83,7 +99,7 @@
               <table>
                 <thead><tr><th>SELLING PARTY</th><th>DUE AMOUNT</th></tr></thead>
                 <tbody>
-                  @for (party of sellingPartiesWithDues; track party.id) {
+                  @for (party of pagedSellingParties; track party.id) {
                     <tr>
                       <td><a class="party-link" [routerLink]="['/people-logistics/selling-parties', party.id]"><strong>{{ party.name || '—' }}</strong></a></td>
                       <td><strong>{{ party.due | currency:'INR':'symbol':'1.0-2' }}</strong></td>
@@ -91,6 +107,22 @@
                   }
                 </tbody>
               </table>
+            </div>
+            <div class="pagination-bar" aria-label="Selling parties pagination">
+              <span class="pagination-summary">Showing {{ sellingRangeStart }}–{{ sellingRangeEnd }} of {{ sellingPartiesWithDues.length }} parties</span>
+              <div class="pagination-controls">
+                <label class="page-size-label">
+                  Rows
+                  <select [value]="sellingPageSize" (change)="changeSellingPageSize($any($event.target).value)">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                  </select>
+                </label>
+                <button class="page-btn" type="button" (click)="setSellingPage(sellingPage - 1)" [disabled]="sellingPage <= 0">Previous</button>
+                <span class="page-indicator">Page {{ sellingTotalPages ? sellingPage + 1 : 0 }} of {{ sellingTotalPages }}</span>
+                <button class="page-btn" type="button" (click)="setSellingPage(sellingPage + 1)" [disabled]="sellingPage + 1 >= sellingTotalPages">Next</button>
+              </div>
             </div>
           } @else { <p class="empty">No selling parties with positive dues.</p> }
         </article>
@@ -107,7 +139,7 @@
               <table>
                 <thead><tr><th>BUYING PARTY</th><th>DUE AMOUNT</th></tr></thead>
                 <tbody>
-                  @for (party of buyingPartiesToClear; track party.id) {
+                  @for (party of pagedBuyingParties; track party.id) {
                     <tr>
                       <td><a class="party-link" [routerLink]="['/people-logistics/buying-parties', party.id]"><strong>{{ party.name || '—' }}</strong></a></td>
                       <td><strong>{{ party.due | currency:'INR':'symbol':'1.0-2' }}</strong></td>
@@ -115,6 +147,22 @@
                   }
                 </tbody>
               </table>
+            </div>
+            <div class="pagination-bar" aria-label="Buying parties pagination">
+              <span class="pagination-summary">Showing {{ buyingRangeStart }}–{{ buyingRangeEnd }} of {{ buyingPartiesToClear.length }} parties</span>
+              <div class="pagination-controls">
+                <label class="page-size-label">
+                  Rows
+                  <select [value]="buyingPageSize" (change)="changeBuyingPageSize($any($event.target).value)">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                  </select>
+                </label>
+                <button class="page-btn" type="button" (click)="setBuyingPage(buyingPage - 1)" [disabled]="buyingPage <= 0">Previous</button>
+                <span class="page-indicator">Page {{ buyingTotalPages ? buyingPage + 1 : 0 }} of {{ buyingTotalPages }}</span>
+                <button class="page-btn" type="button" (click)="setBuyingPage(buyingPage + 1)" [disabled]="buyingPage + 1 >= buyingTotalPages">Next</button>
+              </div>
             </div>
           } @else { <p class="empty">No buying parties with pending clearance.</p> }
         </article>
