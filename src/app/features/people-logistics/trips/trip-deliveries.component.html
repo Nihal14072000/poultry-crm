@@ -1,5 +1,5 @@
 <main class="delivery-page">
-  <header class="page-heading"><div><div class="eyebrow">PEOPLE & LOGISTICS <span>/</span> TRIP DELIVERY</div><h1>{{ trip ? trip['tripNumber'] : 'All Trips' }}@if (trip) {<app-info-popover title="Trip deliveries" content="Record vendor handoffs and reconcile this trip." />}</h1>@if (!trip) { <p>Select a trip to record and review deliveries.</p> }</div>@if (trip) { <a class="button button-secondary" routerLink="/people-logistics/deliveries">← All deliveries</a> }</header>
+  <header class="page-heading"><div><div class="eyebrow">PEOPLE & LOGISTICS <span>/</span> TRIP DELIVERY</div><h1>{{ trip ? trip['tripNumber'] : 'All Trips' }}@if (trip) {<app-info-popover title="Trip deliveries" content="Record vendor handoffs and reconcile this trip." />}</h1>@if (!trip) { <p>Select a trip to record and review deliveries.</p> }</div>@if (trip) { <div class="trip-payment-card-actions">@if (canReopenTrip) { <button class="button button-secondary" type="button" (click)="reopenTrip()" [disabled]="saving">Reopen trip</button> }<a class="button button-secondary" routerLink="/people-logistics/deliveries">← All deliveries</a></div> }</header>
   @if (error) { <p class="feedback error" role="alert">{{ error }}</p> }
   @if (loading) { <app-loading-skeleton variant="detail" /> }
   @else if (!trip) {
@@ -30,7 +30,7 @@
       @if (!allSupplierReceiptsSaved()) { <p class="feedback error">Record the actual receipt for every supplier before entering deliveries or mortality and before reconciliation.</p> }
       @for (form of supplierReceiptForms; track form.vendorId) {
         <article class="pickup-receipt">
-          <div class="pickup-receipt-heading"><strong>{{ form.vendorName }}</strong><button class="button button-secondary" [class.icon-action]="activePickupVendorId !== form.vendorId && supplierReceipt(form.vendorId)" type="button" [attr.aria-label]="activePickupVendorId === form.vendorId ? 'Cancel actual receipt' : supplierReceipt(form.vendorId) ? 'Edit actual receipt' : 'Enter actual receipt'" [attr.title]="activePickupVendorId === form.vendorId ? 'Cancel actual receipt' : supplierReceipt(form.vendorId) ? 'Edit actual receipt' : 'Enter actual receipt'" (click)="toggleSupplierReceiptForm(form)" [disabled]="saving || !canEditSupplierPickup">@if (activePickupVendorId === form.vendorId) { Cancel } @else if (supplierReceipt(form.vendorId)) { <img src="assets/icons/actions/edit.svg" width="16" height="16" alt="" aria-hidden="true"> } @else { Enter actual receipt }</button></div>
+          <div class="pickup-receipt-heading"><strong>{{ form.vendorName }}</strong><div class="trip-payment-card-actions"><button class="button button-secondary" [class.icon-action]="activePickupVendorId !== form.vendorId && supplierReceipt(form.vendorId)" type="button" [attr.aria-label]="activePickupVendorId === form.vendorId ? 'Cancel actual receipt' : supplierReceipt(form.vendorId) ? 'Edit actual receipt' : 'Enter actual receipt'" [attr.title]="activePickupVendorId === form.vendorId ? 'Cancel actual receipt' : supplierReceipt(form.vendorId) ? 'Edit actual receipt' : 'Enter actual receipt'" (click)="toggleSupplierReceiptForm(form)" [disabled]="saving || !canEditSupplierPickup">@if (activePickupVendorId === form.vendorId) { Cancel } @else if (supplierReceipt(form.vendorId)) { <img src="assets/icons/actions/edit.svg" width="16" height="16" alt="" aria-hidden="true"> } @else { Enter actual receipt }</button>@if (canEditActualDelivery && supplierReceipt(form.vendorId)) { <button class="link-button delete-action" type="button" aria-label="Delete actual receipt" title="Delete actual receipt" (click)="deleteSupplierReceipt(form)" [disabled]="saving"><img src="assets/icons/actions/delete.svg" width="16" height="16" alt="" aria-hidden="true"></button> }</div></div>
           @if (plannedSupplier(form.vendorId); as planned) {
             <div class="table-wrap"><table><thead><tr><th>ITEM</th><th>PROPOSED QTY / WEIGHT / RATE / COST</th><th>ACTUAL QTY / WEIGHT / COST</th></tr></thead><tbody>
               <tr><th scope="row">Broiler</th><td>{{ planned.broiler.quantity }} · {{ planned.broiler.weight }} kg · {{ planned.broiler.rate | currency:'INR':'symbol':'1.2-2' }}/kg · {{ planned.broiler.total | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ supplierActualSummary(form.vendorId, 'broiler') }}</td></tr>
@@ -54,7 +54,32 @@
         </article>
       }
     </section>
-    <section class="panel"><div class="section-heading"><div><span class="step">ROUTE STOPS</span><h2>Vendor destinations <app-info-popover title="Vendor destinations" content="Each row represents a planned delivery stop. Compare proposed quantities, weights, rates and sales with actual handoffs recorded for that vendor. Actual sales are calculated from delivered weights and rates; use the delivery action to record or update a handoff." /></h2></div>@if (canUpdateTrip) { <a class="button button-secondary" [routerLink]="['/people-logistics/trips', id(trip), 'edit']">＋ Add stop</a> }</div>
+    <section class="panel"><div class="section-heading"><div><span class="step">ROUTE STOPS</span><h2>Vendor destinations <app-info-popover title="Vendor destinations" content="Each row represents a planned delivery stop. Compare proposed quantities, weights, rates and sales with actual handoffs recorded for that vendor. Actual sales are calculated from delivered weights and rates; use the delivery action to record or update a handoff." /></h2></div>@if (canUpdateTrip) { <button class="button button-secondary" type="button" (click)="toggleAddStopForm()" [disabled]="saving || trip['status'] === 'Completed'">{{ showAddStopForm ? 'Cancel' : '＋ Add stop' }}</button> }</div>
+      @if (showAddStopForm) {
+        <div class="inline-entry">
+          <div class="form-grid delivery-entry-grid">
+            <label class="wide">Delivery vendor <span class="required">*</span>
+              <select name="newStopVendorId" [(ngModel)]="newStopVendorId" [disabled]="saving">
+                <option value="">Select delivery vendor</option>
+                @for (vendor of availableStopVendors; track vendor['_demoId']) {
+                  <option [value]="vendor['_demoId']">{{ vendor['name'] }} · {{ vendor['location'] || vendor['address'] || '' }}</option>
+                }
+              </select>
+            </label>
+            <label>Broiler qty<input name="newStopBroilerQty" type="number" min="0" step="1" [(ngModel)]="newStopBroilerQty" [disabled]="saving"></label>
+            <label>Broiler weight (kg)<input name="newStopBroilerWeight" type="number" min="0" step="0.01" [(ngModel)]="newStopBroilerWeight" [disabled]="saving"></label>
+            <label>Broiler rate (₹/kg)<input name="newStopBroilerRate" type="number" min="0" step="0.01" [(ngModel)]="newStopBroilerRate" [disabled]="saving"></label>
+            <label>Culls qty<input name="newStopCullsQty" type="number" min="0" step="1" [(ngModel)]="newStopCullsQty" [disabled]="saving"></label>
+            <label>Culls weight (kg)<input name="newStopCullsWeight" type="number" min="0" step="0.01" [(ngModel)]="newStopCullsWeight" [disabled]="saving"></label>
+            <label>Culls rate (₹/kg)<input name="newStopCullsRate" type="number" min="0" step="0.01" [(ngModel)]="newStopCullsRate" [disabled]="saving"></label>
+            <label>Feed qty ({{ trip['feedUnit'] }})<input name="newStopFeedQty" type="number" min="0" step="0.01" [(ngModel)]="newStopFeedQty" [disabled]="saving"></label>
+            <label>Feed weight (kg)<input name="newStopFeedWeight" type="number" min="0" step="0.01" [(ngModel)]="newStopFeedWeight" [disabled]="saving"></label>
+            <label>Feed rate (₹/kg)<input name="newStopFeedRate" type="number" min="0" step="0.01" [(ngModel)]="newStopFeedRate" [disabled]="saving"></label>
+          </div>
+          <p class="calculation">Planned stop total: {{ newStopPlannedTotal() | currency:'INR':'symbol':'1.2-2' }}</p>
+          <button class="button button-primary save-button" type="button" (click)="saveNewStop()" [disabled]="saving">{{ saving ? 'Saving…' : 'Save stop' }}</button>
+        </div>
+      }
       <ng-template #deliveryEditor>
         <div class="inline-entry">
           <div class="section-heading">
@@ -97,6 +122,9 @@
                     @if (canEnterDelivery) { <button class="link-button" type="button" (click)="open(destination)">{{ entries(id(destination)).length ? 'Enter another' : 'Enter delivery' }}</button> }
                     @for (delivery of entries(id(destination)); track id(delivery)) {
                       @if (canEditActualDelivery) { <button class="link-button icon-action" type="button" aria-label="Edit actual delivery" title="Edit actual delivery" (click)="editActualDelivery(delivery)" [disabled]="saving"><img src="assets/icons/actions/edit.svg" width="16" height="16" alt="" aria-hidden="true"></button> }
+                    }
+                    @if (canEditActualDelivery) {
+                      <button class="link-button delete-action" type="button" aria-label="Delete order" title="Delete order" (click)="deleteVendorOrder(destination)" [disabled]="saving"><img src="assets/icons/actions/delete.svg" width="16" height="16" alt="" aria-hidden="true"></button>
                     }
                   </td>
                 </tr>
@@ -252,18 +280,18 @@
         <p>Supplier pickups: {{ loadedBroiler }} broiler + {{ loadedCulls }} culls = {{ totalLoaded() }} birds loaded.</p>
         <p>Vendor handoffs: {{ deliveredBroilerTotal() }} broiler + {{ deliveredCullsTotal() }} culls = {{ totalDelivered() }} birds delivered.</p>
         <p>Unreconciled = {{ totalLoaded() }} loaded − {{ totalDelivered() }} delivered − {{ totalMortality() }} mortality.</p>
-        @if (hasReconciliationMismatch) {
+        @if (hasReconciliationMismatch || trip['status'] === 'Pending reconciliation') {
           @if (auth.currentUser?.role === 'Organization Admin') {
-            <p class="feedback warning">Review the bird-count discrepancy. As Organization Admin, you can approve and finalize this trip.</p>
+            <p class="feedback warning">{{ hasReconciliationMismatch ? 'Review the bird-count discrepancy. As Organization Admin, you can approve and finalize this trip.' : 'This trip is pending reconciliation approval. As Organization Admin, you can approve and finalize this trip.' }}</p>
           } @else {
-            <p class="readonly">A bird-count discrepancy was detected. Submit this trip for Organization Admin reconciliation approval.</p>
+            <p class="readonly">{{ hasReconciliationMismatch ? 'A bird-count discrepancy was detected. Submit this trip for Organization Admin reconciliation approval.' : 'A new order was added or reconciliation is pending. Organization Admin approval is required to complete this trip.' }}</p>
           }
         }
         @if (hasMissingDestinationDeliveries) {
           <p class="feedback error">Record an actual delivery for every Vendor Destination before completing the trip.</p>
         }
       </div>
-      @if (hasReconciliationMismatch) {
+      @if (hasReconciliationMismatch || trip['status'] === 'Pending reconciliation') {
         <button class="button button-primary" (click)="complete()" [disabled]="saving || !allSupplierReceiptsSaved() || hasMissingDestinationDeliveries || trip['status'] === 'Completed' || (trip['status'] === 'Pending reconciliation' && auth.currentUser?.role !== 'Organization Admin')">{{ trip['status'] === 'Completed' ? 'Trip completed' : (trip['status'] === 'Pending reconciliation' ? (auth.currentUser?.role === 'Organization Admin' ? 'Approve & complete trip' : 'Awaiting admin approval') : (auth.currentUser?.role === 'Organization Admin' ? 'Approve & complete trip' : 'Submit for reconciliation')) }}</button>
       } @else {
         <button class="button button-primary" (click)="complete()" [disabled]="saving || !allSupplierReceiptsSaved() || hasMissingDestinationDeliveries || trip['status'] === 'Completed'">{{ trip['status'] === 'Completed' ? 'Trip completed' : 'Complete trip' }}</button>

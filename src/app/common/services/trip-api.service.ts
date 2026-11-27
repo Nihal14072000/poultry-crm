@@ -556,6 +556,25 @@ export class TripApiService {
     return String(vendorDeliveryId);
   }
 
+  async deleteSupplierPickup(pickupId: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${this.baseUrl}/supplier-pickups/${this.parseId(pickupId)}`));
+  }
+
+  async deleteVendorDelivery(deliveryId: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${this.baseUrl}/vendor-deliveries/${this.parseId(deliveryId)}`));
+  }
+
+  async removeVendorStop(id: string, sellingPartyId: string): Promise<void> {
+    const tripId = this.parseId(id);
+    const existing = await firstValueFrom(this.http.get<ApiTrip>(`${this.baseUrl}/trips/${tripId}/retrieve`));
+    const currentSelling = (existing.sellingParties ?? []).filter((party) => !party['isDeleted']);
+    const remaining = currentSelling.filter((party) => String(party['id'] ?? '') !== sellingPartyId);
+    if (remaining.length === currentSelling.length) {
+      throw new Error('This vendor destination could not be found on the trip.');
+    }
+    await firstValueFrom(this.http.put(`${this.baseUrl}/trips/${tripId}/update`, { sellingParties: remaining }));
+  }
+
   async saveMortality(tripId: string, quantity: number, reason: string, existingId?: string): Promise<void> {
     const mortality = {
       tripId: this.parseId(tripId),
@@ -611,6 +630,60 @@ export class TripApiService {
       { ...this.toRequest(input, options, String(tripId)), tripId, status: existing.status }
     ));
     return this.tripRecord(response, new Map(), new Map());
+  }
+
+  async addVendorStop(
+    id: string,
+    vendor: TripRecord,
+    stop: {
+      broilerQuantity: number;
+      broilerWeight: number;
+      broilerRate: number;
+      cullsQuantity: number;
+      cullsWeight: number;
+      cullsRate: number;
+      feedQuantity: number;
+      feedWeight: number;
+      feedRate: number;
+    }
+  ): Promise<string> {
+    const tripId = this.parseId(id);
+    const [current, orderTypes] = await Promise.all([
+      firstValueFrom(this.http.get<ApiTrip>(`${this.baseUrl}/trips/${tripId}/retrieve`)),
+      this.getOrderTypes()
+    ]);
+    const ids = this.getOrderTypeIds(orderTypes);
+    const vendorId = this.parseId(String(vendor['_demoId'] ?? ''));
+    const existing = (current.sellingParties ?? []).filter((party) => !party['isDeleted']);
+    if (existing.some((party) => Number(party['id']) === vendorId)) {
+      throw new Error('This vendor destination is already on the trip.');
+    }
+    const newParty = this.partyPayload(vendor, [
+      this.createOrder(stop.broilerQuantity, stop.broilerWeight, stop.broilerRate, ids.broiler),
+      this.createOrder(stop.cullsQuantity, stop.cullsWeight, stop.cullsRate, ids.culls),
+      this.createOrder(stop.feedQuantity, stop.feedWeight, stop.feedRate, ids.feed)
+    ]);
+    if (!(newParty['order'] as unknown[]).length) {
+      throw new Error('Enter at least one planned quantity or weight.');
+    }
+    await firstValueFrom(this.http.put<ApiTrip>(
+      `${this.baseUrl}/trips/${tripId}/update`,
+      { sellingParties: [...existing, newParty] }
+    ));
+    const vendorDeliveryId = await this.saveVendorDelivery(String(vendorId), {
+      broiler: stop.broilerQuantity,
+      broilerWeight: stop.broilerWeight,
+      broilerRate: stop.broilerRate,
+      culls: stop.cullsQuantity,
+      cullsWeight: stop.cullsWeight,
+      cullsRate: stop.cullsRate,
+      feed: stop.feedQuantity,
+      feedWeight: stop.feedWeight,
+      feedRate: stop.feedRate,
+      note: ''
+    });
+    await this.linkVendorDeliveries(id, [vendorDeliveryId]);
+    return vendorDeliveryId;
   }
 
   private toRequest(input: CreateTripInput, options: TripFormOptions, currentTripId?: string): Record<string, unknown> {
