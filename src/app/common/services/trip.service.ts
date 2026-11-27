@@ -271,10 +271,13 @@ export class TripService {
     const planned = data.supplierPickups.find((pickup) => pickup.vendorId === vendorId);
     if (!planned) throw new Error('This supplier is not assigned to the trip.');
     const existing = data.supplierReceipts.find((receipt) => String(receipt['vendorId'] ?? '') === vendorId);
-    const isAdminEdit = !!existing && this.auth.currentUser?.role === 'Organization Admin' &&
-      this.rolePermissions.can('trips', 'update');
-    if (String(data.trip['status']) === 'Completed' && !isAdminEdit) {
-      throw new Error('Only Organization Admins can edit supplier pickups on a completed trip.');
+    const role = this.auth.currentUser?.role;
+    const canEditCompletedPickup = !!existing && (
+      (role === 'Organization Admin' && this.rolePermissions.can('trips', 'update')) ||
+      (role === 'Supervisor' && this.rolePermissions.can('deliveries', 'update'))
+    );
+    if (String(data.trip['status']) === 'Completed' && !canEditCompletedPickup) {
+      throw new Error('Only Organization Admins or Supervisors can edit existing supplier pickups on a completed trip.');
     }
     const feedUnit = String(data.trip['feedUnit'] ?? '');
     const actual = this.validatePickup({ vendorId, broiler: { quantity: input.broiler, weight: input.broilerWeight, rate: planned.broiler.rate },

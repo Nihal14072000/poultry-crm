@@ -151,6 +151,39 @@ describe('TripService', () => {
     }), '77');
   });
 
+  it('lets a Supervisor update an existing supplier pickup on a completed trip', async () => {
+    currentUser = {
+      name: 'Supervisor', email: 'supervisor@example.com', role: 'Supervisor', permissions: '',
+      status: 'Active', authenticatedAt: ''
+    };
+    tripApi.getDeliveryData.and.resolveTo({
+      trip: { _demoId: 'trip-12', status: 'Completed', feedUnit: 'kg' },
+      supplierPickups: [{
+        vendorId: 'supplier-1', vendorName: 'Farm Vendor',
+        broiler: { quantity: 10, weight: 10, rate: 100, total: 1000 },
+        culls: { quantity: 0, weight: 0, rate: 0, total: 0 },
+        feed: { quantity: 0, weight: 0, rate: 0, total: 0 },
+        total: 1000
+      }],
+      supplierReceipts: [{ _demoId: '77', vendorId: 'supplier-1' }],
+      destinations: [],
+      deliveries: [],
+      mortalities: [],
+      loadedBroiler: 10, loadedCulls: 0, loadedBirds: 10
+    });
+    tripApi.saveSupplierPickup.and.resolveTo('77');
+
+    const savedId = await service.saveSupplierPickup('trip-12', 'supplier-1', {
+      broiler: 9, broilerWeight: 9.5, culls: 0, cullsWeight: 0,
+      feed: 0, feedWeight: 0, reason: 'Supervisor corrected supplier receipt'
+    });
+
+    expect(savedId).toBe('77');
+    expect(tripApi.saveSupplierPickup).toHaveBeenCalledWith('supplier-1', jasmine.objectContaining({
+      broiler: 9, broilerWeight: 9.5, culls: 0, cullsWeight: 0, feed: 0, feedWeight: 0
+    }), '77');
+  });
+
   it('soft deletes in-transit and completed trips even when they have operational records', async () => {
     await service.softDeleteTrip('trip-in-transit');
     await service.softDeleteTrip('trip-completed');

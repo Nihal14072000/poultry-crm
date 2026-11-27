@@ -232,8 +232,10 @@ export class TripDeliveriesComponent implements OnInit {
     return this.auth.currentUser?.role === 'Organization Admin' && this.canUpdateTrip;
   }
   get canEditSupplierPickup(): boolean {
-    return String(this.trip?.['status'] ?? '') !== 'Completed' ||
-      (this.auth.currentUser?.role === 'Organization Admin' && this.canUpdateTrip);
+    if (String(this.trip?.['status'] ?? '') !== 'Completed') return true;
+    const role = this.auth.currentUser?.role;
+    return (role === 'Organization Admin' && this.canUpdateTrip) ||
+      (role === 'Supervisor' && this.rolePermissions.can('deliveries', 'update'));
   }
   get paymentParties(): { id: string; name: string }[] {
     if (this.paymentType === 'BUYER_RECEIPT') {
