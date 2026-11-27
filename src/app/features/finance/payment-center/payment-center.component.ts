@@ -37,8 +37,8 @@ export class PaymentCenterComponent implements OnInit {
         this.trips = trips;
         this.parties = this.form.paymentType === 'BUYER_RECEIPT' ? options.deliveryVendors : options.suppliers;
         this.paymentParties = [
-          ...options.suppliers.map(party => ({ ...party, _demoId: `BUYER_RECEIPT:${party['_demoId']}`, paymentType: 'BUYER_RECEIPT' as const })),
-          ...options.deliveryVendors.map(party => ({ ...party, _demoId: `SELLER_PAYOUT:${party['_demoId']}`, paymentType: 'SELLER_PAYOUT' as const }))
+          ...options.deliveryVendors.map(party => ({ ...party, _demoId: `BUYER_RECEIPT:${party['_demoId']}`, paymentType: 'BUYER_RECEIPT' as const })),
+          ...options.suppliers.map(party => ({ ...party, _demoId: `SELLER_PAYOUT:${party['_demoId']}`, paymentType: 'SELLER_PAYOUT' as const }))
         ];
       }
       if (this.view === 'receivables') this.records = await this.api.receivables({ tripId: this.tripId || undefined, buyingPartyId: this.partyId || undefined });
@@ -120,8 +120,8 @@ export class PaymentCenterComponent implements OnInit {
   }
   get balanceComparison(): { label: string; value: number }[] {
     return [
-      { label: 'Receivables', value: this.records.filter(this.isReceivable, this).reduce((sum, row) => sum + this.money(row, 'outstandingBalance', 'amountDue', 'amount'), 0) },
-      { label: 'Payables', value: this.records.filter(row => !this.isReceivable(row)).reduce((sum, row) => sum + this.money(row, 'outstandingBalance', 'amountPayable', 'amount'), 0) }
+      { label: 'Receivables', value: this.records.filter(this.isReceivable, this).reduce((sum, row) => sum + this.money(row, 'outstandingBalance', 'outstandingAmount', 'amountDue', 'amount'), 0) },
+      { label: 'Payables', value: this.records.filter(row => !this.isReceivable(row)).reduce((sum, row) => sum + this.money(row, 'outstandingBalance', 'outstandingAmount', 'amountPayable', 'amount'), 0) }
     ];
   }
   get trendMaximum(): number {
@@ -270,7 +270,11 @@ export class PaymentCenterComponent implements OnInit {
     return this.trips.find(trip => String(trip['_demoId']) === tripId);
   }
   money(row: FinanceRecord | undefined, ...keys: string[]): number { for (const key of keys) { const value=row?.[key]; if (value != null && Number.isFinite(Number(value))) return Number(value); } return 0; }
-  isReceivable(row: FinanceRecord): boolean { return this.text(row,'settlementType','type','paymentType').includes('BUYER') || !!row['buyingPartyId']; }
+  isReceivable(row: FinanceRecord): boolean {
+    const kind = this.text(row, 'settlementType', 'type', 'paymentType').toUpperCase();
+    if (kind) return kind.includes('BUYER');
+    return !!row['buyingPartyId'] || !!row['buyingPartyName'];
+  }
   allocationAllowed(settlement: FinanceRecord): boolean { const payment=this.selectedPayment; if (!payment) return false; return this.text(payment,'paymentType','type') === 'BUYER_RECEIPT' ? this.text(payment,'partyId','buyingPartyId') === this.text(settlement,'buyingPartyId') : this.text(payment,'partyId','sellingPartyId') === this.text(settlement,'sellingPartyId'); }
   go(path: string): void { void this.router.navigate(['/finance',path]); }
   private newForm(): FormValue { return { paymentType:'BUYER_RECEIPT', partyId:null, amount:0, paymentDate:new Date().toISOString().slice(0,10), paymentMethod:'BANK_TRANSFER', reference:'', status:'PENDING', note:'' }; }

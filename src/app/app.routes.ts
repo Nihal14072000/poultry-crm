@@ -55,7 +55,6 @@ const peoplePages: DirectoryPage[] = [
 ];
 
 const financePages: DirectoryPage[] = [
-  { path: 'overview', title: 'Finance', description: 'A clear view of receivables, payables and recent financial activity.', resource: 'finance', mode: 'read-only', columns: [{ key: 'reference', label: 'REFERENCE' }, { key: 'counterparty', label: 'CUSTOMER / SUPPLIER' }, { key: 'type', label: 'TYPE' }, { key: 'dueDate', label: 'DUE DATE' }, { key: 'amount', label: 'AMOUNT' }, { key: 'status', label: 'STATUS' }] },
   { path: 'receivables', title: 'Receivables', description: 'Review customer invoices, balances and collection status.', resource: 'receivables', mode: 'read-only', columns: [{ key: 'invoice', label: 'INVOICE' }, { key: 'customer', label: 'CUSTOMER' }, { key: 'issued', label: 'ISSUED' }, { key: 'due', label: 'DUE DATE' }, { key: 'amount', label: 'AMOUNT' }, { key: 'balance', label: 'BALANCE' }, { key: 'status', label: 'STATUS' }] },
   { path: 'payables', title: 'Payables', description: 'Review supplier bills, due dates and amounts outstanding.', resource: 'payables', mode: 'read-only', columns: [{ key: 'bill', label: 'BILL' }, { key: 'supplier', label: 'SUPPLIER' }, { key: 'issued', label: 'ISSUED' }, { key: 'due', label: 'DUE DATE' }, { key: 'amount', label: 'AMOUNT' }, { key: 'balance', label: 'BALANCE' }, { key: 'status', label: 'STATUS' }] },
   { path: 'payments', title: 'Payments & receipts', description: 'Review incoming receipts and outgoing supplier payments.', resource: 'payments', mode: 'append-only', columns: [{ key: 'reference', label: 'REFERENCE' }, { key: 'party', label: 'CUSTOMER / SUPPLIER' }, { key: 'type', label: 'TYPE' }, { key: 'date', label: 'DATE' }, { key: 'method', label: 'METHOD' }, { key: 'amount', label: 'AMOUNT' }, { key: 'status', label: 'STATUS' }] },
@@ -143,7 +142,7 @@ export const routes: Routes = [
     { path: 'trips', canActivate: [requirePermissionGuard], data: { resource: 'trips' }, loadComponent: () => import('./features/people-logistics/trips/trips.component').then((module) => module.TripsComponent) }
   ]),
   sectionRoute('finance', financePages, [
-    { path: '', pathMatch: 'full', redirectTo: 'overview' },
+    { path: '', pathMatch: 'full', redirectTo: 'payments' },
     { path: 'record', canActivate: [requirePermissionGuard], data: { resource: 'payments' }, loadComponent: () => import('./features/finance/payment-center/payment-center.component').then((module) => module.PaymentCenterComponent) },
     { path: 'allocate', canActivate: [requirePermissionGuard], data: { resource: 'payments' }, loadComponent: () => import('./features/finance/payment-center/payment-center.component').then((module) => module.PaymentCenterComponent) },
     { path: 'trip-summary', canActivate: [requirePermissionGuard], data: { resource: 'finance' }, loadComponent: () => import('./features/finance/payment-center/payment-center.component').then((module) => module.PaymentCenterComponent) }
