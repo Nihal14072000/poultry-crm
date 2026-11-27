@@ -45,6 +45,17 @@ export class TripDeliveriesComponent implements OnInit {
   expenseNote = '';
   showExpenseForm = false;
   editingExpenseId = '';
+  showAddStopForm = false;
+  newStopVendorId = '';
+  newStopBroilerQty = 0;
+  newStopBroilerWeight = 0;
+  newStopBroilerRate = 0;
+  newStopCullsQty = 0;
+  newStopCullsWeight = 0;
+  newStopCullsRate = 0;
+  newStopFeedQty = 0;
+  newStopFeedWeight = 0;
+  newStopFeedRate = 0;
   allSuppliers: TripRecord[] = [];
   allDeliveryVendors: TripRecord[] = [];
   private pendingSupplierPickupIds: Record<string, string> = {};
@@ -227,7 +238,61 @@ export class TripDeliveriesComponent implements OnInit {
   get currentDestination(): TripRecord | undefined { return this.destinations.find((destination) => this.id(destination) === this.activeOrderId); }
   get canEnterDelivery(): boolean { return ['In transit', 'Delivery in progress'].includes(String(this.trip?.['status'] ?? '')); }
   get canStartTrip(): boolean { return String(this.trip?.['status'] ?? '') === 'Assigned'; }
+  get canReopenTrip(): boolean {
+    return this.auth.currentUser?.role === 'Organization Admin' &&
+      this.canUpdateTrip &&
+      ['Completed', 'Pending reconciliation'].includes(String(this.trip?.['status'] ?? ''));
+  }
   get canUpdateTrip(): boolean { return this.rolePermissions.can('trips', 'update'); }
+  get availableStopVendors(): TripRecord[] {
+    const existingIds = new Set(this.destinations.map((d) => String(d['vendorId'] ?? d['_demoId'] ?? '')));
+    return this.allDeliveryVendors.filter((v) => !existingIds.has(String(v['_demoId'] ?? '')));
+  }
+  toggleAddStopForm(): void {
+    this.showAddStopForm = !this.showAddStopForm;
+    this.error = '';
+    if (this.showAddStopForm) {
+      this.newStopVendorId = '';
+      this.newStopBroilerQty = 0; this.newStopBroilerWeight = 0; this.newStopBroilerRate = 0;
+      this.newStopCullsQty = 0; this.newStopCullsWeight = 0; this.newStopCullsRate = 0;
+      this.newStopFeedQty = 0; this.newStopFeedWeight = 0; this.newStopFeedRate = 0;
+    }
+  }
+  newStopPlannedTotal(): number {
+    return this.number(this.newStopBroilerWeight) * this.number(this.newStopBroilerRate)
+      + this.number(this.newStopCullsWeight) * this.number(this.newStopCullsRate)
+      + this.number(this.newStopFeedWeight) * this.number(this.newStopFeedRate);
+  }
+  async saveNewStop(): Promise<void> {
+    if (!this.trip || !this.canUpdateTrip) return;
+    const vendor = this.allDeliveryVendors.find((v) => String(v['_demoId'] ?? '') === this.newStopVendorId);
+    if (!vendor) { this.error = 'Select a delivery vendor.'; return; }
+    this.saving = true; this.error = '';
+    try {
+      const tripId = this.id(this.trip);
+      const deliveryId = await this.tripApi.addVendorStop(tripId, vendor, {
+        broilerQuantity: this.number(this.newStopBroilerQty),
+        broilerWeight: this.number(this.newStopBroilerWeight),
+        broilerRate: this.number(this.newStopBroilerRate),
+        cullsQuantity: this.number(this.newStopCullsQty),
+        cullsWeight: this.number(this.newStopCullsWeight),
+        cullsRate: this.number(this.newStopCullsRate),
+        feedQuantity: this.number(this.newStopFeedQty),
+        feedWeight: this.number(this.newStopFeedWeight),
+        feedRate: this.number(this.newStopFeedRate)
+      });
+      if (deliveryId && !this.pendingVendorDeliveryIds.includes(deliveryId)) {
+        this.pendingVendorDeliveryIds.push(deliveryId);
+        this.persistPendingVendorDeliveries(tripId);
+      }
+      await this.tripApi.updateTripStatus(tripId, 'Pending reconciliation');
+      this.showAddStopForm = false;
+      this.toast.success('Vendor stop added. Trip submitted for reconciliation and admin approval.');
+      await this.load();
+    } catch (e) {
+      this.error = e instanceof Error ? e.message : 'Vendor stop could not be added.';
+    } finally { this.saving = false; }
+  }
   get canEditActualDelivery(): boolean {
     return this.auth.currentUser?.role === 'Organization Admin' && this.canUpdateTrip;
   }
@@ -410,6 +475,9 @@ export class TripDeliveriesComponent implements OnInit {
   }
   get hasReconciliationMismatch(): boolean { return this.unreconciled() !== 0; }
   get hasMissingDestinationDeliveries(): boolean {
+    if (this.allSupplierReceiptsSaved() && this.totalLoaded() > 0 && this.totalLoaded() === this.totalDelivered()) {
+      return false;
+    }
     return this.destinations.some((destination) => !this.entries(this.id(destination)).length);
   }
   entries(destinationId: string): TripRecord[] { return this.deliveries.filter((item) => String(item['vendorDestinationId']) === destinationId); }
@@ -510,7 +578,12 @@ export class TripDeliveriesComponent implements OnInit {
   completedDestinations(): number { return this.destinations.filter((destination) => this.destinationStatus(destination) === 'Delivered').length; }
   totalProgressItems(): number { return this.supplierReceiptForms.length + this.destinations.length; }
   completedProgressItems(): number { return this.completedSupplierPickups() + this.completedDestinations(); }
-  progress(): number { return this.totalProgressItems() ? Math.round(this.completedProgressItems() * 100 / this.totalProgressItems()) : 0; }
+  progress(): number {
+    if (String(this.trip?.['status'] ?? '') === 'Completed' || (this.allSupplierReceiptsSaved() && this.totalLoaded() > 0 && this.totalLoaded() === this.totalDelivered())) {
+      return 100;
+    }
+    return this.totalProgressItems() ? Math.round(this.completedProgressItems() * 100 / this.totalProgressItems()) : 0;
+  }
   destinationStatus(destination: TripRecord): string {
     const id = this.id(destination); const destinationEntries = this.entries(id); const count = destinationEntries.length;
     if (!count) return 'Pending';
@@ -557,6 +630,14 @@ export class TripDeliveriesComponent implements OnInit {
     catch (e) { this.toast.error(e instanceof Error ? e.message : 'Trip could not be started.'); }
     finally { this.saving = false; }
   }
+  async reopenTrip(): Promise<void> {
+    if (!this.trip || !this.canReopenTrip || this.saving) return;
+    if (!window.confirm('Reopen this trip and set its status back to In transit?')) return;
+    this.saving = true; this.error = '';
+    try { await this.service.reopenTrip(this.id(this.trip)); this.toast.success('Trip reopened and marked In transit.'); await this.load(); }
+    catch (e) { this.toast.error(e instanceof Error ? e.message : 'Trip could not be reopened.'); }
+    finally { this.saving = false; }
+  }
   async saveEntry(): Promise<void> {
     if (!this.trip || !this.activeOrderId || this.saving ||
       (this.editingDeliveryId && !this.canEditActualDelivery)) return;
@@ -574,9 +655,20 @@ export class TripDeliveriesComponent implements OnInit {
       deliverySaved = true;
       if (!editing && !this.pendingVendorDeliveryIds.includes(deliveryId)) this.pendingVendorDeliveryIds.push(deliveryId);
       this.persistPendingVendorDeliveries(tripId);
+      const autoCompleted = !editing && await this.service.completeTripIfQuantitiesMatch(tripId, this.pendingPickupIds(), this.pendingDeliveryIds());
+      if (autoCompleted) {
+        this.clearPendingSupplierPickups(tripId);
+        this.clearPendingVendorDeliveries(tripId);
+      }
       this.cancelEntry();
       await this.load();
-      this.toast.success(editing ? 'Actual delivery updated successfully.' : 'Delivery saved successfully. Record mortality if applicable, review reconciliation, and complete the trip below.');
+      this.toast.success(
+        autoCompleted
+          ? 'Delivery saved. Actual pickup and vendor destination quantities match — trip marked Completed.'
+          : editing
+            ? 'Actual delivery updated successfully.'
+            : 'Delivery saved successfully. Record mortality if applicable, review reconciliation, and complete the trip below.'
+      );
     } catch (e) {
       if (deliverySaved && this.trip) {
         this.cancelEntry();
@@ -584,6 +676,51 @@ export class TripDeliveriesComponent implements OnInit {
       }
       this.toast.error(e instanceof Error ? e.message : 'Delivery could not be saved.');
     }
+    finally { this.saving = false; }
+  }
+  async deleteVendorOrder(destination: TripRecord): Promise<void> {
+    const destinationId = this.id(destination);
+    if (!this.trip || !destinationId || this.saving || !this.canEditActualDelivery) return;
+    if (!window.confirm(`Delete order for ${destination['vendorName']} from both proposed and actual orders?`)) return;
+    this.saving = true; this.error = '';
+    try {
+      const tripId = this.id(this.trip);
+      const actualEntries = this.entries(destinationId);
+      const deletedIds = new Set<string>();
+      for (const delivery of actualEntries) {
+        const deliveryId = this.id(delivery);
+        if (!deliveryId) continue;
+        await this.tripApi.deleteVendorDelivery(deliveryId);
+        deletedIds.add(deliveryId);
+      }
+      if (deletedIds.size) {
+        this.pendingVendorDeliveryIds = this.pendingVendorDeliveryIds.filter((id) => !deletedIds.has(id));
+        this.persistPendingVendorDeliveries(tripId);
+      }
+      await this.tripApi.removeVendorStop(tripId, destinationId);
+      if (this.activeOrderId === destinationId || (this.editingDeliveryId && deletedIds.has(this.editingDeliveryId))) {
+        this.cancelEntry();
+      }
+      this.toast.success('Order deleted from proposed and actual orders.');
+      await this.load();
+    } catch (e) { this.toast.error(e instanceof Error ? e.message : 'Order could not be deleted.'); }
+    finally { this.saving = false; }
+  }
+  async deleteSupplierReceipt(form: SupplierReceiptForm): Promise<void> {
+    const receipt = this.supplierReceipt(form.vendorId);
+    const pickupId = receipt ? this.id(receipt) : '';
+    if (!this.trip || !pickupId || this.saving || !this.canEditActualDelivery) return;
+    if (!window.confirm(`Delete actual supplier pickup from ${form.vendorName}?`)) return;
+    this.saving = true; this.error = '';
+    try {
+      const tripId = this.id(this.trip);
+      await this.tripApi.deleteSupplierPickup(pickupId);
+      delete this.pendingSupplierPickupIds[form.vendorId];
+      this.persistPendingSupplierPickups(tripId);
+      if (this.activePickupVendorId === form.vendorId) this.activePickupVendorId = '';
+      this.toast.success(`Actual supplier pickup from ${form.vendorName} deleted successfully.`);
+      await this.load();
+    } catch (e) { this.toast.error(e instanceof Error ? e.message : 'Supplier pickup could not be deleted.'); }
     finally { this.saving = false; }
   }
   async saveMortality(): Promise<void> {

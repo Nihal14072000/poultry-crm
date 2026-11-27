@@ -342,6 +342,22 @@ export class TripService {
     return deliveryId;
   }
 
+  async completeTripIfQuantitiesMatch(tripId: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<boolean> {
+    const data = await this.getDeliveryData(tripId, pendingSupplierPickupIds, pendingVendorDeliveryIds);
+    const status = String(data.trip['status'] ?? '');
+    if (status === 'Completed') return true;
+    if (status === 'Pending reconciliation') return false;
+    const allReceiptsSaved = data.supplierPickups.length > 0 &&
+      data.supplierPickups.every((pickup) => data.supplierReceipts.some((receipt) => String(receipt['vendorId'] ?? '') === pickup.vendorId));
+    if (!allReceiptsSaved || !data.destinations.length) return false;
+    const delivered = data.deliveries.reduce((sum, item) => sum + Number(item['broiler'] ?? 0) + Number(item['culls'] ?? 0), 0);
+    if (data.loadedBirds <= 0 || data.loadedBirds !== delivered) return false;
+    if (pendingSupplierPickupIds.length) await this.tripApi.linkSupplierPickups(tripId, pendingSupplierPickupIds);
+    if (pendingVendorDeliveryIds.length) await this.tripApi.linkVendorDeliveries(tripId, pendingVendorDeliveryIds);
+    await this.tripApi.updateTripStatus(tripId, 'Completed');
+    return true;
+  }
+
   async completeTripWhenDeliveriesSubmitted(tripId: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<boolean> {
     const data = await this.getDeliveryData(tripId, pendingSupplierPickupIds, pendingVendorDeliveryIds);
     if (String(data.trip['status']) === 'Completed') return true;
@@ -357,6 +373,17 @@ export class TripService {
   async startAssignedTrip(tripId: string): Promise<void> {
     const data = await this.getDeliveryData(tripId);
     if (String(data.trip['status']) !== 'Assigned') throw new Error('Only an assigned trip can be started.');
+    await this.tripApi.updateTripStatus(tripId, 'In transit');
+  }
+
+  async reopenTrip(tripId: string): Promise<void> {
+    if (this.auth.currentUser?.role !== 'Organization Admin' || !this.rolePermissions.can('trips', 'update')) {
+      throw new Error('Only Organization Admins can reopen a trip.');
+    }
+    const data = await this.getDeliveryData(tripId);
+    if (!['Completed', 'Pending reconciliation'].includes(String(data.trip['status'] ?? ''))) {
+      throw new Error('Only a Completed or Pending reconciliation trip can be reopened.');
+    }
     await this.tripApi.updateTripStatus(tripId, 'In transit');
   }
 
@@ -391,14 +418,15 @@ export class TripService {
     if (String(data.trip['status']) === 'Completed') throw new Error('This trip has already been completed.');
     if (!data.destinations.length) throw new Error('Assign at least one Vendor Destination before completion.');
     if (data.supplierPickups.some((pickup) => !data.supplierReceipts.some((receipt) => String(receipt['vendorId'] ?? '') === pickup.vendorId))) throw new Error('Record actual receipts for every supplier before submitting reconciliation.');
-    if (data.destinations.some((destination) => !data.deliveries.some((item) => String(item['vendorDestinationId']) === String(destination['vendorDestinationId'])))) {
+    const delivered = data.deliveries.reduce((sum, item) => sum + Number(item['broiler'] ?? 0) + Number(item['culls'] ?? 0), 0);
+    const quantitiesMatched = data.loadedBirds > 0 && data.loadedBirds === delivered;
+    if (!quantitiesMatched && data.destinations.some((destination) => !data.deliveries.some((item) => String(item['vendorDestinationId']) === String(destination['vendorDestinationId'])))) {
       throw new Error('Record a delivery for every Vendor Destination before submitting.');
     }
-    const delivered = data.deliveries.reduce((sum, item) => sum + Number(item['broiler'] ?? 0) + Number(item['culls'] ?? 0), 0);
     const mortality = data.mortalities.reduce((sum, record) => sum + Number(record['quantity'] ?? 0), 0);
     const discrepancy = data.loadedBirds - delivered - mortality;
-    const hasDiscrepancy = discrepancy !== 0;
-    if (hasDiscrepancy && !this.rolePermissions.can('trips', 'approve')) {
+    const requiresApproval = discrepancy !== 0 || String(data.trip['status'] ?? '') === 'Pending reconciliation';
+    if (requiresApproval && !this.rolePermissions.can('trips', 'approve')) {
       if (String(data.trip['status']) === 'Pending reconciliation') throw new Error('This trip is awaiting Organization Admin reconciliation approval.');
       if (pendingSupplierPickupIds.length) await this.tripApi.linkSupplierPickups(tripId, pendingSupplierPickupIds);
       if (pendingVendorDeliveryIds.length) await this.tripApi.linkVendorDeliveries(tripId, pendingVendorDeliveryIds);
