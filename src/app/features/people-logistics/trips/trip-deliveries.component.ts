@@ -244,6 +244,9 @@ export class TripDeliveriesComponent implements OnInit {
       ['Completed', 'Pending reconciliation'].includes(String(this.trip?.['status'] ?? ''));
   }
   get canUpdateTrip(): boolean { return this.rolePermissions.can('trips', 'update'); }
+  get canAddVendorStop(): boolean {
+    return this.canUpdateTrip || this.rolePermissions.can('deliveries', 'update');
+  }
   get availableStopVendors(): TripRecord[] {
     const existingIds = new Set(this.destinations.map((d) => String(d['vendorId'] ?? d['_demoId'] ?? '')));
     return this.allDeliveryVendors.filter((v) => !existingIds.has(String(v['_demoId'] ?? '')));
@@ -264,7 +267,7 @@ export class TripDeliveriesComponent implements OnInit {
       + this.number(this.newStopFeedWeight) * this.number(this.newStopFeedRate);
   }
   async saveNewStop(): Promise<void> {
-    if (!this.trip || !this.canUpdateTrip) return;
+    if (!this.trip || !this.canAddVendorStop) return;
     const vendor = this.allDeliveryVendors.find((v) => String(v['_demoId'] ?? '') === this.newStopVendorId);
     if (!vendor) { this.error = 'Select a delivery vendor.'; return; }
     this.saving = true; this.error = '';
