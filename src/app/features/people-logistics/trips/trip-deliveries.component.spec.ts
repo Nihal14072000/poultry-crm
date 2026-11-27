@@ -165,6 +165,20 @@ describe('TripDeliveriesComponent payments', () => {
     expect(component.canUpdateTrip).toBeFalse();
   });
 
+  it('allows a Supervisor to edit an existing supplier pickup after trip completion', () => {
+    component.rolePermissions.can.and.callFake((resource: string, action: string) =>
+      resource === 'deliveries' && action === 'update'
+    );
+    Object.defineProperty(component.auth, 'currentUser', {
+      configurable: true,
+      get: () => ({ role: 'Supervisor' })
+    });
+    component.trip = { _demoId: '12', status: 'Completed' };
+
+    expect(component.canEditSupplierPickup).toBeTrue();
+    expect(component.rolePermissions.can).toHaveBeenCalledWith('deliveries', 'update');
+  });
+
   it('lets Organization Admin edit saved actual delivery quantities, weights, and rates', async () => {
     component.rolePermissions.can.and.returnValue(true);
     Object.defineProperty(component.auth, 'currentUser', {
