@@ -479,7 +479,10 @@ export class TripDeliveriesComponent implements OnInit {
   get hasReconciliationMismatch(): boolean { return this.unreconciled() !== 0; }
   readonly weightToleranceKg = TRIP_WEIGHT_RECONCILIATION_TOLERANCE_KG;
   get hasWeightReconciliationMismatch(): boolean {
-    return this.supplierReceipts.length > 0 && this.deliveries.length > 0 &&
+    const allDestinationsDelivered = this.destinations.length > 0 && this.destinations.every((destination) =>
+      this.deliveries.some((delivery) => String(delivery['vendorDestinationId'] ?? '') === String(destination['vendorDestinationId'] ?? ''))
+    );
+    return this.supplierReceipts.length > 0 && allDestinationsDelivered &&
       this.weightReconciliationDifference() > this.weightToleranceKg;
   }
   weightReconciliationDifference(): number {
@@ -487,9 +490,6 @@ export class TripDeliveriesComponent implements OnInit {
     return Math.round(Math.abs(this.totalActualSupplierWeight() - this.totalActualVendorDeliveryWeight()) * 100) / 100;
   }
   get hasMissingDestinationDeliveries(): boolean {
-    if (this.allSupplierReceiptsSaved() && this.totalLoaded() > 0 && this.totalLoaded() === this.totalDelivered()) {
-      return false;
-    }
     return this.destinations.some((destination) => !this.entries(this.id(destination)).length);
   }
   entries(destinationId: string): TripRecord[] { return this.deliveries.filter((item) => String(item['vendorDestinationId']) === destinationId); }
@@ -716,6 +716,7 @@ export class TripDeliveriesComponent implements OnInit {
         this.persistPendingVendorDeliveries(tripId);
       }
       await this.tripApi.removeVendorStop(tripId, destinationId);
+      await this.service.reopenCompletedTripForWeightMismatch(tripId);
       if (this.activeOrderId === destinationId || (this.editingDeliveryId && deletedIds.has(this.editingDeliveryId))) {
         this.cancelEntry();
       }
@@ -735,6 +736,7 @@ export class TripDeliveriesComponent implements OnInit {
       await this.tripApi.deleteSupplierPickup(pickupId);
       delete this.pendingSupplierPickupIds[form.vendorId];
       this.persistPendingSupplierPickups(tripId);
+      await this.service.reopenCompletedTripForWeightMismatch(tripId);
       if (this.activePickupVendorId === form.vendorId) this.activePickupVendorId = '';
       this.toast.success(`Actual supplier pickup from ${form.vendorName} deleted successfully.`);
       await this.load();
