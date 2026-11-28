@@ -213,6 +213,26 @@ describe('TripDeliveriesComponent payments', () => {
     }), [], [], '83');
   });
 
+  it('compares total actual supplier pickup and vendor delivery weights using a 1 kg inclusive tolerance', () => {
+    component.supplierReceipts = [
+      { broilerWeight: 500, cullsWeight: 100, feedWeight: 20 },
+      { broilerWeight: 250, cullsWeight: 50, feedWeight: 10 }
+    ];
+    component.deliveries = [
+      { broilerWeight: 500, cullsWeight: 100, feedWeight: 20 },
+      { broilerWeight: 250, cullsWeight: 50, feedWeight: 9 }
+    ];
+
+    expect(component.totalActualSupplierWeight()).toBe(930);
+    expect(component.totalActualVendorDeliveryWeight()).toBe(929);
+    expect(component.weightReconciliationDifference()).toBe(1);
+    expect(component.hasWeightReconciliationMismatch).toBeFalse();
+
+    component.deliveries[1]['feedWeight'] = 8.99;
+    expect(component.weightReconciliationDifference()).toBe(1.01);
+    expect(component.hasWeightReconciliationMismatch).toBeTrue();
+  });
+
   it('calculates received payments, supplier payouts, and outstanding supplier balance separately', () => {
     component.supplierReceipts = [{ total: 700 }];
     component.supplierPickups = [{ vendorId: '31', vendorName: 'Supplier', broiler: { quantity: 1, rate: 1, total: 1 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 1 }];

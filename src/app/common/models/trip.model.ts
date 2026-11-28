@@ -1,3 +1,5 @@
+export const TRIP_WEIGHT_RECONCILIATION_TOLERANCE_KG = 1;
+
 export interface TripLineInput {
   quantity: number | null;
   weight?: number | null;

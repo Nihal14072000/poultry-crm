@@ -151,6 +151,38 @@ describe('TripService', () => {
     }), '77');
   });
 
+  it('returns a completed trip to pending reconciliation when a completed supplier pickup edit creates a weight mismatch', async () => {
+    currentUser = {
+      name: 'Admin', email: 'admin@example.com', role: 'Organization Admin', permissions: '',
+      status: 'Active', authenticatedAt: ''
+    };
+    const completedTrip: TripDeliveryData = {
+      trip: { _demoId: 'trip-12', status: 'Completed', feedUnit: 'kg' },
+      supplierPickups: [{
+        vendorId: 'supplier-1', vendorName: 'Farm Vendor',
+        broiler: { quantity: 10, weight: 30, rate: 100, total: 3000 },
+        culls: { quantity: 0, weight: 0, rate: 0, total: 0 },
+        feed: { quantity: 0, weight: 0, rate: 0, total: 0 },
+        total: 3000
+      }],
+      supplierReceipts: [{ _demoId: '77', vendorId: 'supplier-1', broilerWeight: 30, cullsWeight: 0, feedWeight: 0 }],
+      destinations: [{ vendorDestinationId: '51' }],
+      deliveries: [{ vendorDestinationId: '51', broiler: 10, broilerWeight: 28.5, cullsWeight: 0, feedWeight: 0 }],
+      mortalities: [],
+      loadedBroiler: 10, loadedCulls: 0, loadedBirds: 10
+    };
+    tripApi.getDeliveryData.and.returnValues(Promise.resolve(completedTrip), Promise.resolve(completedTrip));
+    tripApi.saveSupplierPickup.and.resolveTo('77');
+    tripApi.linkSupplierPickups.and.resolveTo();
+
+    await service.saveSupplierPickup('trip-12', 'supplier-1', {
+      broiler: 10, broilerWeight: 30, culls: 0, cullsWeight: 0,
+      feed: 0, feedWeight: 0, reason: 'Admin correction'
+    });
+
+    expect(tripApi.updateTripStatus).toHaveBeenCalledWith('trip-12', 'Pending reconciliation');
+  });
+
   it('lets a Supervisor update an existing supplier pickup on a completed trip', async () => {
     currentUser = {
       name: 'Supervisor', email: 'supervisor@example.com', role: 'Supervisor', permissions: '',
@@ -386,6 +418,40 @@ describe('TripService', () => {
     expect(tripApi.updateTripStatus).toHaveBeenCalledWith('trip-1', 'Completed');
   });
 
+  it('submits a trip for Organization Admin approval when actual weights differ by more than 1 kg', async () => {
+    tripApi.getDeliveryData.and.resolveTo({
+      trip: { status: 'In transit', _demoId: 'trip-weight-1' },
+      destinations: [{ vendorDestinationId: 'dest-1' }],
+      deliveries: [{ vendorDestinationId: 'dest-1', broiler: 10, culls: 0, broilerWeight: 28.5 }],
+      supplierPickups: [{ vendorId: 'sup-1', vendorName: 'Supplier 1', broiler: { quantity: 10, rate: 10, total: 150 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 150 }],
+      supplierReceipts: [{ vendorId: 'sup-1', broilerQuantity: 10, broilerWeight: 30 }],
+      mortalities: [],
+      loadedBroiler: 10,
+      loadedCulls: 0,
+      loadedBirds: 10
+    });
+
+    await expectAsync(service.submitForReconciliation('trip-weight-1')).toBeResolvedTo('submitted');
+    expect(tripApi.updateTripStatus).toHaveBeenCalledWith('trip-weight-1', 'Pending reconciliation');
+  });
+
+  it('allows automatic completion when actual weight difference is exactly the 1 kg tolerance', async () => {
+    tripApi.getDeliveryData.and.resolveTo({
+      trip: { status: 'In transit', _demoId: 'trip-weight-2' },
+      destinations: [{ vendorDestinationId: 'dest-1' }],
+      deliveries: [{ vendorDestinationId: 'dest-1', broiler: 10, culls: 0, broilerWeight: 29 }],
+      supplierPickups: [{ vendorId: 'sup-1', vendorName: 'Supplier 1', broiler: { quantity: 10, rate: 10, total: 150 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 150 }],
+      supplierReceipts: [{ vendorId: 'sup-1', broilerQuantity: 10, broilerWeight: 30 }],
+      mortalities: [],
+      loadedBroiler: 10,
+      loadedCulls: 0,
+      loadedBirds: 10
+    });
+
+    await expectAsync(service.submitForReconciliation('trip-weight-2')).toBeResolvedTo('completed');
+    expect(tripApi.updateTripStatus).toHaveBeenCalledWith('trip-weight-2', 'Completed');
+  });
+
   it('updates one mortality record without counting its prior quantity twice', async () => {
     tripApi.getDeliveryData.and.resolveTo({
       trip: { status: 'In transit', _demoId: 'trip-1' },
@@ -428,7 +494,7 @@ describe('TripService', () => {
     tripApi.getDeliveryData.and.resolveTo({
       trip: { status: 'In transit', _demoId: 'trip-1' },
       destinations: [{ vendorDestinationId: 'dest-1' }],
-      deliveries: [{ vendorDestinationId: 'dest-1', broiler: 15, culls: 0 }],
+      deliveries: [{ vendorDestinationId: 'dest-1', broiler: 15, culls: 0, broilerWeight: 30 }],
       supplierPickups: [{ vendorId: 'sup-1', vendorName: 'Supplier 1', broiler: { quantity: 15, rate: 10, total: 150 }, culls: { quantity: 0, rate: 0, total: 0 }, feed: { quantity: 0, rate: 0, total: 0 }, total: 150 }],
       supplierReceipts: [{ vendorId: 'sup-1', broilerQuantity: 15, broilerWeight: 30 }],
       mortalities: [],

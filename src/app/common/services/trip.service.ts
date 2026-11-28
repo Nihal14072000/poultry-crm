@@ -6,6 +6,7 @@ import {
   TripRecord,
   TripSummary,
   TripVendorPickup,
+  TRIP_WEIGHT_RECONCILIATION_TOLERANCE_KG,
   VendorDeliveryInput,
   VendorPickupInput
 } from '../models/trip.model';
@@ -266,6 +267,52 @@ export class TripService {
     return data;
   }
 
+  private actualSupplierPickupWeight(data: TripDeliveryData): number {
+    return data.supplierReceipts.reduce((sum, receipt) => {
+      const weight = ['broilerWeight', 'cullsWeight', 'feedWeight']
+        .reduce((lineSum, field) => {
+          const value = Number(receipt[field] ?? 0);
+          return lineSum + (Number.isFinite(value) && value > 0 ? value : 0);
+        }, 0);
+      return sum + weight;
+    }, 0);
+  }
+
+  private actualVendorDeliveryWeight(data: TripDeliveryData): number {
+    return data.deliveries.reduce((sum, delivery) => {
+      const weight = ['broilerWeight', 'cullsWeight', 'feedWeight']
+        .reduce((lineSum, field) => {
+          const value = Number(delivery[field] ?? 0);
+          return lineSum + (Number.isFinite(value) && value > 0 ? value : 0);
+        }, 0);
+      return sum + weight;
+    }, 0);
+  }
+
+  private weightReconciliationDifference(data: TripDeliveryData): number {
+    if (!data.supplierReceipts.length) return 0;
+    return Math.round(Math.abs(
+      this.actualSupplierPickupWeight(data) - this.actualVendorDeliveryWeight(data)
+    ) * 100) / 100;
+  }
+
+  private hasWeightReconciliationMismatch(data: TripDeliveryData): boolean {
+    return this.weightReconciliationDifference(data) > TRIP_WEIGHT_RECONCILIATION_TOLERANCE_KG;
+  }
+
+  async reopenCompletedTripForWeightMismatch(tripId: string): Promise<void> {
+    const latest = await this.getDeliveryData(tripId);
+    if (String(latest.trip['status'] ?? '') !== 'Completed') return;
+    const allSupplierReceiptsSaved = latest.supplierPickups.length > 0 &&
+      latest.supplierPickups.every((pickup) => latest.supplierReceipts.some((receipt) => String(receipt['vendorId'] ?? '') === pickup.vendorId));
+    const allDestinationsDelivered = latest.destinations.length > 0 &&
+      latest.destinations.every((destination) => latest.deliveries.some((delivery) =>
+        String(delivery['vendorDestinationId'] ?? '') === String(destination['vendorDestinationId'] ?? '')
+      ));
+    if (allSupplierReceiptsSaved && allDestinationsDelivered && !this.hasWeightReconciliationMismatch(latest)) return;
+    await this.tripApi.updateTripStatus(tripId, 'Pending reconciliation');
+  }
+
   async saveSupplierPickup(tripId: string, vendorId: string, input: { broiler: number; broilerWeight: number; culls: number; cullsWeight: number; feed: number; feedWeight: number; reason: string }, pendingSupplierPickupIds: string[] = []): Promise<string> {
     const data = await this.getDeliveryData(tripId, pendingSupplierPickupIds);
     const planned = data.supplierPickups.find((pickup) => pickup.vendorId === vendorId);
@@ -290,6 +337,9 @@ export class TripService {
       note: input.reason
     }, existing ? String(existing['_demoId'] ?? '') : undefined);
     await this.tripApi.linkSupplierPickups(tripId, [pickupId]);
+    if (String(data.trip['status'] ?? '') === 'Completed') {
+      await this.reopenCompletedTripForWeightMismatch(tripId);
+    }
     return pickupId;
   }
 
@@ -339,6 +389,9 @@ export class TripService {
       note: [input.reason.trim(), input.remarks.trim()].filter(Boolean).join(' · ')
     }, existingDeliveryId);
     await this.tripApi.linkVendorDeliveries(tripId, [deliveryId]);
+    if (String(data.trip['status'] ?? '') === 'Completed') {
+      await this.reopenCompletedTripForWeightMismatch(tripId);
+    }
     return deliveryId;
   }
 
@@ -351,7 +404,10 @@ export class TripService {
       data.supplierPickups.every((pickup) => data.supplierReceipts.some((receipt) => String(receipt['vendorId'] ?? '') === pickup.vendorId));
     if (!allReceiptsSaved || !data.destinations.length) return false;
     const delivered = data.deliveries.reduce((sum, item) => sum + Number(item['broiler'] ?? 0) + Number(item['culls'] ?? 0), 0);
-    if (data.loadedBirds <= 0 || data.loadedBirds !== delivered) return false;
+    const allDestinationsDelivered = data.destinations.every((destination) => data.deliveries.some((item) =>
+      String(item['vendorDestinationId'] ?? '') === String(destination['vendorDestinationId'] ?? '')
+    ));
+    if (!allDestinationsDelivered || data.loadedBirds <= 0 || data.loadedBirds !== delivered || this.hasWeightReconciliationMismatch(data)) return false;
     if (pendingSupplierPickupIds.length) await this.tripApi.linkSupplierPickups(tripId, pendingSupplierPickupIds);
     if (pendingVendorDeliveryIds.length) await this.tripApi.linkVendorDeliveries(tripId, pendingVendorDeliveryIds);
     await this.tripApi.updateTripStatus(tripId, 'Completed');
@@ -361,6 +417,7 @@ export class TripService {
   async completeTripWhenDeliveriesSubmitted(tripId: string, pendingSupplierPickupIds: string[] = [], pendingVendorDeliveryIds: string[] = []): Promise<boolean> {
     const data = await this.getDeliveryData(tripId, pendingSupplierPickupIds, pendingVendorDeliveryIds);
     if (String(data.trip['status']) === 'Completed') return true;
+    if (String(data.trip['status']) === 'Pending reconciliation' || this.hasWeightReconciliationMismatch(data)) return false;
     if (!data.destinations.length || data.destinations.some((destination) =>
       !data.deliveries.some((delivery) => String(delivery['vendorDestinationId']) === String(destination['vendorDestinationId']))
     )) return false;
@@ -419,14 +476,17 @@ export class TripService {
     if (!data.destinations.length) throw new Error('Assign at least one Vendor Destination before completion.');
     if (data.supplierPickups.some((pickup) => !data.supplierReceipts.some((receipt) => String(receipt['vendorId'] ?? '') === pickup.vendorId))) throw new Error('Record actual receipts for every supplier before submitting reconciliation.');
     const delivered = data.deliveries.reduce((sum, item) => sum + Number(item['broiler'] ?? 0) + Number(item['culls'] ?? 0), 0);
-    const quantitiesMatched = data.loadedBirds > 0 && data.loadedBirds === delivered;
-    if (!quantitiesMatched && data.destinations.some((destination) => !data.deliveries.some((item) => String(item['vendorDestinationId']) === String(destination['vendorDestinationId'])))) {
+    if (data.destinations.some((destination) => !data.deliveries.some((item) => String(item['vendorDestinationId']) === String(destination['vendorDestinationId'])))) {
       throw new Error('Record a delivery for every Vendor Destination before submitting.');
     }
     const mortality = data.mortalities.reduce((sum, record) => sum + Number(record['quantity'] ?? 0), 0);
     const discrepancy = data.loadedBirds - delivered - mortality;
-    const requiresApproval = discrepancy !== 0 || String(data.trip['status'] ?? '') === 'Pending reconciliation';
-    if (requiresApproval && !this.rolePermissions.can('trips', 'approve')) {
+    const weightDifference = this.weightReconciliationDifference(data);
+    const requiresApproval = discrepancy !== 0 || weightDifference > TRIP_WEIGHT_RECONCILIATION_TOLERANCE_KG ||
+      String(data.trip['status'] ?? '') === 'Pending reconciliation';
+    const canApproveReconciliation = this.auth.currentUser?.role === 'Organization Admin' &&
+      this.rolePermissions.can('trips', 'approve');
+    if (requiresApproval && !canApproveReconciliation) {
       if (String(data.trip['status']) === 'Pending reconciliation') throw new Error('This trip is awaiting Organization Admin reconciliation approval.');
       if (pendingSupplierPickupIds.length) await this.tripApi.linkSupplierPickups(tripId, pendingSupplierPickupIds);
       if (pendingVendorDeliveryIds.length) await this.tripApi.linkVendorDeliveries(tripId, pendingVendorDeliveryIds);
