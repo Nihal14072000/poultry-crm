@@ -128,7 +128,7 @@ describe('TripApiService', () => {
   it('loads actual party orders with the requested party ID and type', async () => {
     const sellingResult = service.getPartyOrders('11', 'S');
     const sellingRequest = http.expectOne((request) =>
-      request.url === 'http://localhost:8080/api/orders/actual' &&
+      request.url === 'http://localhost:8080/api/orders' &&
       request.params.get('partyId') === '11' &&
       request.params.get('partyType') === 'S'
     );
@@ -156,7 +156,7 @@ describe('TripApiService', () => {
   it('loads an actual party order total for sales and purchases', async () => {
     const sellingResult = service.getPartyOrderTotal('11', 'S');
     http.expectOne((request) =>
-      request.url === 'http://localhost:8080/api/orders/actual/total' &&
+      request.url === 'http://localhost:8080/api/orders/total' &&
       request.params.get('partyId') === '11' &&
       request.params.get('partyType') === 'S'
     ).flush(5500);
