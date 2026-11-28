@@ -477,8 +477,10 @@ export class TripDeliveriesComponent implements OnInit {
       this.number(this.feedWeight) * this.number(this.feedRate);
   }
   get hasReconciliationMismatch(): boolean { return this.unreconciled() !== 0; }
+  readonly weightToleranceKg = TRIP_WEIGHT_RECONCILIATION_TOLERANCE_KG;
   get hasWeightReconciliationMismatch(): boolean {
-    return this.weightReconciliationDifference() > TRIP_WEIGHT_RECONCILIATION_TOLERANCE_KG;
+    return this.supplierReceipts.length > 0 && this.deliveries.length > 0 &&
+      this.weightReconciliationDifference() > this.weightToleranceKg;
   }
   weightReconciliationDifference(): number {
     return Math.round(Math.abs(this.totalActualSupplierWeight() - this.totalActualVendorDeliveryWeight()) * 100) / 100;
