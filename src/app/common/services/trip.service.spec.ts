@@ -151,6 +151,38 @@ describe('TripService', () => {
     }), '77');
   });
 
+  it('returns a completed trip to pending reconciliation when a completed supplier pickup edit creates a weight mismatch', async () => {
+    currentUser = {
+      name: 'Admin', email: 'admin@example.com', role: 'Organization Admin', permissions: '',
+      status: 'Active', authenticatedAt: ''
+    };
+    const completedTrip: TripDeliveryData = {
+      trip: { _demoId: 'trip-12', status: 'Completed', feedUnit: 'kg' },
+      supplierPickups: [{
+        vendorId: 'supplier-1', vendorName: 'Farm Vendor',
+        broiler: { quantity: 10, weight: 30, rate: 100, total: 3000 },
+        culls: { quantity: 0, weight: 0, rate: 0, total: 0 },
+        feed: { quantity: 0, weight: 0, rate: 0, total: 0 },
+        total: 3000
+      }],
+      supplierReceipts: [{ _demoId: '77', vendorId: 'supplier-1', broilerWeight: 30, cullsWeight: 0, feedWeight: 0 }],
+      destinations: [{ vendorDestinationId: '51' }],
+      deliveries: [{ vendorDestinationId: '51', broiler: 10, broilerWeight: 28.5, cullsWeight: 0, feedWeight: 0 }],
+      mortalities: [],
+      loadedBroiler: 10, loadedCulls: 0, loadedBirds: 10
+    };
+    tripApi.getDeliveryData.and.returnValues(Promise.resolve(completedTrip), Promise.resolve(completedTrip));
+    tripApi.saveSupplierPickup.and.resolveTo('77');
+    tripApi.linkSupplierPickups.and.resolveTo();
+
+    await service.saveSupplierPickup('trip-12', 'supplier-1', {
+      broiler: 10, broilerWeight: 30, culls: 0, cullsWeight: 0,
+      feed: 0, feedWeight: 0, reason: 'Admin correction'
+    });
+
+    expect(tripApi.updateTripStatus).toHaveBeenCalledWith('trip-12', 'Pending reconciliation');
+  });
+
   it('lets a Supervisor update an existing supplier pickup on a completed trip', async () => {
     currentUser = {
       name: 'Supervisor', email: 'supervisor@example.com', role: 'Supervisor', permissions: '',
