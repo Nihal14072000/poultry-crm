@@ -716,7 +716,9 @@ export class TripDeliveriesComponent implements OnInit {
         this.persistPendingVendorDeliveries(tripId);
       }
       await this.tripApi.removeVendorStop(tripId, destinationId);
-      await this.service.reopenCompletedTripForWeightMismatch(tripId);
+      if (String(this.trip['status'] ?? '') === 'Completed') {
+        await this.service.reopenCompletedTripForWeightMismatch(tripId);
+      }
       if (this.activeOrderId === destinationId || (this.editingDeliveryId && deletedIds.has(this.editingDeliveryId))) {
         this.cancelEntry();
       }
@@ -736,7 +738,9 @@ export class TripDeliveriesComponent implements OnInit {
       await this.tripApi.deleteSupplierPickup(pickupId);
       delete this.pendingSupplierPickupIds[form.vendorId];
       this.persistPendingSupplierPickups(tripId);
-      await this.service.reopenCompletedTripForWeightMismatch(tripId);
+      if (String(this.trip['status'] ?? '') === 'Completed') {
+        await this.service.reopenCompletedTripForWeightMismatch(tripId);
+      }
       if (this.activePickupVendorId === form.vendorId) this.activePickupVendorId = '';
       this.toast.success(`Actual supplier pickup from ${form.vendorName} deleted successfully.`);
       await this.load();
