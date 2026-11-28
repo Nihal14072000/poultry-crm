@@ -484,7 +484,9 @@ export class TripService {
     const weightDifference = this.weightReconciliationDifference(data);
     const requiresApproval = discrepancy !== 0 || weightDifference > TRIP_WEIGHT_RECONCILIATION_TOLERANCE_KG ||
       String(data.trip['status'] ?? '') === 'Pending reconciliation';
-    if (requiresApproval && !this.rolePermissions.can('trips', 'approve')) {
+    const canApproveReconciliation = this.auth.currentUser?.role === 'Organization Admin' &&
+      this.rolePermissions.can('trips', 'approve');
+    if (requiresApproval && !canApproveReconciliation) {
       if (String(data.trip['status']) === 'Pending reconciliation') throw new Error('This trip is awaiting Organization Admin reconciliation approval.');
       if (pendingSupplierPickupIds.length) await this.tripApi.linkSupplierPickups(tripId, pendingSupplierPickupIds);
       if (pendingVendorDeliveryIds.length) await this.tripApi.linkVendorDeliveries(tripId, pendingVendorDeliveryIds);
