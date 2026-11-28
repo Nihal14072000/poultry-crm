@@ -330,7 +330,7 @@ export class TripService {
     const actual = this.validatePickup({ vendorId, broiler: { quantity: input.broiler, weight: input.broilerWeight, rate: planned.broiler.rate },
       culls: { quantity: input.culls, weight: input.cullsWeight, rate: planned.culls.rate },
       feed: { quantity: input.feed, weight: input.feedWeight, rate: planned.feed.rate } }, feedUnit, planned.vendorName);
-    const pickupId = await this.tripApi.saveSupplierPickup(vendorId, {
+    const pickupId = await this.tripApi.saveSupplierPickup(tripId, vendorId, {
       broiler: actual.broiler.quantity, broilerWeight: actual.broiler.weight, broilerRate: actual.broiler.rate,
       culls: actual.culls.quantity, cullsWeight: actual.culls.weight, cullsRate: actual.culls.rate,
       feed: actual.feed.quantity, feedWeight: actual.feed.weight, feedRate: actual.feed.rate,
@@ -382,7 +382,7 @@ export class TripService {
     const broilerRate = input.broilerRate ?? Number(destination['broilerRate'] ?? 0);
     const cullsRate = input.cullsRate ?? Number(destination['cullsRate'] ?? 0);
     const feedRate = input.feedRate ?? Number(destination['feedRate'] ?? 0);
-    const deliveryId = await this.tripApi.saveVendorDelivery(vendorDestinationId, {
+    const deliveryId = await this.tripApi.saveVendorDelivery(tripId, vendorDestinationId, {
       broiler: input.broiler, broilerWeight, broilerRate,
       culls: input.culls, cullsWeight, cullsRate,
       feed, feedWeight, feedRate,
