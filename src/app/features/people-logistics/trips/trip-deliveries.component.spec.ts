@@ -110,6 +110,23 @@ describe('TripDeliveriesComponent payments', () => {
     expect(component.tripProfit()).toBe(500);
   });
 
+  it('expands and collapses all vendor destinations together', () => {
+    component.destinations = [
+      { _demoId: '51', vendorName: 'Vendor One' },
+      { _demoId: '52', vendorName: 'Vendor Two' },
+      { _demoId: '53', vendorName: 'Vendor Three' }
+    ];
+
+    expect(component.allDestinationsExpanded).toBeFalse();
+    component.toggleAllDestinationDetails();
+    expect(component.allDestinationsExpanded).toBeTrue();
+    expect(component.destinations.every((destination) => component.isDestinationExpanded(component.id(destination)))).toBeTrue();
+
+    component.toggleAllDestinationDetails();
+    expect(component.allDestinationsExpanded).toBeFalse();
+    expect(component.destinations.every((destination) => !component.expandedDestinationIds.has(component.id(destination)))).toBeTrue();
+  });
+
   it('toggles expanded destination details independently', () => {
     component.toggleDestinationDetails('51');
     component.toggleDestinationDetails('52');

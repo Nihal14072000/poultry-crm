@@ -506,6 +506,17 @@ export class TripDeliveriesComponent implements OnInit {
   isDestinationExpanded(destinationId: string): boolean {
     return this.expandedDestinationIds.has(destinationId) || this.activeOrderId === destinationId;
   }
+  get allDestinationsExpanded(): boolean {
+    return this.destinations.length > 0 &&
+      this.destinations.every((destination) => this.expandedDestinationIds.has(this.id(destination)));
+  }
+  toggleAllDestinationDetails(): void {
+    if (this.allDestinationsExpanded) {
+      this.expandedDestinationIds.clear();
+      return;
+    }
+    this.destinations.forEach((destination) => this.expandedDestinationIds.add(this.id(destination)));
+  }
   toggleDestinationDetails(destinationId: string): void {
     if (this.isDestinationExpanded(destinationId)) this.expandedDestinationIds.delete(destinationId);
     else this.expandedDestinationIds.add(destinationId);
