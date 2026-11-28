@@ -111,7 +111,7 @@ describe('TripService', () => {
     }, [], [], '83');
 
     expect(savedId).toBe('83');
-    expect(tripApi.saveVendorDelivery).toHaveBeenCalledWith('51', jasmine.objectContaining({
+    expect(tripApi.saveVendorDelivery).toHaveBeenCalledWith('trip-12', '51', jasmine.objectContaining({
       broiler: 4, broilerWeight: 8, broilerRate: 120,
       culls: 0, cullsWeight: 0, cullsRate: 45,
       feed: 0, feedWeight: 0, feedRate: 25
@@ -146,7 +146,7 @@ describe('TripService', () => {
     });
 
     expect(savedId).toBe('77');
-    expect(tripApi.saveSupplierPickup).toHaveBeenCalledWith('supplier-1', jasmine.objectContaining({
+    expect(tripApi.saveSupplierPickup).toHaveBeenCalledWith('trip-12', 'supplier-1', jasmine.objectContaining({
       broiler: 10, broilerWeight: 10, culls: 0, cullsWeight: 0, feed: 0, feedWeight: 0
     }), '77');
   });
