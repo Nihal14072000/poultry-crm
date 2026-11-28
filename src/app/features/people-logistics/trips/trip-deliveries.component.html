@@ -280,18 +280,33 @@
         <p>Supplier pickups: {{ loadedBroiler }} broiler + {{ loadedCulls }} culls = {{ totalLoaded() }} birds loaded.</p>
         <p>Vendor handoffs: {{ deliveredBroilerTotal() }} broiler + {{ deliveredCullsTotal() }} culls = {{ totalDelivered() }} birds delivered.</p>
         <p>Unreconciled = {{ totalLoaded() }} loaded − {{ totalDelivered() }} delivered − {{ totalMortality() }} mortality.</p>
-        @if (hasReconciliationMismatch || trip['status'] === 'Pending reconciliation') {
-          @if (auth.currentUser?.role === 'Organization Admin') {
-            <p class="feedback warning">{{ hasReconciliationMismatch ? 'Review the bird-count discrepancy. As Organization Admin, you can approve and finalize this trip.' : 'This trip is pending reconciliation approval. As Organization Admin, you can approve and finalize this trip.' }}</p>
-          } @else {
-            <p class="readonly">{{ hasReconciliationMismatch ? 'A bird-count discrepancy was detected. Submit this trip for Organization Admin reconciliation approval.' : 'A new order was added or reconciliation is pending. Organization Admin approval is required to complete this trip.' }}</p>
+        <p>Actual supplier pickup weight: {{ totalActualSupplierWeight() | number:'1.2-2' }} kg.</p>
+        <p>Total actual vendor delivery weight: {{ totalActualVendorDeliveryWeight() | number:'1.2-2' }} kg.</p>
+        <p>Weight difference: {{ weightReconciliationDifference() | number:'1.2-2' }} kg · Allowed tolerance: {{ 1 | number:'1.0-0' }} kg.</p>
+        @if (hasReconciliationMismatch || hasWeightReconciliationMismatch || trip['status'] === 'Pending reconciliation') {
+          @if (hasReconciliationMismatch) {
+            @if (auth.currentUser?.role === 'Organization Admin') {
+              <p class="feedback warning">Bird-count discrepancy detected. As Organization Admin, you can approve and finalize this trip.</p>
+            } @else {
+              <p class="readonly">A bird-count discrepancy was detected. Submit this trip for Organization Admin reconciliation approval.</p>
+            }
+          }
+          @if (hasWeightReconciliationMismatch) {
+            @if (auth.currentUser?.role === 'Organization Admin') {
+              <p class="feedback warning">Actual pickup and delivery weights differ by more than 1 kg. Review the difference and approve or correct the records.</p>
+            } @else {
+              <p class="readonly">Actual supplier pickup weight and total vendor delivery weight differ by more than 1 kg. Organization Admin approval is required.</p>
+            }
+          }
+          @if (!hasReconciliationMismatch && !hasWeightReconciliationMismatch) {
+            <p class="readonly">A new order was added or reconciliation is pending. Organization Admin approval is required to complete this trip.</p>
           }
         }
         @if (hasMissingDestinationDeliveries) {
           <p class="feedback error">Record an actual delivery for every Vendor Destination before completing the trip.</p>
         }
       </div>
-      @if (hasReconciliationMismatch || trip['status'] === 'Pending reconciliation') {
+      @if (hasReconciliationMismatch || hasWeightReconciliationMismatch || trip['status'] === 'Pending reconciliation') {
         <button class="button button-primary" (click)="complete()" [disabled]="saving || !allSupplierReceiptsSaved() || hasMissingDestinationDeliveries || trip['status'] === 'Completed' || (trip['status'] === 'Pending reconciliation' && auth.currentUser?.role !== 'Organization Admin')">{{ trip['status'] === 'Completed' ? 'Trip completed' : (trip['status'] === 'Pending reconciliation' ? (auth.currentUser?.role === 'Organization Admin' ? 'Approve & complete trip' : 'Awaiting admin approval') : (auth.currentUser?.role === 'Organization Admin' ? 'Approve & complete trip' : 'Submit for reconciliation')) }}</button>
       } @else {
         <button class="button button-primary" (click)="complete()" [disabled]="saving || !allSupplierReceiptsSaved() || hasMissingDestinationDeliveries || trip['status'] === 'Completed'">{{ trip['status'] === 'Completed' ? 'Trip completed' : 'Complete trip' }}</button>
