@@ -224,7 +224,7 @@ export class TripApiService {
   }
 
   getPartyOrderTotal(partyId: string, partyType: 'B' | 'S'): Promise<number> {
-    return firstValueFrom(this.http.get<number | string>(`${this.baseUrl}/orders/total`, { params: { partyId, partyType } }))
+    return firstValueFrom(this.http.get<number | string>(`${this.baseUrl}/orders/actual/total`, { params: { partyId, partyType } }))
       .then((value) => {
         const total = Number(value);
         return Number.isFinite(total) ? total : 0;
@@ -233,7 +233,7 @@ export class TripApiService {
 
   getPartyOrders(partyId: string, partyType: 'B' | 'S'): Promise<Record<string, unknown>[]> {
     return Promise.all([
-      firstValueFrom(this.http.get<Record<string, unknown>[]>(`${this.baseUrl}/orders`, { params: { partyId, partyType } })),
+      firstValueFrom(this.http.get<Record<string, unknown>[]>(`${this.baseUrl}/orders/actual`, { params: { partyId, partyType } })),
       this.getOrderTypes()
     ]).then(([orders, orderTypes]) => {
       const names = new Map(orderTypes.map((orderType) => [String(orderType.id), String(orderType.name ?? '')] as const));
