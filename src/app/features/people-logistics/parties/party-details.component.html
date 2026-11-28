@@ -27,7 +27,7 @@
 
     @if (activeTab === 'orders') {
       <section class="trip-card" role="tabpanel" id="orders-panel" aria-labelledby="orders-tab">
-        <div class="card-heading"><div><h2>Actual orders</h2><p>{{ partyType === 'buying' ? 'Recorded supplier pickups' : 'Recorded vendor deliveries' }} for {{ party.name }}.</p></div><strong>{{ orders.length }} orders</strong></div>
+        <div class="card-heading"><div><h2>All orders</h2><p>Orders for {{ party.name }}.</p></div><strong>{{ orders.length }} orders</strong></div>
         <div class="table-scroll">
           <table>
             <thead><tr>@for (column of orderColumns; track column) { <th>{{ orderColumnLabel(column) }}</th> }</tr></thead>

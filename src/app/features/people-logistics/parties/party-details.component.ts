@@ -99,7 +99,7 @@ export class PartyDetailsComponent implements OnInit {
 
   orderValue(value: unknown, column: string, order: Record<string, unknown>): string {
     if (column === 'orderTypeId' && order['orderTypeName']) return String(order['orderTypeName']);
-    if (column === 'tripId') return value == null || value === '' ? '—' : `TR00${value}`;
+    if (column === 'tripId') return `TR00${value ?? ''}`;
     if (column === 'sales') {
       const weight = Number(order['weight']);
       const rate = Number(order['rate']);
