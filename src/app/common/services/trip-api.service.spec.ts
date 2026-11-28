@@ -557,7 +557,7 @@ describe('TripApiService', () => {
     });
     vendor.flush(null);
 
-    const orders = http.expectOne('http://localhost:8080/api/vendor-deliveries/83/orders');
+    const orders = http.expectOne('http://localhost:8080/api/vendor-deliveries/83/orders?tripId=12');
     expect(orders.request.method).toBe('PUT');
     expect(orders.request.body).toEqual([
       { orderTypeId: 1, qty: 8, weight: 18, rate: 115, total: 2070, isActive: true, isDeleted: false },
