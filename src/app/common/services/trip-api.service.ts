@@ -540,7 +540,7 @@ export class TripApiService {
     existingId?: string
   ): Promise<string> {
     const sellingPartyId = this.parseId(vendorId);
-    const orders = await this.actualOrders([
+    const orders = await this.actualOrders(this.parseId(tripId), [
       { kind: 'broiler', quantity: input.broiler, weight: input.broilerWeight, rate: input.broilerRate },
       { kind: 'culls', quantity: input.culls, weight: input.cullsWeight, rate: input.cullsRate },
       { kind: 'feed', quantity: input.feed, weight: input.feedWeight, rate: input.feedRate }
