@@ -57,6 +57,7 @@ interface ApiDelivery extends Record<string, unknown> {
 
 interface ApiActualOrder extends ApiOrder {
   id?: number;
+  tripId?: number;
   isActive?: boolean;
   isDeleted?: boolean;
 }
@@ -480,7 +481,7 @@ export class TripApiService {
     existingId?: string
   ): Promise<string> {
     const supplierId = this.parseId(vendorId);
-    const orders = await this.actualOrders([
+    const orders = await this.actualOrders(this.parseId(tripId), [
       { kind: 'broiler', quantity: input.broiler, weight: input.broilerWeight, rate: input.broilerRate },
       { kind: 'culls', quantity: input.culls, weight: input.cullsWeight, rate: input.cullsRate },
       { kind: 'feed', quantity: input.feed, weight: input.feedWeight, rate: input.feedRate }
@@ -498,11 +499,7 @@ export class TripApiService {
       }));
       pickupId = this.parseId(String(pickup.id));
     }
-    await firstValueFrom(this.http.put(
-      `${this.baseUrl}/supplier-pickups/${pickupId}/orders`,
-      orders,
-      { params: { tripId: this.parseId(tripId) } }
-    ));
+    await firstValueFrom(this.http.put(`${this.baseUrl}/supplier-pickups/${pickupId}/orders`, orders));
     return String(pickupId);
   }
 
@@ -558,11 +555,7 @@ export class TripApiService {
         id: vendorDeliveryId, sellingPartyId, note: input.note.trim(), isActive: true, isDeleted: false
       }));
     }
-    await firstValueFrom(this.http.put(
-      `${this.baseUrl}/vendor-deliveries/${vendorDeliveryId}/orders`,
-      orders,
-      { params: { tripId: this.parseId(tripId) } }
-    ));
+    await firstValueFrom(this.http.put(`${this.baseUrl}/vendor-deliveries/${vendorDeliveryId}/orders`, orders));
     return String(vendorDeliveryId);
   }
 
@@ -935,7 +928,7 @@ export class TripApiService {
     };
   }
 
-  private async actualOrders(lines: Array<{ kind: OrderKind; quantity: number; weight: number; rate: number }>): Promise<ApiActualOrder[]> {
+  private async actualOrders(tripId: number, lines: Array<{ kind: OrderKind; quantity: number; weight: number; rate: number }>): Promise<ApiActualOrder[]> {
     const orderTypes = await this.getOrderTypes();
     const ids = this.getOrderTypeIds(orderTypes);
     for (const line of lines) {
@@ -946,6 +939,7 @@ export class TripApiService {
     }
     return lines.filter((line) => line.quantity > 0 || line.weight > 0).map((line) => {
       return {
+        tripId,
         orderTypeId: ids[line.kind],
         qty: line.quantity,
         weight: line.weight,
