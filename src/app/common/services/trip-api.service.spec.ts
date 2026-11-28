@@ -293,7 +293,7 @@ describe('TripApiService', () => {
         order: [
           { orderTypeId: 1, qty: 8, weight: 18, rate: 110, total: 1980, isActive: true, isDeleted: false },
           { orderTypeId: 2, qty: 1, weight: 1.5, rate: 45, total: 67.5, isActive: true, isDeleted: false },
-          { orderTypeId: 3, qty: 2, weight: 2, rate: 25, total: 50, isActive: true, isDeleted: false }
+          { tripId: 12, orderTypeId: 3, qty: 2, weight: 2, rate: 25, total: 50, isActive: true, isDeleted: false }
         ]
       }],
       route: 'Nashik to Pune',
@@ -462,7 +462,7 @@ describe('TripApiService', () => {
   });
 
   it('creates supplier pickups and persists actual orders through the order endpoint', async () => {
-    const result = service.saveSupplierPickup('31', {
+    const result = service.saveSupplierPickup('12', '31', {
       broiler: 9, broilerWeight: 20, broilerRate: 100,
       culls: 0, cullsWeight: 0, cullsRate: 40,
       feed: 4, feedWeight: 4, feedRate: 20,
@@ -487,8 +487,8 @@ describe('TripApiService', () => {
     const orders = http.expectOne('http://localhost:8080/api/supplier-pickups/81/orders');
     expect(orders.request.method).toBe('PUT');
     expect(orders.request.body).toEqual([
-      { orderTypeId: 1, qty: 9, weight: 20, rate: 100, total: 2000, isActive: true, isDeleted: false },
-      { orderTypeId: 3, qty: 4, weight: 4, rate: 20, total: 80, isActive: true, isDeleted: false }
+      { tripId: 12, orderTypeId: 1, qty: 9, weight: 20, rate: 100, total: 2000, isActive: true, isDeleted: false },
+      { tripId: 12, orderTypeId: 3, qty: 4, weight: 4, rate: 20, total: 80, isActive: true, isDeleted: false }
     ]);
     orders.flush([]);
     http.expectNone('http://localhost:8080/api/deliveries');
@@ -510,7 +510,7 @@ describe('TripApiService', () => {
   });
 
   it('persists a vendor delivery through the documented entity and order endpoints', async () => {
-    const result = service.saveVendorDelivery('51', {
+    const result = service.saveVendorDelivery('12', '51', {
       broiler: 2, broilerWeight: 5.5, broilerRate: 110,
       culls: 0, cullsWeight: 0, cullsRate: 45,
       feed: 0, feedWeight: 0, feedRate: 25,
@@ -539,7 +539,7 @@ describe('TripApiService', () => {
   });
 
   it('updates an existing vendor delivery and its actual orders', async () => {
-    const result = service.saveVendorDelivery('51', {
+    const result = service.saveVendorDelivery('12', '51', {
       broiler: 8, broilerWeight: 18, broilerRate: 115,
       culls: 1, cullsWeight: 1.5, cullsRate: 50,
       feed: 2, feedWeight: 2, feedRate: 25, note: 'Corrected receipt'
@@ -560,9 +560,9 @@ describe('TripApiService', () => {
     const orders = http.expectOne('http://localhost:8080/api/vendor-deliveries/83/orders');
     expect(orders.request.method).toBe('PUT');
     expect(orders.request.body).toEqual([
-      { orderTypeId: 1, qty: 8, weight: 18, rate: 115, total: 2070, isActive: true, isDeleted: false },
-      { orderTypeId: 2, qty: 1, weight: 1.5, rate: 50, total: 75, isActive: true, isDeleted: false },
-      { orderTypeId: 3, qty: 2, weight: 2, rate: 25, total: 50, isActive: true, isDeleted: false }
+      { tripId: 12, orderTypeId: 1, qty: 8, weight: 18, rate: 115, total: 2070, isActive: true, isDeleted: false },
+      { tripId: 12, orderTypeId: 2, qty: 1, weight: 1.5, rate: 50, total: 75, isActive: true, isDeleted: false },
+      { tripId: 12, orderTypeId: 3, qty: 2, weight: 2, rate: 25, total: 50, isActive: true, isDeleted: false }
     ]);
     orders.flush([]);
     await expectAsync(result).toBeResolvedTo('83');
