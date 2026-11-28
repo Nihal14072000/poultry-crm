@@ -474,6 +474,7 @@ export class TripApiService {
   }
 
   async saveSupplierPickup(
+    tripId: string,
     vendorId: string,
     input: { broiler: number; broilerWeight: number; broilerRate: number; culls: number; cullsWeight: number; cullsRate: number; feed: number; feedWeight: number; feedRate: number; note: string },
     existingId?: string
@@ -497,7 +498,11 @@ export class TripApiService {
       }));
       pickupId = this.parseId(String(pickup.id));
     }
-    await firstValueFrom(this.http.put(`${this.baseUrl}/supplier-pickups/${pickupId}/orders`, orders));
+    await firstValueFrom(this.http.put(
+      `${this.baseUrl}/supplier-pickups/${pickupId}/orders`,
+      orders,
+      { params: { tripId: this.parseId(tripId) } }
+    ));
     return String(pickupId);
   }
 
@@ -532,6 +537,7 @@ export class TripApiService {
   }
 
   async saveVendorDelivery(
+    tripId: string,
     vendorId: string,
     input: { broiler: number; broilerWeight: number; broilerRate: number; culls: number; cullsWeight: number; cullsRate: number; feed: number; feedWeight: number; feedRate: number; note: string },
     existingId?: string
@@ -552,7 +558,11 @@ export class TripApiService {
         id: vendorDeliveryId, sellingPartyId, note: input.note.trim(), isActive: true, isDeleted: false
       }));
     }
-    await firstValueFrom(this.http.put(`${this.baseUrl}/vendor-deliveries/${vendorDeliveryId}/orders`, orders));
+    await firstValueFrom(this.http.put(
+      `${this.baseUrl}/vendor-deliveries/${vendorDeliveryId}/orders`,
+      orders,
+      { params: { tripId: this.parseId(tripId) } }
+    ));
     return String(vendorDeliveryId);
   }
 
