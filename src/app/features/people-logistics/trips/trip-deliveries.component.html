@@ -282,7 +282,7 @@
         <p>Unreconciled = {{ totalLoaded() }} loaded − {{ totalDelivered() }} delivered − {{ totalMortality() }} mortality.</p>
         <p>Actual supplier pickup weight: {{ totalActualSupplierWeight() | number:'1.2-2' }} kg.</p>
         <p>Total actual vendor delivery weight: {{ totalActualVendorDeliveryWeight() | number:'1.2-2' }} kg.</p>
-        <p>Weight difference: {{ weightReconciliationDifference() | number:'1.2-2' }} kg · Allowed tolerance: {{ 1 | number:'1.0-0' }} kg.</p>
+        <p>Weight difference: {{ weightReconciliationDifference() | number:'1.2-2' }} kg · Allowed tolerance: {{ weightToleranceKg | number:'1.0-0' }} kg.</p>
         @if (hasReconciliationMismatch || hasWeightReconciliationMismatch || trip['status'] === 'Pending reconciliation') {
           @if (hasReconciliationMismatch) {
             @if (auth.currentUser?.role === 'Organization Admin') {
