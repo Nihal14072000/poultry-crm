@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TripRecord, TripVendorPickup } from '../../../common/models/trip.model';
+import { TripRecord, TripVendorPickup, TRIP_WEIGHT_RECONCILIATION_TOLERANCE_KG } from '../../../common/models/trip.model';
 import { TripService } from '../../../common/services/trip.service';
 import { SessionAuthService } from '../../../common/services/session-auth.service';
 import { RolePermissionService } from '../../../common/services/role-permission.service';
@@ -477,6 +477,12 @@ export class TripDeliveriesComponent implements OnInit {
       this.number(this.feedWeight) * this.number(this.feedRate);
   }
   get hasReconciliationMismatch(): boolean { return this.unreconciled() !== 0; }
+  get hasWeightReconciliationMismatch(): boolean {
+    return this.weightReconciliationDifference() > TRIP_WEIGHT_RECONCILIATION_TOLERANCE_KG;
+  }
+  weightReconciliationDifference(): number {
+    return Math.round(Math.abs(this.totalActualSupplierWeight() - this.totalActualVendorDeliveryWeight()) * 100) / 100;
+  }
   get hasMissingDestinationDeliveries(): boolean {
     if (this.allSupplierReceiptsSaved() && this.totalLoaded() > 0 && this.totalLoaded() === this.totalDelivered()) {
       return false;
@@ -513,6 +519,12 @@ export class TripDeliveriesComponent implements OnInit {
   totalLoaded(): number { return this.loadedBroiler + this.loadedCulls; }
   totalMortality(): number { return this.mortalities.reduce((sum, record) => sum + this.number(record['quantity']), 0); }
   totalLoadedWeight(): number { return this.supplierReceipts.reduce((sum, receipt) => sum + this.number(receipt['broilerWeight']) + this.number(receipt['cullsWeight']), 0); }
+  totalActualSupplierWeight(): number {
+    return this.supplierReceipts.reduce((sum, receipt) => sum + this.number(receipt['broilerWeight']) + this.number(receipt['cullsWeight']) + this.number(receipt['feedWeight']), 0);
+  }
+  totalActualVendorDeliveryWeight(): number {
+    return this.deliveries.reduce((sum, delivery) => sum + this.number(delivery['broilerWeight']) + this.number(delivery['cullsWeight']) + this.number(delivery['feedWeight']), 0);
+  }
   allSupplierReceiptsSaved(): boolean { return this.supplierReceiptForms.length > 0 && this.supplierReceiptForms.every((form) => !!this.supplierReceipt(form.vendorId)); }
   proposedLoadedBroiler(): number { return this.supplierPickups.reduce((sum, pickup) => sum + pickup.broiler.quantity, 0); }
   proposedLoadedCulls(): number { return this.supplierPickups.reduce((sum, pickup) => sum + pickup.culls.quantity, 0); }
