@@ -476,7 +476,6 @@ export class TripService {
     if (!data.destinations.length) throw new Error('Assign at least one Vendor Destination before completion.');
     if (data.supplierPickups.some((pickup) => !data.supplierReceipts.some((receipt) => String(receipt['vendorId'] ?? '') === pickup.vendorId))) throw new Error('Record actual receipts for every supplier before submitting reconciliation.');
     const delivered = data.deliveries.reduce((sum, item) => sum + Number(item['broiler'] ?? 0) + Number(item['culls'] ?? 0), 0);
-    const quantitiesMatched = data.loadedBirds > 0 && data.loadedBirds === delivered;
     if (data.destinations.some((destination) => !data.deliveries.some((item) => String(item['vendorDestinationId']) === String(destination['vendorDestinationId'])))) {
       throw new Error('Record a delivery for every Vendor Destination before submitting.');
     }
