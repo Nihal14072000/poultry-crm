@@ -293,7 +293,7 @@ describe('TripApiService', () => {
         order: [
           { orderTypeId: 1, qty: 8, weight: 18, rate: 110, total: 1980, isActive: true, isDeleted: false },
           { orderTypeId: 2, qty: 1, weight: 1.5, rate: 45, total: 67.5, isActive: true, isDeleted: false },
-          { orderTypeId: 3, qty: 2, weight: 2, rate: 25, total: 50, isActive: true, isDeleted: false }
+          { tripId: 12, orderTypeId: 3, qty: 2, weight: 2, rate: 25, total: 50, isActive: true, isDeleted: false }
         ]
       }],
       route: 'Nashik to Pune',
@@ -484,11 +484,11 @@ describe('TripApiService', () => {
     });
     createPickup.flush({ id: 81 });
 
-    const orders = http.expectOne('http://localhost:8080/api/supplier-pickups/81/orders?tripId=12');
+    const orders = http.expectOne('http://localhost:8080/api/supplier-pickups/81/orders');
     expect(orders.request.method).toBe('PUT');
     expect(orders.request.body).toEqual([
-      { orderTypeId: 1, qty: 9, weight: 20, rate: 100, total: 2000, isActive: true, isDeleted: false },
-      { orderTypeId: 3, qty: 4, weight: 4, rate: 20, total: 80, isActive: true, isDeleted: false }
+      { tripId: 12, orderTypeId: 1, qty: 9, weight: 20, rate: 100, total: 2000, isActive: true, isDeleted: false },
+      { tripId: 12, orderTypeId: 3, qty: 4, weight: 4, rate: 20, total: 80, isActive: true, isDeleted: false }
     ]);
     orders.flush([]);
     http.expectNone('http://localhost:8080/api/deliveries');
@@ -527,7 +527,7 @@ describe('TripApiService', () => {
       sellingPartyId: 51, note: 'Shortage noted', isActive: true, isDeleted: false
     });
     createVendor.flush({ id: 83 });
-    const orders = http.expectOne('http://localhost:8080/api/vendor-deliveries/83/orders?tripId=12');
+    const orders = http.expectOne('http://localhost:8080/api/vendor-deliveries/83/orders');
     expect(orders.request.method).toBe('PUT');
     expect(orders.request.body).toEqual([{
       orderTypeId: 1, qty: 2, weight: 5.5, rate: 110, total: 605,
@@ -560,8 +560,8 @@ describe('TripApiService', () => {
     const orders = http.expectOne('http://localhost:8080/api/vendor-deliveries/83/orders?tripId=12');
     expect(orders.request.method).toBe('PUT');
     expect(orders.request.body).toEqual([
-      { orderTypeId: 1, qty: 8, weight: 18, rate: 115, total: 2070, isActive: true, isDeleted: false },
-      { orderTypeId: 2, qty: 1, weight: 1.5, rate: 50, total: 75, isActive: true, isDeleted: false },
+      { tripId: 12, orderTypeId: 1, qty: 8, weight: 18, rate: 115, total: 2070, isActive: true, isDeleted: false },
+      { tripId: 12, orderTypeId: 2, qty: 1, weight: 1.5, rate: 50, total: 75, isActive: true, isDeleted: false },
       { orderTypeId: 3, qty: 2, weight: 2, rate: 25, total: 50, isActive: true, isDeleted: false }
     ]);
     orders.flush([]);
