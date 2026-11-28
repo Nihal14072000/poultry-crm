@@ -483,6 +483,7 @@ export class TripDeliveriesComponent implements OnInit {
       this.weightReconciliationDifference() > this.weightToleranceKg;
   }
   weightReconciliationDifference(): number {
+    if (!this.supplierReceipts.length || !this.deliveries.length) return 0;
     return Math.round(Math.abs(this.totalActualSupplierWeight() - this.totalActualVendorDeliveryWeight()) * 100) / 100;
   }
   get hasMissingDestinationDeliveries(): boolean {
