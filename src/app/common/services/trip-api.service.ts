@@ -680,7 +680,7 @@ export class TripApiService {
       `${this.baseUrl}/trips/${tripId}/update`,
       { sellingParties: [...existing, newParty] }
     ));
-    const vendorDeliveryId = await this.saveVendorDelivery(String(vendorId), {
+    const vendorDeliveryId = await this.saveVendorDelivery(String(tripId), String(vendorId), {
       broiler: stop.broilerQuantity,
       broilerWeight: stop.broilerWeight,
       broilerRate: stop.broilerRate,
