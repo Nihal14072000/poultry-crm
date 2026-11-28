@@ -557,12 +557,12 @@ describe('TripApiService', () => {
     });
     vendor.flush(null);
 
-    const orders = http.expectOne('http://localhost:8080/api/vendor-deliveries/83/orders?tripId=12');
+    const orders = http.expectOne('http://localhost:8080/api/vendor-deliveries/83/orders');
     expect(orders.request.method).toBe('PUT');
     expect(orders.request.body).toEqual([
       { tripId: 12, orderTypeId: 1, qty: 8, weight: 18, rate: 115, total: 2070, isActive: true, isDeleted: false },
       { tripId: 12, orderTypeId: 2, qty: 1, weight: 1.5, rate: 50, total: 75, isActive: true, isDeleted: false },
-      { orderTypeId: 3, qty: 2, weight: 2, rate: 25, total: 50, isActive: true, isDeleted: false }
+      { tripId: 12, orderTypeId: 3, qty: 2, weight: 2, rate: 25, total: 50, isActive: true, isDeleted: false }
     ]);
     orders.flush([]);
     await expectAsync(result).toBeResolvedTo('83');
