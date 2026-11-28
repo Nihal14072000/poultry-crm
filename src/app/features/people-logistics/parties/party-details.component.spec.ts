@@ -16,7 +16,7 @@ describe('PartyDetailsComponent', () => {
     } as unknown as ActivatedRoute, tripsApi, financeApi);
   });
 
-  it('loads party details without fetching unused trip data', async () => {
+  it('loads actual party transactions without fetching unused trip data', async () => {
     tripsApi.getBuyingParties.and.resolveTo([{
       _demoId: '7', id: 7, name: 'Supplier', contact: '', location: '',
       outstanding: null, isActive: true, isDeleted: false, status: 'Active'
@@ -50,7 +50,7 @@ describe('PartyDetailsComponent', () => {
     expect(component.orders[0]['tripId']).toBe(11);
   });
 
-  it('loads all orders for a selling party using party type S', async () => {
+  it('loads actual vendor deliveries for a selling party using party type S', async () => {
     component = new PartyDetailsComponent({
       snapshot: { data: { partyType: 'selling' }, paramMap: { get: () => '12' } }
     } as unknown as ActivatedRoute, tripsApi, financeApi);
@@ -85,6 +85,7 @@ describe('PartyDetailsComponent', () => {
     expect(component.orders[0]['tripId']).toBe(15);
     expect(component.orderColumns).toEqual(['tripId', 'orderTypeId', 'qty', 'weight', 'rate', 'sales', 'createDate']);
     expect(component.orderValue(15, 'tripId', component.orders[0])).toBe('TR0015');
+    expect(component.orderValue(null, 'tripId', { tripId: null })).toBe('—');
     expect(component.orderColumnLabel('orderTypeId')).toBe('ORDER TYPE');
     expect(component.orderValue(1, 'orderTypeId', component.orders[0])).toBe('Broiler');
     expect(component.orderValue(undefined, 'sales', component.orders[0])).toBe('₹ 5500');
